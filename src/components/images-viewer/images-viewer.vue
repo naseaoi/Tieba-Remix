@@ -63,6 +63,13 @@ export interface ImagesViewerOpts {
     defaultIndex?: number;
 }
 
+interface ControlDirectionMap<T> {
+    left: T;
+    right: T;
+    top: T;
+    bottom: T;
+}
+
 const props = withDefaults(defineProps<ImagesViewerOpts>(), {
     defaultIndex: 0,
 });
@@ -87,11 +94,17 @@ const scale = ref(1.0);
 const deg = ref(0);
 const imageLeft = ref<Maybe<number>>(undefined);
 const imageTop = ref<Maybe<number>>(undefined);
-const showControls = ref({
-    left: true,
-    right: true,
-    top: true,
-    bottom: true,
+const showControls = ref<ControlDirectionMap<boolean>>({
+    left: false,
+    right: false,
+    top: false,
+    bottom: false,
+});
+const lockControls = ref<ControlDirectionMap<boolean>>({
+    left: false,
+    right: false,
+    top: false,
+    bottom: false,
 });
 const vliMode = ref(false);
 
@@ -138,55 +151,25 @@ const SHOW_CONTROLS_THRESHOLD_X = 180 as const;
 const SHOW_CONTROLS_THRESHOLD_Y = 140 as const;
 
 const evproxy = new EventProxy();
+let lastMousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let lastControlTimeout: ControlDirectionMap<number> = {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+};
 
 onMounted(async () => {
     await nextTick();
     let offsetX = 0, offsetY = 0;
 
-    const showControlsBefore = {
-        left: false,
-        right: false,
-        top: false,
-        bottom: false,
-    };
-    let beforeDefaultHide = true;
-
     evproxy.on(window, "mousemove", _.throttle(function (e: MouseEvent) {
         const { clientX, clientY } = e;
-
-        const distanceToLeft = clientX;
-        const distanceToRight = window.innerWidth - clientX;
-        const distanceToTop = clientY;
-        const distanceToBottom = window.innerHeight - clientY;
-
-        const dataRef = beforeDefaultHide ? showControlsBefore : showControls.value;
-
-        distanceToLeft <= SHOW_CONTROLS_THRESHOLD_X
-            ? dataRef.left = true
-            : dataRef.left = false;
-        distanceToRight <= SHOW_CONTROLS_THRESHOLD_X
-            ? dataRef.right = true
-            : dataRef.right = false;
-        distanceToTop <= SHOW_CONTROLS_THRESHOLD_Y
-            ? dataRef.top = true
-            : dataRef.top = false;
-        distanceToBottom <= SHOW_CONTROLS_THRESHOLD_Y
-            ? dataRef.bottom = true
-            : dataRef.bottom = false;
+        lastMousePos = { x: clientX, y: clientY };
+        showControls.value = verifyPos();
     }, 100, { leading: true }));
 
-    setTimeout(() => {
-        showControls.value = {
-            ...{
-                left: false,
-                right: false,
-                top: false,
-                bottom: false,
-            },
-            ...showControlsBefore,
-        };
-        beforeDefaultHide = false;
-    }, DEFAULT_HIDE_CONTROLS_DELAY);
+    lockControlsTemporarily("all", DEFAULT_HIDE_CONTROLS_DELAY);
 
     evproxy.on(imagesViewer.value, "wheel", imageWheel, { passive: true });
 
@@ -237,7 +220,7 @@ onMounted(async () => {
         if (Math.abs(deg.value) >= 360) {
             currImage.value?.classList.add("changing");
             deg.value = Math.abs(deg.value) % 360;
-            currImage.value?.offsetHeight;  // 强制重绘
+            currImage.value?.offsetHeight; // force reflow
             currImage.value?.classList.remove("changing");
         }
     });
@@ -274,6 +257,7 @@ watch(imageTop, function (newTop) {
 });
 
 watch(vliMode, function (newMode) {
+    lockControlsTemporarily("top", DEFAULT_HIDE_CONTROLS_DELAY);
     if (newMode && currImage.value && !imageTop.value) {
         imageTop.value = Math.max(
             imageProps.value.vliMinTop,
@@ -329,6 +313,69 @@ function clickModal(e: MouseEvent) {
     if (e.target === imageContainer.value) {
         unload();
     }
+}
+
+/**
+ * 暂时锁定某个方向的控件，支持直接锁定全部控件
+ * @param direction 方向
+ * @param timeout 超时时间
+ */
+function lockControlsTemporarily(
+    direction: keyof ControlDirectionMap<any> | "all",
+    timeout: number
+) {
+    if (direction !== "all") {
+        lock(direction);
+    } else {
+        lock("left");
+        lock("right");
+        lock("top");
+        lock("bottom");
+    }
+
+    function lock(direction: keyof ControlDirectionMap<any>) {
+        lockControls.value[direction] = true;
+        if (lastControlTimeout[direction]) {
+            clearTimeout(lastControlTimeout[direction]);
+        }
+        showControls.value[direction] = true;
+        lastControlTimeout[direction] = setTimeout(() => {
+            lockControls.value[direction] = false;
+            showControls.value = verifyPos();
+        }, timeout);
+    }
+}
+
+/**
+ * 验证光标位置，返回控件显示状态
+ * @param pos 光标位置
+ */
+function verifyPos(pos = lastMousePos) {
+    const distanceToLeft = pos.x;
+    const distanceToRight = window.innerWidth - pos.x;
+    const distanceToTop = pos.y;
+    const distanceToBottom = window.innerHeight - pos.y;
+    const calcValue: ControlDirectionMap<boolean> = {
+        left: false,
+        right: false,
+        top: false,
+        bottom: false,
+    };
+
+    distanceToLeft <= SHOW_CONTROLS_THRESHOLD_X || lockControls.value.left
+        ? calcValue.left = true
+        : calcValue.left = false;
+    distanceToRight <= SHOW_CONTROLS_THRESHOLD_X || lockControls.value.right
+        ? calcValue.right = true
+        : calcValue.right = false;
+    distanceToTop <= SHOW_CONTROLS_THRESHOLD_Y || lockControls.value.top
+        ? calcValue.top = true
+        : calcValue.top = false;
+    distanceToBottom <= SHOW_CONTROLS_THRESHOLD_Y || lockControls.value.bottom
+        ? calcValue.bottom = true
+        : calcValue.bottom = false;
+
+    return calcValue;
 }
 </script>
 
