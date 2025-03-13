@@ -140,6 +140,12 @@ export default async function () {
                     }
                 });
             });
+
+            // 帖子主楼层显示分隔符，但无人回帖时不显示
+            if (PageData.pager.cur_page === 1 && PageData.thread.reply_num > 1) {
+                const firstFloor = dom<"div">(".l_post", threadList);
+                if (firstFloor) firstFloor.style.borderBottom = "2px solid var(--tieba-theme-fore) !important";
+            }
         }, { once: true });
 
         threadFloorsObserver.addEvent(function () {
