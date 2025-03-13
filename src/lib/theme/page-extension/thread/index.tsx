@@ -98,31 +98,31 @@ export default async function () {
 
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
-        insertJSX(
-            <div id="title-wrapper">
-                <h3 class="thread-title">{_.unescape(PageData.thread.title)}</h3>
+        insertJSX(<div id="title-wrapper">
+            <h3 class="thread-title">{_.unescape(PageData.thread.title)}</h3>
 
-                <UserButton class="forum-wrapper-button" noBorder>
-                    <img class="forum-icon" src={forumIconLink} alt="" />
-                    <a class="forum-name" href={`/f?kw=${PageData.forum.name_url}`} target="_blank">{PageData.forum.forum_name} 吧</a>
+            <div class="forum-wrapper-button">
+                <img class="forum-icon" src={forumIconLink} alt="吧头像" />
+                <a class="forum-name anchor-noback"
+                    href={`/f?kw=${PageData.forum.name_url}`} target="_blank">
+                    {PageData.forum.forum_name} 吧
+                </a>
 
-                    <div class="button-container">
-                        <UserButton
-                            class="icon forum-button add-forum-button"
-                            noBorder>
-                            {PageData.user.is_like ? "check" : "add"}
-                        </UserButton>
-                    </div>
-                </UserButton>
-            </div>, content, pbContent);
+                <div class="button-container">
+                    <UserButton
+                        class="icon forum-button add-forum-button"
+                        noBorder
+                        onClick={() => dom<"button">("#j_head_focus_btn")?.click()}>
+                        {PageData.user.is_like ? "check" : "add"}
+                    </UserButton>
+                </div>
+            </div>
+        </div>, content, pbContent);
 
         // 绑定事件
         floatMessage({
             target: await asyncdom<"button">(".forum-wrapper-button"),
             content: `关注 ${PageData.forum.member_count}, 帖子 ${PageData.forum.post_num}`,
-        });
-        dom(".add-forum-button")?.addEventListener("click", function () {
-            dom<"button">("#j_head_focus_btn")?.click();
         });
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
             dom<"button">(".j_signbtn")?.click();
