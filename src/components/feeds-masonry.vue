@@ -3,7 +3,7 @@
         <div ref="masonryContainer" class="masonry-container"></div>
 
         <PostContainer v-for="post in feeds" :key="post.id" :post="post" class="post-elem" dynamic shadow-border
-            @click-image="showImages" @assets-loaded="addToLoaded">
+                       @click-image="showImages" @assets-loaded="addToLoaded">
         </PostContainer>
     </div>
 </template>
@@ -134,21 +134,20 @@ async function addFeeds(newFeeds?: TiebaPost[]) {
 
 /** 创建布局，若布局已存在则追加资源 */
 async function renderMasonry() {
-    await nextTick(() => {
-        if (!masonryContainer.value) return;
+    await nextTick();
+    if (!masonryContainer.value) return;
 
-        if (!flexMasonry) {
-            flexMasonry = new FlexMasonry({
-                container: masonryContainer.value,
-                // items: ".post-elem.assets-loaded",
-                columnWidth: 320,
-                gap: 12,
-                fixScrollOffset: true,
-            });
-        } else {
-            flexMasonry.append(".masonry-wrapper > .post-elem.assets-loaded", 60);
-        }
-    });
+    if (!flexMasonry) {
+        flexMasonry = new FlexMasonry({
+            container: masonryContainer.value,
+            // items: ".post-elem.assets-loaded",
+            columnWidth: 320,
+            gap: 12,
+            fixScrollOffset: true,
+        });
+    } else {
+        flexMasonry.append(".masonry-wrapper > .post-elem.assets-loaded", 60);
+    }
 }
 
 /** 将已经加载好的贴子添加到 `currentLoadedFeeds` */
