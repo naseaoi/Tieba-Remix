@@ -1,6 +1,8 @@
 $content-padding-x: 48px;
 $content-padding-y: 24px;
 $content-font-size: 16px;
+$tail-font-size: 13px;
+$author-container-gap: 6px;
 $avatar-size: 36px;
 $floor-padding: 8px;
 $tail-gap: 12px;
@@ -145,6 +147,11 @@ body.special_conf_skin {
     div[data-po] {
         display: none;
     }
+
+    // 当前帖子回帖数大于 1 时，在主楼底部增加分隔线
+    // &:has(.l_post_bright + .l_post_bright) > .l_post_bright:first-of-type {
+    //     border-bottom: 2px solid var(--border-color);
+    // }
 }
 
 .main-wrapper {
@@ -164,6 +171,10 @@ body.special_conf_skin {
     width: 100%;
 }
 
+.core_reply_wrapper {
+    padding-left: $avatar-size + $author-container-gap;
+}
+
 // 楼层尾部信息
 .post-tail-wrap,
 .core_reply_tail:not(.clearfix) {
@@ -172,23 +183,11 @@ body.special_conf_skin {
     margin-top: 0;
     color: var(--light-fore);
     float: none;
+    font-size: $tail-font-size;
     gap: $tail-gap;
 
     .question-image {
         display: none;
-    }
-
-    // 举报
-    .j_jb_ele a {
-        @extend %anchor;
-    }
-
-    .tail-info {
-        margin: 0;
-
-        &:hover {
-            color: var(--light-fore);
-        }
     }
 
     .p_reply {
@@ -199,6 +198,32 @@ body.special_conf_skin {
             @extend %anchor;
             border: none;
             background: none;
+        }
+    }
+}
+
+.post-tail-wrap {
+    a {
+        @extend %anchor-noback;
+    }
+
+    .tail-info {
+        margin: 0;
+
+        &:hover {
+            color: var(--light-fore);
+        }
+    }
+
+    .tail-info a,
+    a.tail-info,
+    .j_jb_ele a {
+        &:hover {
+            color: var(--tieba-theme-fore);
+        }
+
+        &:active {
+            color: var(--tieba-theme-active);
         }
     }
 }
@@ -236,8 +261,13 @@ body.special_conf_skin {
             margin: 0;
         }
 
+        a,
+        .j_jb_ele::after {
+            @extend %anchor-noback;
+            color: var(--light-fore);
+        }
+
         .j_jb_ele {
-            @extend %anchor;
             padding: 0;
         }
     }
@@ -295,7 +325,6 @@ body.special_conf_skin {
         }
 
         .forum-name {
-            color: var(--highlight-fore);
             font-size: 14px;
             font-weight: bold;
         }
@@ -360,7 +389,7 @@ body.special_conf_skin {
 }
 
 .core_reply_content {
-    padding: 0 0 0 $avatar-size;
+    padding: 0;
 }
 
 .content-wrapper {
@@ -372,7 +401,7 @@ body.special_conf_skin {
     .author-container {
         display: grid;
         margin-bottom: 8px;
-        gap: 6px;
+        gap: $author-container-gap;
         grid-template:
             "avatar name" auto
             "avatar tags" auto

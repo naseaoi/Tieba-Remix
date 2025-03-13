@@ -1,10 +1,14 @@
+$lzl-content-font-size: 15px;
+$lzl-tail-font-size: 13px;
+$lzl-content-margin: 12px;
+
 // 楼层尾巴 + 楼中楼
 .core_reply {
     margin-right: unset;
 
     // 楼中楼包装（包括 padding）
     .core_reply_wrapper {
-        width: 100%;
+        width: auto;
         max-width: 840px; // TODO: 更具体的调整
         border: none !important;
         background-color: unset !important;
@@ -14,7 +18,7 @@
 
             // 单个楼中楼内容
             .lzl_single_post {
-                margin-bottom: 12px;
+                margin-bottom: $lzl-content-margin;
                 animation: kf-slide-in var(--default-duration);
                 transform-origin: bottom;
 
@@ -34,6 +38,8 @@
                     }
 
                     .lzl_content_main {
+                        font-size: $lzl-content-font-size;
+
                         a {
                             @extend %anchor;
                         }
@@ -47,29 +53,38 @@
                     .lzl_content_reply {
                         display: flex;
                         align-items: center;
+                        font-size: $lzl-tail-font-size;
                         line-height: 28px;
                         text-align: justify;
+
+                        // 楼中楼管理
+                        .lzl_op_list {
+                            color: var(--light-fore);
+
+                            a {
+                                @extend %anchor-noback;
+                                color: var(--light-fore);
+                            }
+                        }
 
                         // 楼中楼举报
                         .lzl_jb {
                             order: 1;
                             margin-left: auto;
+                            color: var(--light-fore);
 
                             .lzl_jb_in {
+                                @extend %anchor-noback;
                                 padding: 0;
                             }
                         }
 
                         // 楼中楼回复
                         .lzl_s_r {
-                            @extend %anchor;
+                            @extend %anchor-noback;
                             padding: 0;
                             margin-left: 8px;
                             color: var(--light-fore);
-
-                            &:hover {
-                                color: var(--tieba-theme-fore);
-                            }
                         }
                     }
                 }
@@ -78,17 +93,22 @@
             // 楼中楼翻页
             .lzl_li_pager {
                 padding: 0;
-                margin-top: -6px;
+                margin-top: -$lzl-content-margin;
 
                 // 点击查看（更多）
-                .lzl_more a {
-                    @extend %anchor;
+                .lzl_more {
+                    font-size: $lzl-tail-font-size;
+
+                    a {
+                        @extend %anchor;
+                    }
                 }
 
                 .j_pager {
                     display: flex;
                     align-items: center;
                     font-family: var(--code-zh);
+                    font-size: $lzl-tail-font-size;
 
                     .tP {
                         width: auto;
@@ -112,6 +132,7 @@
                 padding: 4px 0;
                 border-radius: 0;
                 background: none;
+                font-size: $lzl-tail-font-size;
             }
 
             // 楼中楼编辑器

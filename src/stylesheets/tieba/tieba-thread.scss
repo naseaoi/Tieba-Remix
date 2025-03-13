@@ -526,16 +526,10 @@ span.tP {
     color: var(--light-fore);
 }
 
-.j_jb_ele .tail-info {
-    /* 举报超链接 */
-    color: var(--tieba-theme-fore) !important;
-}
-
 .complaint {
     /* 部分吧楼层举报 */
     padding-right: 4px;
     background: none;
-    color: var(--tieba-theme-fore) !important;
 }
 
 .complaint::after {
@@ -669,11 +663,10 @@ span.tP {
     color: var(--light-fore);
 }
 
+/* 楼中楼举报 */
 .lzl_jb_in,
 .user-jubao-button {
-    /* 楼中楼举报 */
     background: none;
-    color: var(--tieba-theme-fore);
 }
 
 .lzl_jb_in::after,
