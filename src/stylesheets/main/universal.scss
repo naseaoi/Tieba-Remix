@@ -15,6 +15,10 @@
     @extend %anchor-underline;
 }
 
+.anchor-noback {
+    @extend %anchor-noback;
+}
+
 .markdown {
     font-family: var(--code-zh);
     font-size: 16px;

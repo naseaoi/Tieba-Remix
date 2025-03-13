@@ -1,21 +1,30 @@
 <template>
-    <component :is="isAnchor ? 'a' : 'button'" class="user-button"
-        :class="{ 'shadow-border': props.shadowBorder, 'unset-background': props.unsetBackground, 'theme-style': props.themeStyle, 'no-border': props.noBorder, 'no-border-all': props.noBorder === 'all' }"
-        type="button">
+    <component :is="isAnchor ? 'a' : 'button'"
+        class="user-button"
+        :class="{
+            'shadow-border': props.shadowBorder,
+            'unset-background': props.unsetBackground,
+            'theme-style': props.themeStyle,
+            'no-border': props.noBorder,
+            'no-border-all': props.noBorder === 'all'
+        }"
+        @click="emit('click', $event)">
         <slot></slot>
     </component>
 </template>
 
 <script setup lang="ts">
-interface Props {
-    isAnchor?: boolean
-    shadowBorder?: true
-    unsetBackground?: true
-    themeStyle?: boolean
-    noBorder?: boolean | "all"
+export interface UserButtonOpts {
+    isAnchor?: boolean;
+    shadowBorder?: true;
+    unsetBackground?: true;
+    themeStyle?: boolean;
+    noBorder?: boolean | "all";
 }
 
-const props = defineProps<Props>();
+const props = defineProps<UserButtonOpts>();
+
+const emit = defineEmits<{ (type: "click", e: MouseEvent): void }>();
 </script>
 
 <style lang="scss">

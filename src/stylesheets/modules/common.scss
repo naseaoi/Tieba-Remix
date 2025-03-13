@@ -33,6 +33,12 @@
     text-decoration: underline 1.2px;
 }
 
+%anchor-noback {
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--default-duration);
+}
+
 %anchor:hover,
 %anchor-underline:hover {
     background-color: var(--default-hover);
@@ -42,9 +48,17 @@
     text-decoration: underline 1.2px rgba($color: #000, $alpha: 0%);
 }
 
+%anchor-noback:hover {
+    color: var(--tieba-theme-fore);
+}
+
 %anchor:active,
 %anchor-underline:active {
     background-color: var(--default-active);
+}
+
+%anchor-noback:active {
+    color: var(--tieba-theme-active);
 }
 
 // 头像
