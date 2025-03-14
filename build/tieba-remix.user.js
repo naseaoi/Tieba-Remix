@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tieba Remix
 // @namespace    https://github.com/HacksawBlade/Tieba-Remix
-// @version      0.4.5-beta
+// @version      0.4.6-beta
 // @author       锯条
 // @description  贴吧网页端重塑
 // @license      MIT
