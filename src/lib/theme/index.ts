@@ -15,7 +15,7 @@ import { getResource } from "../api/remixed";
 import { domrd } from "../elemental";
 import { injectCSSRule, overwriteCSS, parseMultiCSS } from "../elemental/styles";
 import { scrollbarWidth } from "../render";
-import { customBackground, customStyle, monospaceFonts, themeColor, userFonts, wideScreen } from "../user-values";
+import { customBackground, customStyle, fontWeights, monospaceFonts, themeColor, userFonts, wideScreen } from "../user-values";
 import { waitUntil } from "../utils";
 import { hexToRGBA, rgbaToHSLA } from "../utils/color";
 
@@ -36,6 +36,8 @@ export async function loadDynamicCSS() {
                 : `${wideScreen.get().maxWidth}px`,
             "--code-zh": `${_.join(userFonts.get(), ",")}`,
             "--code-monospace": `${_.join(monospaceFonts.get(), ",")}`,
+            "--font-weight-normal": `${fontWeights.get().normal}`,
+            "--font-weight-bold": `${fontWeights.get().bold}`,
         },
 
         "html.dark-theme": {

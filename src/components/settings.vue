@@ -301,7 +301,7 @@ $wrapper-padding: 16px;
             .icon {
                 margin-left: 4px;
                 font-variation-settings: "FILL" 1, "GRAD" 48, "wght" 300;
-                font-weight: normal;
+                font-weight: var(--font-weight-normal);
             }
 
             .key-desc {
@@ -345,7 +345,7 @@ $wrapper-padding: 16px;
                 margin-top: 8px;
                 color: var(--default-fore) !important;
                 font-size: 20px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
                 line-height: normal;
             }
 
@@ -410,14 +410,14 @@ $wrapper-padding: 16px;
                 margin: 8px 0 0;
                 color: var(--highlight-fore);
                 font-size: 18px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
             }
 
             .content-sub-title {
                 margin: 4px 0 0;
                 color: var(--default-fore);
                 font-size: 16px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
             }
 
             .content-desc {

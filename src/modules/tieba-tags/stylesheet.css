@@ -25,7 +25,7 @@
     background-color: var(--trans-light-background);
     color: var(--light-fore);
     font-size: 12px;
-    font-weight: normal;
+    font-weight: var(--font-weight-normal);
 }
 
 .tieba-tags-me::after {

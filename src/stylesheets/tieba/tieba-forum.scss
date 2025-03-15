@@ -136,7 +136,7 @@
 .card_title_fname {
     /* 吧标题 */
     color: var(--tieba-theme-fore) !important;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
 }
 
 .card_slogan {
@@ -234,7 +234,7 @@
     color: var(--default-background);
     content: "search";
     font-size: 18px;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
     line-height: 26px;
     text-align: center;
 }
@@ -296,7 +296,7 @@
 .j_th_tit {
     /* 帖子标题 */
     color: var(--tieba-theme-fore);
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
 }
 
 .threadlist_bright .threadlist_abs_onlyline,
@@ -341,7 +341,7 @@
     background: none !important;
     background-color: var(--tieba-theme-background) !important;
     color: var(--tieba-theme-fore);
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
 }
 
 .pagination-default .pagination-item {

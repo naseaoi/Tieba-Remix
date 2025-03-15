@@ -67,7 +67,7 @@ const emit = defineEmits(["changeView"]);
             color: var(--highlight-fore);
             font-size: 32px;
             font-style: italic;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
     }
 

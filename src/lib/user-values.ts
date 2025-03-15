@@ -222,6 +222,10 @@ export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
 export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "fold");
 /** 自定义样式 */
 export const customStyle = new UserKey<string>("customStyle", "");
+export const fontWeights = new UserKey("fontWeights", {
+    "normal": 400,
+    "bold": 700,
+});
 
 export const SymbolFont = "Material Symbols";
 

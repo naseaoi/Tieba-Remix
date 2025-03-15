@@ -155,7 +155,7 @@ img::before {
         .title {
             margin: 0;
             color: var(--highlight-fore);
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .content {
@@ -222,7 +222,7 @@ img::before {
 
                 .author-name {
                     font-size: 14px;
-                    font-weight: bold;
+                    font-weight: var(--font-weight-bold);
                 }
 
                 .post-time {
@@ -243,9 +243,9 @@ img::before {
             border-radius: 24px;
             margin-left: auto;
             color: var(--light-fore);
-            font-family: var(--code-monospace);
+            font-family: var(--code-zh);
             font-size: 13px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .replies::before {
@@ -253,7 +253,7 @@ img::before {
             margin-right: 6px;
             content: "forum";
             font-size: 16px;
-            font-weight: normal;
+            font-weight: var(--font-weight-normal);
         }
     }
 }

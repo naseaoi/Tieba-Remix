@@ -4,7 +4,7 @@ import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { UserSelectItem } from "@/components/user-select.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, monospaceFonts, navBarHideMode, pageExtension, perfProfile, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
+import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { markRaw } from "vue";
@@ -204,6 +204,44 @@ export const getUserSettings = _.once((): UserSettings => ({
                                 return _.join(monospaceFonts.get(), "\n");
                             },
                         }],
+                    },
+
+                    "font-weights": {
+                        title: "字重调整",
+                        description:
+                            `设置字体的字重。`,
+                        widgets: [
+                            {
+                                type: "subTitle",
+                                content: "默认字重",
+                            },
+                            {
+                                type: "textbox",
+                                placeHolder: "默认字重",
+                                init() {
+                                    return fontWeights.get().normal;
+                                },
+                                event(e) {
+                                    const newValue = (e.target as HTMLInputElement).value;
+                                    fontWeights.merge({ normal: +newValue });
+                                },
+                            },
+                            {
+                                type: "subTitle",
+                                content: "粗体字重",
+                            },
+                            {
+                                type: "textbox",
+                                placeHolder: "粗体字重",
+                                init() {
+                                    return fontWeights.get().bold;
+                                },
+                                event(e) {
+                                    const newValue = (e.target as HTMLInputElement).value;
+                                    fontWeights.merge({ bold: +newValue });
+                                },
+                            },
+                        ],
                     },
                 },
             },

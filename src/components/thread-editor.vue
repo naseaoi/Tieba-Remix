@@ -144,7 +144,7 @@ async function unload() {
         border-width: 3px;
         background-color: transparent;
         font-size: 24px;
-        font-weight: bold;
+        font-weight: var(--font-weight-bold);
     }
 
     h1 {
@@ -166,7 +166,7 @@ async function unload() {
             padding: 4px 12px;
             margin-left: auto;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
     }
 }
@@ -553,7 +553,7 @@ body {
                     .s_tab_btnbg {
                         background-color: var(--tieba-theme-color);
                         color: var(--default-background);
-                        font-weight: bold;
+                        font-weight: var(--font-weight-bold);
                     }
                 }
             }

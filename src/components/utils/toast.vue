@@ -126,7 +126,7 @@ function chooseIcon() {
         .close-button {
             padding: 6px;
             color: var(--error-color);
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .close-button:not(:active, :focus) {

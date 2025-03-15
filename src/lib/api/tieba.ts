@@ -384,7 +384,7 @@ export interface OneKeySignResponse extends TiebaResponse1 {
  * @returns `TiebaPost` 对象
  */
 export function parsePostFromElement(elem: Element): TiebaPost {
-    // console.log("🚀 ~ file: api/tieba.ts:19 ~ parsePostFromElement ~ elem:", elem);
+    console.log("🚀 ~ file: api/tieba.ts:19 ~ parsePostFromElement ~ elem:", elem);
     const titleTagWrapperAnch = dom<"a">(".title-tag-wraper a", elem);
     const threadNameWrapper = elem.getElementsByClassName("thread-name-wraper")[0];
     const threadNameWrapperAnch = threadNameWrapper.getElementsByTagName("a")[0];
@@ -394,12 +394,12 @@ export function parsePostFromElement(elem: Element): TiebaPost {
     const nReplyAnch = nReply.getElementsByTagName("a")[0];
 
     // 图片
-    const imgArray = <TiebaPost["images"]>[];
+    const imgArray: TiebaPost["images"] = [];
     if (imgs.length > 0) {
         _.forEach(imgs, (img) => {
             imgArray.push({
                 thumb: img.src,
-                original: _.defaultTo(img.getAttribute("original"), ""),
+                original: img.getAttribute("original") ?? img.src,
             });
         });
     }

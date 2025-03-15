@@ -392,7 +392,7 @@ $fold-bar-height: 3px;
                     color: var(--default-fore);
                     font-size: 20px;
                     font-style: italic;
-                    font-weight: bold;
+                    font-weight: var(--font-weight-bold);
                     transition: 0.2s;
                 }
 
@@ -415,7 +415,7 @@ $fold-bar-height: 3px;
                 border: none;
                 color: var(--default-fore);
                 font-size: 15px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
                 text-decoration: underline 2px rgba($color: #000, $alpha: 0%);
 
                 &:hover {
@@ -482,7 +482,7 @@ $fold-bar-height: 3px;
     z-index: 1201;
     display: none;
     cursor: default;
-    font-weight: normal;
+    font-weight: var(--font-weight-normal);
 
     &:hover {
         display: block;

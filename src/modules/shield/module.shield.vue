@@ -166,7 +166,7 @@ function updateShieldList() {
             .submit-button {
                 padding: 4px 12px;
                 font-size: 14px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
             }
         }
     }

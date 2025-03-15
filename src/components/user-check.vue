@@ -44,7 +44,7 @@ const emit = defineEmits<{ (e: "change", value: boolean): void }>();
         border-radius: 4px;
         color: var(--tieba-theme-color);
         font-size: 14px;
-        font-weight: bold;
+        font-weight: var(--font-weight-bold);
     }
 
     .check-label {

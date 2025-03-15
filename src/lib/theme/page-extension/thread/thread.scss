@@ -326,7 +326,7 @@ body.special_conf_skin {
 
         .forum-name {
             font-size: 14px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .forum-info {
@@ -348,7 +348,7 @@ body.special_conf_skin {
                 padding: 0 4px;
                 color: var(--tieba-theme-color);
                 font-size: 16px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
 
                 &:not(:hover, :active, :focus) {
                     background-color: transparent;
@@ -426,7 +426,7 @@ body.special_conf_skin {
             width: fit-content;
             color: var(--highlight-fore);
             font-size: 14px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
             grid-area: name;
 
             @extend %anchor;
@@ -448,7 +448,7 @@ body.special_conf_skin {
                 gap: 6px;
 
                 .badge-level {
-                    font-weight: bold;
+                    font-weight: var(--font-weight-bold);
                 }
             }
         }
@@ -496,7 +496,7 @@ body.special_conf_skin {
             grid-area: tags;
 
             .badge-level {
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
             }
         }
 

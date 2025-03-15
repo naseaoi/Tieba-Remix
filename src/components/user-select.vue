@@ -106,7 +106,7 @@ $select-gap: 4px;
             .icon {
                 animation: select-arrow-down var(--fast-duration) cubic-bezier(0.18, 0.89, 0.32, 1.6);
                 color: var(--tieba-theme-color);
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
             }
         }
 

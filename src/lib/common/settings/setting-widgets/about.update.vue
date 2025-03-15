@@ -88,7 +88,7 @@ onMounted(async () => {
         .title {
             flex-shrink: 1;
             font-size: 20px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .is-pre-release {
@@ -127,7 +127,7 @@ onMounted(async () => {
             padding: 4px 8px;
             border-radius: 10px;
             font-size: 15px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .up-name {

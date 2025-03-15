@@ -287,7 +287,7 @@ $dialog-radius: 12px;
             padding: $dialog-padding $dialog-padding 0 $dialog-padding;
             color: var(--highlight-fore);
             font-size: 22px;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .dialog-content {

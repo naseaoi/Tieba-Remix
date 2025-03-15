@@ -425,7 +425,7 @@ a {
     .block-title {
         margin: 0;
         font-size: 24px;
-        font-weight: bold;
+        font-weight: var(--font-weight-bold);
     }
 }
 
@@ -502,7 +502,7 @@ a {
                 .title {
                     font-size: 36px;
                     font-style: italic;
-                    font-weight: bold;
+                    font-weight: var(--font-weight-bold);
                 }
             }
 
@@ -527,7 +527,7 @@ a {
                     border-bottom-left-radius: 0;
                     border-top-left-radius: 0;
                     font-size: 16px;
-                    font-weight: bold;
+                    font-weight: var(--font-weight-bold);
                 }
 
                 .search-suggestions {
@@ -590,7 +590,7 @@ a {
                                 overflow: hidden;
                                 margin: 0;
                                 font-size: 14px;
-                                font-weight: bold;
+                                font-weight: var(--font-weight-bold);
                                 text-overflow: ellipsis;
                                 white-space: nowrap;
                             }
@@ -669,7 +669,7 @@ a {
         }
 
         .signed-count {
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
         }
 
         .block-panel.followed {
@@ -697,14 +697,14 @@ a {
 
                     .signed {
                         color: green;
-                        font-weight: bold;
+                        font-weight: var(--font-weight-bold);
                     }
 
                     .forum-level {
                         min-width: 24px;
                         padding: 0 2px;
                         border-radius: 24px;
-                        font-weight: bold;
+                        font-weight: var(--font-weight-bold);
                         text-align: center;
                     }
                 }
@@ -747,13 +747,13 @@ a {
                             border-radius: 4px;
                             background-color: orange;
                             color: var(--default-background);
-                            font-weight: bold;
+                            font-weight: var(--font-weight-bold);
                             text-align: center;
                         }
 
                         .topic-name {
                             font-size: 16px;
-                            font-weight: bold;
+                            font-weight: var(--font-weight-bold);
                         }
                     }
 
@@ -815,7 +815,7 @@ a {
                 animation: refresh-btn-in 0.4s ease;
                 box-shadow: 0 6px 20px rgb(0 0 0 / 30%);
                 font-size: 14px;
-                font-weight: bold;
+                font-weight: var(--font-weight-bold);
                 gap: 6px;
                 transform: translateX(-50%);
 
