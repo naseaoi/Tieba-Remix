@@ -39,17 +39,21 @@
                 chevron_right
             </UserButton>
 
-            <div class="control-panel bottom-controls" :class="{ 'hide': !showControls.bottom }">
-                <UserButton v-for="image, index in imageArray" class="bottom-btn"
-                    :class="{ 'selected': index === curr }" no-border="all">
-                    <img class="image-list" :src="image" alt="" @click="curr = index">
-                </UserButton>
+            <div ref="bottomPanel" class="control-panel bottom-controls-wrapper"
+                :class="{ 'hide': !showControls.bottom }">
+                <div class="bottom-controls-container">
+                    <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
+                        :class="{ 'selected': index === curr }" no-border="all">
+                        <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
+                    </UserButton>
+                </div>
             </div>
         </div>
     </UserDialog>
 </template>
 
 <script setup lang="ts">
+import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import _ from "lodash";
@@ -59,8 +63,13 @@ import ToggleButton from "../utils/toggle-button.vue";
 import UserButton from "../utils/user-button.vue";
 
 export interface ImagesViewerOpts {
-    content: string | string[] | TiebaPost;
+    content: string | string[] | TiebaPost | ImagesViewerPictureUrl[];
     defaultIndex?: number;
+}
+
+export interface ImagesViewerPictureUrl {
+    original: string;
+    thumbnail: string;
 }
 
 interface ControlDirectionMap<T> {
@@ -75,13 +84,24 @@ const props = withDefaults(defineProps<ImagesViewerOpts>(), {
 });
 
 const imageArray: string[] = [];
+const thumbArray: string[] = [];
 if (typeof props.content === "string") {
     imageArray.push(props.content);
+    thumbArray.push(props.content);
 } else if (Array.isArray(props.content)) {
-    imageArray.push(...props.content);
+    if (typeof props.content[0] === "string") {
+        imageArray.push(...props.content as string[]);
+        thumbArray.push(...props.content as string[]);
+    } else {
+        _.map(props.content as ImagesViewerPictureUrl[], (value) => {
+            imageArray.push(value.original);
+            thumbArray.push(value.thumbnail);
+        });
+    }
 } else {
     _.map(props.content.images, (value) => {
         imageArray.push(value.original);
+        thumbArray.push(value.thumb);
     });
 }
 
@@ -89,6 +109,7 @@ const dialog = ref<InstanceType<typeof UserDialog>>();
 const imagesViewer = ref<HTMLDivElement>();
 const imageContainer = ref<HTMLDivElement>();
 const currImage = ref<HTMLImageElement>();
+const bottomPanel = ref<HTMLDivElement>();
 const curr = ref(props.defaultIndex);
 const scale = ref(1.0);
 const deg = ref(0);
@@ -158,6 +179,7 @@ let lastControlTimeout: ControlDirectionMap<number> = {
     top: 0,
     bottom: 0,
 };
+let thumbLazyloadObserver: IntersectionObserver;
 
 onMounted(async () => {
     await nextTick();
@@ -225,6 +247,34 @@ onMounted(async () => {
         }
     });
 
+    evproxy.on(bottomPanel.value, "wheel", (e: WheelEvent) => {
+        e.stopPropagation();
+        if (e.deltaX === 0 && e.deltaY !== 0) {
+            bottomPanel.value?.scrollBy({
+                left: e.deltaY,
+            });
+        } else if (e.deltaX !== 0 && e.deltaY === 0) {
+            bottomPanel.value?.scrollBy({
+                left: e.deltaX,
+            });
+        }
+    }, { passive: false });
+
+    thumbLazyloadObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                (entry.target as HTMLImageElement).src = (entry.target as HTMLImageElement).dataset.lazyload ?? "";
+                thumbLazyloadObserver.unobserve(entry.target);
+            }
+        });
+    });
+
+    if (bottomPanel.value) {
+        dom("img", bottomPanel.value, []).forEach((img) => {
+            thumbLazyloadObserver.observe(img);
+        });
+    }
+
     function moveHandler(e: MouseEvent) {
         if (!currImage.value) return;
         imageLeft.value = e.clientX - offsetX;
@@ -234,6 +284,7 @@ onMounted(async () => {
 
 onUnmounted(function () {
     evproxy.release();
+    thumbLazyloadObserver.disconnect();
 });
 
 watch(curr, function () {
@@ -512,11 +563,11 @@ $panel-radius: 12px;
         }
     }
 
-    .bottom-controls {
+    .bottom-controls-wrapper {
         bottom: $panel-margin;
-        display: flex;
+        max-width: calc(100% - #{$panel-margin * 3});
         margin-top: auto;
-        gap: 4px;
+        overflow-x: hidden;
         transition: var(--default-duration);
 
         &.hide {
@@ -524,25 +575,35 @@ $panel-radius: 12px;
             transform: translateY(calc(100% + $panel-margin)) scale(0.85);
         }
 
-        .bottom-btn {
-            overflow: hidden;
-            width: 100px;
-            height: 75px;
-            padding: 0;
-            border: none;
-            border-radius: $panel-radius - 2;
-            background-color: var(--trans-default-background);
-            transition: linear var(--xfast-duration);
+        .bottom-controls-container {
+            display: flex;
+            gap: 4px;
 
-            .image-list {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
+            img[src=""],
+            img:not([src]) {
+                opacity: 0;
             }
-        }
 
-        .bottom-btn.selected {
-            border: 3px solid var(--tieba-theme-color);
+            .bottom-btn {
+                overflow: hidden;
+                width: 100px;
+                height: 75px;
+                padding: 0;
+                border: none;
+                border-radius: $panel-radius - 2;
+                background-color: var(--trans-default-background);
+                transition: linear var(--xfast-duration);
+
+                .image-list {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+            }
+
+            .bottom-btn.selected {
+                border: 3px solid var(--tieba-theme-color);
+            }
         }
     }
 }

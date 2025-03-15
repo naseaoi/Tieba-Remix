@@ -1,6 +1,7 @@
 import { dom } from "@/lib/elemental";
 import { requestBody, requestInstance } from "@/lib/utils";
 import _ from "lodash";
+import { Except } from "type-fest";
 
 /** 贴吧 API */
 export const tiebaAPI = {
@@ -163,6 +164,15 @@ export const tiebaAPI = {
                 "geetest_success": 0,
             }),
         }),
+
+    getThreadImages(threadId: number, lzOnly = false, fromPage = 0, next = 15, prev = 15) {
+        return fetch(`/photo/bw/picture/guide?${requestBody({
+            tid: threadId,
+            see_lz: +lzOnly,
+            from_page: fromPage,
+            prev, next,
+        })}`);
+    },
 };
 
 /** 贴吧请求收到的响应 */
@@ -378,13 +388,71 @@ export interface OneKeySignResponse extends TiebaResponse1 {
     }
 }
 
+interface GetThreadImagesImgType {
+    id: string;
+    width: number;
+    height: number;
+    size: number;
+    format: string;
+    waterurl: string;
+    url: string;
+    host: string;
+}
+
+export interface GetThreadImagesResponse extends TiebaResponse1 {
+    data: {
+        forum: {
+            name: string,
+            id: number,
+            frist_class: string,
+            second_class: string,
+            has_picture_frs: boolean,
+            album_forum: boolean,
+            frs_page: number,
+        },
+        user_forum_list: {
+            info: [];
+        },
+        pic_amount: number,
+        /** 键: "#1", "#2", ... */
+        pic_list: Record<string, {
+            src_url: string,
+            src_text: string,
+            pic_type: string,
+            img: {
+                /** 原始 */
+                original: Except<GetThreadImagesImgType, "url">,
+                /** 低清 */
+                medium: Except<GetThreadImagesImgType, "waterurl">,
+                /** 中等 */
+                screen: Except<GetThreadImagesImgType, "url">,
+            }
+            post_id: number,
+            user_id: number,
+            /** 需解码 */
+            user_name: string,
+            comment_amount: number,
+            ding_amount: number,
+            click_amount: number,
+            descr: string,
+            index: number,
+            alb_id: string
+        }>,
+        params: {
+            tid: string,
+            pic_id: boolean,
+            path: string,
+            alt: string,
+        },
+    }
+}
+
 /**
  * 将带有完整贴子信息的 HTML 元素解析为 `TiebaPost` 对象
  * @param elem 包含完整贴子信息的元素，一般是 `HTMLLIElement`
  * @returns `TiebaPost` 对象
  */
 export function parsePostFromElement(elem: Element): TiebaPost {
-    console.log("🚀 ~ file: api/tieba.ts:19 ~ parsePostFromElement ~ elem:", elem);
     const titleTagWrapperAnch = dom<"a">(".title-tag-wraper a", elem);
     const threadNameWrapper = elem.getElementsByClassName("thread-name-wraper")[0];
     const threadNameWrapperAnch = threadNameWrapper.getElementsByTagName("a")[0];
@@ -432,7 +500,6 @@ export function parsePostsFromString(
     const dom = new DOMParser().parseFromString(responseString, "text/html");
     const threads = dom.getElementsByClassName("j_feed_li");
     const undesired = "home-place-item";
-    // console.log("🚀 ~ file: api/tieba.ts:57 ~ awaitresponse.json ~ threads:", threads);
 
     _.forEach(threads, (thread) => {
         if (thread.classList.contains(undesired)) return;

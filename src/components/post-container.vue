@@ -17,7 +17,7 @@
         <div v-if="props.post.images.length > 0" class="img-container">
             <UserButton v-for="image, index in props.post.images" class="img-button" @click="showImage($event, index)"
                 no-border="all">
-                <img class="post-img" :src="isIntersecting ? image.original : ''" @load="addLoadedPost">
+                <img class="post-img" :src="isIntersecting ? image.original : image.thumb" @load="addLoadedPost">
             </UserButton>
         </div>
 
@@ -37,9 +37,10 @@
 </template>
 
 <script setup lang="ts">
-import { tiebaAPI } from "@/lib/api/tieba";
+import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
 import _ from "lodash";
 import { onMounted, ref } from "vue";
+import { imagesViewer, ImagesViewerPictureUrl } from "./images-viewer";
 import UserButton from "./utils/user-button.vue";
 
 interface Props {
@@ -79,15 +80,19 @@ onMounted(() => {
     iObs.observe(postContainer.value.$el);
 });
 
-function showImage(e: MouseEvent, index: number) {
+async function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
-    emit("clickImage", (() => {
-        const output: string[] = [];
-        _.map(props.post.images, (value) => {
-            output.push(value.original);
-        });
-        return output;
-    })(), index);
+    const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
+    const pictureList: ImagesViewerPictureUrl[] = _.map(response.data.pic_list, (value) => {
+        return {
+            original: value.img.original.waterurl,
+            thumbnail: value.img.medium.url,
+        };
+    });
+    imagesViewer({
+        content: pictureList,
+        defaultIndex: index,
+    });
 }
 
 function addLoadedPost() {
