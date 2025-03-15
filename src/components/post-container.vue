@@ -54,7 +54,7 @@ const props = withDefaults(defineProps<Props>(), {
     dynamic: false,
 });
 
-const emit = defineEmits(["clickImage", "assetsLoaded"]);
+const emit = defineEmits(["assetsLoaded"]);
 
 const postContainer = ref<InstanceType<typeof UserButton>>();
 const isIntersecting = ref(!props.lazyLoad);

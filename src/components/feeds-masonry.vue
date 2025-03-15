@@ -2,8 +2,13 @@
     <div ref="masonryWrapper" class="masonry-wrapper">
         <div ref="masonryContainer" class="masonry-container"></div>
 
-        <PostContainer v-for="post in feeds" :key="post.id" :post="post" class="post-elem" dynamic shadow-border
-                       @click-image="showImages" @assets-loaded="addToLoaded">
+        <PostContainer v-for="post in feeds"
+            :key="post.id"
+            :post="post"
+            class="post-elem"
+            dynamic
+            shadow-border
+            @assets-loaded="addToLoaded">
         </PostContainer>
     </div>
 </template>
@@ -18,7 +23,6 @@ import { requestInstance, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import { matchShield, shieldList } from "@/modules/shield";
 import _ from "lodash";
 import { ComponentPublicInstance, nextTick, onMounted, ref, watch } from "vue";
-import { imagesViewer } from "./images-viewer";
 import PostContainer from "./post-container.vue";
 
 interface Props {
@@ -153,14 +157,6 @@ async function renderMasonry() {
 /** 将已经加载好的贴子添加到 `currentLoadedFeeds` */
 function addToLoaded(payload: ComponentPublicInstance) {
     currentLoadedFeeds.push(payload.$el);
-}
-
-/** 展示图片 */
-function showImages(images: string[], index: number) {
-    imagesViewer({
-        content: images,
-        defaultIndex: index,
-    });
 }
 
 function refresh() {
