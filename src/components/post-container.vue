@@ -84,12 +84,17 @@ onMounted(() => {
 async function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
     const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
-    const pictureList: ImagesViewerPictureUrl[] = _.map(response.data.pic_list, (value) => {
-        return {
-            original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
-            thumbnail: value.img.medium.url,
-        };
-    });
+    const pictureList: ImagesViewerPictureUrl[] = _(response.data.pic_list)
+        .keys()
+        .sortBy(key => parseInt(key.slice(1)))
+        .map(key => {
+            const value = response.data.pic_list[key];
+            return {
+                original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
+                thumbnail: value.img.medium.url,
+            };
+        })
+        .value();
     imagesViewer({
         content: pictureList,
         defaultIndex: index,
