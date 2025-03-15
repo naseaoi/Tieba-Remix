@@ -4,7 +4,7 @@ import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { UserSelectItem } from "@/components/user-select.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
+import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, highQualityImage, monospaceFonts, navBarHideMode, pageExtension, perfProfile, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { markRaw } from "vue";
@@ -348,6 +348,24 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                             event(perf: PerfType) {
                                 perfProfile.set(perf);
+                            },
+                        }],
+                    },
+                },
+            },
+            "network": {
+                name: "网络",
+                content: {
+                    "high-definition": {
+                        title: "高清图像",
+                        widgets: [{
+                            type: "toggle",
+                            content: `部分场景下展示最高品质的原始尺寸图像。需要较高的网络速度和设备性能，可能造成更多的流量消耗。`,
+                            init() {
+                                return highQualityImage.get();
+                            },
+                            event() {
+                                highQualityImage.set(!highQualityImage.get());
                             },
                         }],
                     },

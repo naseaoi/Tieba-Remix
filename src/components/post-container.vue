@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
+import { highQualityImage } from "@/lib/user-values";
 import _ from "lodash";
 import { onMounted, ref } from "vue";
 import { imagesViewer, ImagesViewerPictureUrl } from "./images-viewer";
@@ -85,7 +86,7 @@ async function showImage(e: MouseEvent, index: number) {
     const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
     const pictureList: ImagesViewerPictureUrl[] = _.map(response.data.pic_list, (value) => {
         return {
-            original: value.img.original.waterurl,
+            original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
             thumbnail: value.img.medium.url,
         };
     });
