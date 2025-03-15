@@ -39,14 +39,18 @@
                 chevron_right
             </UserButton>
 
-            <div ref="bottomPanel" class="control-panel bottom-controls-wrapper"
+            <div ref="bottomPanel"
+                class="control-panel bottom-controls-wrapper"
                 :class="{ 'hide': !showControls.bottom }">
                 <div class="bottom-controls-container">
-                    <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
-                        :class="{ 'selected': index === curr }" no-border="all">
-                        <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
-                    </UserButton>
+                    <div class="thumb-container">
+                        <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
+                            :class="{ 'selected': index === curr }" no-border="all">
+                            <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
+                        </UserButton>
+                    </div>
                 </div>
+                <div class="bottom-panel-scroll-bar"></div>
             </div>
         </div>
     </UserDialog>
@@ -247,19 +251,6 @@ onMounted(async () => {
         }
     });
 
-    evproxy.on(bottomPanel.value, "wheel", (e: WheelEvent) => {
-        e.stopPropagation();
-        if (e.deltaX === 0 && e.deltaY !== 0) {
-            bottomPanel.value?.scrollBy({
-                left: e.deltaY,
-            });
-        } else if (e.deltaX !== 0 && e.deltaY === 0) {
-            bottomPanel.value?.scrollBy({
-                left: e.deltaX,
-            });
-        }
-    }, { passive: false });
-
     thumbLazyloadObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -269,11 +260,39 @@ onMounted(async () => {
         });
     });
 
+    const bottomPanelScrollBar = dom<"div">(".bottom-panel-scroll-bar", bottomPanel.value);
+    const bottomContainer = dom<"div">(".bottom-controls-container", bottomPanel.value);
     if (bottomPanel.value) {
         dom("img", bottomPanel.value, []).forEach((img) => {
             thumbLazyloadObserver.observe(img);
         });
+
+        if (bottomPanelScrollBar && bottomContainer) {
+            const scrollBarScale = bottomContainer.clientWidth / bottomContainer.scrollWidth;
+            if (scrollBarScale >= 1) {
+                bottomPanelScrollBar.style.display = "none";
+            }
+            bottomPanelScrollBar.style.width = `${scrollBarScale * 100}%`;
+        }
     }
+
+    evproxy.on(bottomPanel.value, "wheel", (e: WheelEvent) => {
+        e.stopPropagation();
+        if (!bottomContainer) return;
+
+        if (e.deltaX === 0 && e.deltaY !== 0) {
+            bottomContainer.scrollBy({
+                left: e.deltaY,
+            });
+        } else if (e.deltaX !== 0 && e.deltaY === 0) {
+            bottomContainer.scrollBy({
+                left: e.deltaX,
+            });
+        }
+        if (bottomPanelScrollBar) {
+            bottomPanelScrollBar.style.left = `${bottomContainer.scrollLeft / bottomContainer.scrollWidth * 100}%`;
+        }
+    }, { passive: false });
 
     function moveHandler(e: MouseEvent) {
         if (!currImage.value) return;
@@ -433,6 +452,7 @@ function verifyPos(pos = lastMousePos) {
 <style scoped lang="scss">
 $panel-margin: 16px;
 $panel-radius: 12px;
+$panel-padding: 10px;
 
 .images-viewer {
     position: fixed;
@@ -454,7 +474,7 @@ $panel-radius: 12px;
         position: absolute;
         display: flex;
         align-items: center;
-        padding: 10px;
+        padding: $panel-padding;
         border: 1px solid var(--light-border-color);
         border-radius: $panel-radius + 6;
         background-color: var(--trans-default-background);
@@ -566,6 +586,7 @@ $panel-radius: 12px;
     .bottom-controls-wrapper {
         bottom: $panel-margin;
         max-width: calc(100% - #{$panel-margin * 3});
+        padding: 0;
         margin-top: auto;
         overflow-x: hidden;
         transition: var(--default-duration);
@@ -575,35 +596,59 @@ $panel-radius: 12px;
             transform: translateY(calc(100% + $panel-margin)) scale(0.85);
         }
 
+        &:hover {
+            .bottom-panel-scroll-bar {
+                opacity: 1;
+            }
+        }
+
         .bottom-controls-container {
             display: flex;
-            gap: 4px;
+            overflow: hidden;
+            padding: $panel-padding;
 
             img[src=""],
             img:not([src]) {
                 opacity: 0;
             }
 
-            .bottom-btn {
-                overflow: hidden;
-                width: 100px;
-                height: 75px;
-                padding: 0;
-                border: none;
-                border-radius: $panel-radius - 2;
-                background-color: var(--trans-default-background);
-                transition: linear var(--xfast-duration);
+            .thumb-container {
+                display: flex;
+                gap: 4px;
 
-                .image-list {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
+                .bottom-btn {
+                    overflow: hidden;
+                    width: 100px;
+                    height: 75px;
+                    padding: 0;
+                    border: none;
+                    border-radius: $panel-radius - 2;
+                    background-color: var(--trans-default-background);
+                    transition: linear var(--xfast-duration);
+
+                    .image-list {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                }
+
+                .bottom-btn.selected {
+                    border: 3px solid var(--tieba-theme-color);
                 }
             }
+        }
 
-            .bottom-btn.selected {
-                border: 3px solid var(--tieba-theme-color);
-            }
+        .bottom-panel-scroll-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background-color: var(--minimal-fore);
+            opacity: 0;
+            transition: opacity var(--default-duration);
         }
     }
 }
