@@ -99,9 +99,9 @@
                         <div class="topic-content">
                             <div class="topic-title">
                                 <div :class="'topic-rank-' + topic.idx_num">{{ topic.idx_num }}</div>
-                                <div class="topic-name">{{ topic.topic_name }}</div>
+                                <div class="topic-name">{{ _.unescape(topic.topic_name) }}</div>
                             </div>
-                            <div class="topic-desc">{{ topic.topic_desc }}</div>
+                            <div class="topic-desc">{{ _.unescape(topic.topic_desc) }}</div>
                         </div>
                     </UserButton>
                 </div>
