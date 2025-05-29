@@ -230,23 +230,9 @@ export const highQualityImage = new UserKey("highQualityImage", false);
 
 export const SymbolFont = "Material Symbols";
 
-const publicLib: LiteralObject = {};
-
-export function getPublicLib<T>(key: string): T | undefined;
-export function getPublicLib<T>(key: string, defaultValue: T): T;
-
-export function getPublicLib<T>(key: string, defaultValue?: T) {
-    if (publicLib[key]) {
-        return publicLib[key];
-    } else {
-        if (defaultValue)
-            return defaultValue;
-    }
-}
-
-export function setPublicLib<T>(key: string, value: T) {
-    publicLib[key] = value;
-}
+export const currentStorage = new Map<string, any>();
+export const THREAD_IMAGES = "thread_images";
+export const THREAD_IMAGES_LZONLY = "thread_images_lzonly";
 
 export interface GiteeRelease {
     "id": number
