@@ -101,7 +101,7 @@ export function spawnOffsetTS(
 export function requestBody(body: LiteralObject) {
     let reqBody = "";
     _.forOwn(body, (value, key) => {
-        if (!value) value = "";
+        if (value === null || value === undefined) value = "";
         reqBody += `${key}=${value}&`;
     });
     return reqBody.slice(0, -1);
