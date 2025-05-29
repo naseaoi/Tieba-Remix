@@ -43,7 +43,7 @@
                 class="control-panel bottom-controls-wrapper"
                 :class="{ 'hide': !showControls.bottom }">
                 <div class="bottom-controls-container">
-                    <div class="thumb-container">
+                    <div ref="thumbContainer" class="thumb-container">
                         <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
                             :class="{ 'selected': index === curr }" no-border="all">
                             <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
@@ -109,6 +109,7 @@ const imagesViewer = ref<HTMLDivElement>();
 const imageContainer = ref<HTMLDivElement>();
 const currImage = ref<HTMLImageElement>();
 const bottomPanel = ref<HTMLDivElement>();
+const thumbContainer = ref<HTMLDivElement>();
 const curr = ref(props.defaultIndex);
 const scale = ref(1.0);
 const deg = ref(0);
@@ -183,6 +184,12 @@ let thumbLazyloadObserver: IntersectionObserver;
 
 onMounted(async () => {
     await nextTick();
+
+    const currentBottom = dom(".bottom-btn", thumbContainer.value!, [])[props.defaultIndex];
+    currentBottom.scrollIntoView({
+        inline: "center",
+    });
+
     let offsetX = 0, offsetY = 0;
 
     evproxy.on(window, "mousemove", _.throttle(function (e: MouseEvent) {
