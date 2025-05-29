@@ -1,7 +1,9 @@
+import { ImagesViewerPictureUrl } from "@/components/images-viewer";
 import { dom } from "@/lib/elemental";
 import { requestBody, requestInstance } from "@/lib/utils";
 import _ from "lodash";
 import { Except } from "type-fest";
+import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values";
 
 /** 贴吧 API */
 export const tiebaAPI = {
@@ -165,10 +167,11 @@ export const tiebaAPI = {
             }),
         }),
 
-    getThreadImages(threadId: number, lzOnly = false, fromPage = 0, next = 15, prev = 15) {
+    getThreadImages(threadId: number, lzOnly = false, prev = 15, next = 15, picId?: string, fromPage = 0) {
         return fetch(`/photo/bw/picture/guide?${requestBody({
             tid: threadId,
             see_lz: +lzOnly,
+            pic_id: picId ?? "",
             from_page: fromPage,
             prev, next,
         })}`);
@@ -638,4 +641,52 @@ export function levelToClass(level: number) {
     if (level >= 4 && level <= 9) return "blue";
     if (level >= 9 && level <= 15) return "yellow";
     if (level >= 16) return "orange";
+}
+
+export interface GetAllThreadImagesOpts {
+    threadId: number;
+    lzOnly: boolean;
+}
+
+export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<ImagesViewerPictureUrl[]> {
+    if (currentStorage.has(THREAD_IMAGES)) {
+        return currentStorage.get(THREAD_IMAGES);
+    }
+
+    const firstResponse: GetThreadImagesResponse = await requestInstance(tiebaAPI.getThreadImages(
+        opts.threadId,
+        opts.lzOnly
+    ));
+    const pictureList: ImagesViewerPictureUrl[] = picListConv(firstResponse.data.pic_list);
+    if (pictureList.length < firstResponse.data.pic_amount) {
+        let lastPicId: string = _(picListConv(firstResponse.data.pic_list)).last()?.pictureId ?? "";
+        while (pictureList.length < firstResponse.data.pic_amount) {
+            const response: GetThreadImagesResponse = await requestInstance(tiebaAPI.getThreadImages(
+                opts.threadId,
+                opts.lzOnly,
+                0, firstResponse.data.pic_amount, lastPicId
+            ));
+            const newList = picListConv(response.data.pic_list);
+            pictureList.push(..._.slice(newList, _.findIndex(newList, { pictureId: lastPicId })));
+            lastPicId = _(picListConv(response.data.pic_list)).last()?.pictureId ?? "";
+        }
+    }
+    currentStorage.set(THREAD_IMAGES, pictureList);
+    return pictureList;
+
+    function picListConv(picList: GetThreadImagesResponse["data"]["pic_list"]): ImagesViewerPictureUrl[] {
+        return _(picList)
+            .keys()
+            .sortBy(key => parseInt(key.slice(1)))
+            .map(key => {
+                const value = picList[key];
+                return {
+                    original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
+                    thumbnail: value.img.medium.url,
+                    pictureId: value.img.original.id,
+                    postId: value.post_id,
+                };
+            })
+            .value();
+    }
 }
