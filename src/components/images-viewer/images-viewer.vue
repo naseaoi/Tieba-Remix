@@ -67,15 +67,8 @@ import ToggleButton from "../utils/toggle-button.vue";
 import UserButton from "../utils/user-button.vue";
 
 export interface ImagesViewerOpts {
-    content: string | string[] | TiebaPost | ImagesViewerPictureUrl[];
+    content: string | string[] | TiebaPost | ThreadPicture[];
     defaultIndex?: number;
-}
-
-export interface ImagesViewerPictureUrl {
-    original: string;
-    thumbnail: string;
-    pictureId?: string;
-    postId?: number;
 }
 
 interface ControlDirectionMap<T> {
@@ -99,7 +92,7 @@ if (typeof props.content === "string") {
         imageArray.push(...props.content as string[]);
         thumbArray.push(...props.content as string[]);
     } else {
-        _.forEach(props.content as ImagesViewerPictureUrl[], (value) => {
+        _.forEach(props.content as ThreadPicture[], (value) => {
             imageArray.push(value.original);
             thumbArray.push(value.thumbnail);
         });

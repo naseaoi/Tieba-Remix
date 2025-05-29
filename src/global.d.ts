@@ -119,3 +119,10 @@ interface EventRecord {
     callback: ((e: any) => void) | EventListenerObject;
     options?: EventListenerOptions | boolean;
 }
+
+interface ThreadPicture {
+    original: string;
+    thumbnail: string;
+    pictureId?: string;
+    postId?: number;
+}

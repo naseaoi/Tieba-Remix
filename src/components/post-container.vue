@@ -41,7 +41,7 @@ import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
 import { highQualityImage } from "@/lib/user-values";
 import _ from "lodash";
 import { onMounted, ref } from "vue";
-import { imagesViewer, ImagesViewerPictureUrl } from "./images-viewer";
+import { imagesViewer } from "./images-viewer";
 import UserButton from "./utils/user-button.vue";
 
 interface Props {
@@ -84,7 +84,7 @@ onMounted(() => {
 async function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
     const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
-    const pictureList: ImagesViewerPictureUrl[] = _(response.data.pic_list)
+    const pictureList: ThreadPicture[] = _(response.data.pic_list)
         .keys()
         .sortBy(key => parseInt(key.slice(1)))
         .map(key => {

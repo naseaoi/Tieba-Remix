@@ -1,4 +1,3 @@
-import { ImagesViewerPictureUrl } from "@/components/images-viewer";
 import { dom } from "@/lib/elemental";
 import { requestBody, requestInstance } from "@/lib/utils";
 import _ from "lodash";
@@ -648,7 +647,7 @@ export interface GetAllThreadImagesOpts {
     lzOnly: boolean;
 }
 
-export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<ImagesViewerPictureUrl[]> {
+export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<ThreadPicture[]> {
     if (currentStorage.has(THREAD_IMAGES)) {
         return currentStorage.get(THREAD_IMAGES);
     }
@@ -657,7 +656,7 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
         opts.threadId,
         opts.lzOnly
     ));
-    const pictureList: ImagesViewerPictureUrl[] = picListConv(firstResponse.data.pic_list);
+    const pictureList: ThreadPicture[] = picListConv(firstResponse.data.pic_list);
     if (pictureList.length < firstResponse.data.pic_amount) {
         let lastPicId: string = _(picListConv(firstResponse.data.pic_list)).last()?.pictureId ?? "";
         while (pictureList.length < firstResponse.data.pic_amount) {
@@ -674,7 +673,7 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
     currentStorage.set(THREAD_IMAGES, pictureList);
     return pictureList;
 
-    function picListConv(picList: GetThreadImagesResponse["data"]["pic_list"]): ImagesViewerPictureUrl[] {
+    function picListConv(picList: GetThreadImagesResponse["data"]["pic_list"]): ThreadPicture[] {
         return _(picList)
             .keys()
             .sortBy(key => parseInt(key.slice(1)))
