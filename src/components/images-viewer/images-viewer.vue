@@ -74,6 +74,8 @@ export interface ImagesViewerOpts {
 export interface ImagesViewerPictureUrl {
     original: string;
     thumbnail: string;
+    pictureId?: string;
+    postId?: number;
 }
 
 interface ControlDirectionMap<T> {
@@ -97,13 +99,13 @@ if (typeof props.content === "string") {
         imageArray.push(...props.content as string[]);
         thumbArray.push(...props.content as string[]);
     } else {
-        _.map(props.content as ImagesViewerPictureUrl[], (value) => {
+        _.forEach(props.content as ImagesViewerPictureUrl[], (value) => {
             imageArray.push(value.original);
             thumbArray.push(value.thumbnail);
         });
     }
 } else {
-    _.map(props.content.images, (value) => {
+    _.forEach((props.content as TiebaPost).images, (value) => {
         imageArray.push(value.original);
         thumbArray.push(value.thumb);
     });
@@ -163,6 +165,7 @@ const dialogOpts: UserDialogOpts = {
     },
     renderAnimation: "kf-fade-in var(--fast-duration)",
     unloadAnimation: "kf-fade-out var(--fast-duration)",
+    uniqueName: "images-viewer",
 };
 
 // 状态

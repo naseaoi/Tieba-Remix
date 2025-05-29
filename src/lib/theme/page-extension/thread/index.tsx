@@ -1,11 +1,12 @@
 import { floatMessage } from "@/components/float-message";
+import { imagesViewer } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
 import UserButton from "@/components/utils/user-button.vue";
 import { currentPageType } from "@/lib/api/remixed";
-import { levelToClass } from "@/lib/api/tieba";
-import { asyncdom, dom, domrd } from "@/lib/elemental";
+import { getAllThreadImages, levelToClass } from "@/lib/api/tieba";
+import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { renderDialog } from "@/lib/render";
@@ -213,42 +214,27 @@ export default async function () {
             avatarObserver.observe(content.profile.avatar);
         });
 
-        // 对于部分吧，无法自动加载楼中楼内容，需要手动激活
-        // const lzlObserver = new IntersectionObserver(function (entries, observer) {
-        //     forEach(entries, function (entry) {
-        //         if (entry.isIntersecting) {
-        //             const el = entry.target as HTMLDivElement;
-        //             if (el.classList.contains("hideLzl")) {
-        //                 el.classList.remove("hideLzl");
-        //                 observer.unobserve(el);
-        //             }
-        //         }
-        //     });
-        // }, {
-        //     root: null,
-        //     rootMargin: "0px",
-        //     threshold: 0.5,
-        // });
-
-        // forEach(DOMS(".l_post"), floorContainer => {
-        //     const hidden = DOMS(".hideLzl", "div", floorContainer);
-        //     if (hidden.length > 0)
-        //         lzlObserver.observe(hidden[0]);
-        // });
-
-        // 图片绑定组件
-        // remixedObservers.postsObserver.addEvent(function () {
-        //     forEach(DOMS(".BDE_Image", "img"), function (el) {
-        //         if (!el.classList.contains("image-component")) {
-        //             el.classList.add("image-component");
-        //             el.onclick = function () {
-        //                 renderDialog<ImageViewerProps>(imagesViewerVue, {
-        //                     content: el.src,
-        //                 });
-        //             };
-        //         }
-        //     });
-        // });
+        // 替换图片查看方式
+        threadFloorsObserver.addEvent(async () => {
+            await waitUntil(() => !!PageData.thread.thread_id);
+            _.forEach(dom<"img">(".BDE_Image", threadList, []), el => {
+                const newEl = el.cloneNode(false) as HTMLImageElement;
+                newEl.dataset.pid = _(findParent(el, "d_post_content")?.id).split("_").last();
+                newEl.addEventListener("click", async function () {
+                    if (_.isNil(newEl.dataset.index)) {
+                        newEl.dataset.index = _.findIndex(
+                            await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
+                            { postId: +(newEl.dataset.pid ?? 0) }
+                        ).toString();
+                    }
+                    imagesViewer({
+                        content: await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
+                        defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
+                    });
+                });
+                el.replaceWith(newEl);
+            });
+        });
 
         // 去除楼中楼用户发言的冒号
         threadCommentsObserver.addEvent(() => {
