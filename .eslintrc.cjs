@@ -51,5 +51,6 @@ module.exports = {
             allowTemplateLiterals: true,
         }],
         "prefer-template": "warn",
+        "@typescript-eslint/no-non-null-assertion": 0,         /* 禁止使用 ! */
     },
 };
