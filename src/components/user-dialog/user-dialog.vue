@@ -1,16 +1,25 @@
 <template>
     <Teleport to="body">
-        <div ref="dialogModal" v-if="!_.some(abnormal)" aria-modal class="user-dialog-modal"
+        <div ref="dialogModal"
+            v-if="!_.some(abnormal)" aria-modal class="user-dialog-modal"
+            :class="{
+                'no-modal': !modal,
+            }"
             :style="parseCSSRule(modalStyle)">
             <Transition name="dialog" type="animation" @after-leave="unloadDialog">
-                <div ref="userDialog" v-show="dialogTrigger" class="user-dialog remove-default"
-                    :style="parseCSSRule(contentStyle)" :class="{
+                <div ref="userDialog"
+                    v-show="dialogTrigger"
+                    class="user-dialog remove-default"
+                    :style="parseCSSRule(containerStyle)" :class="{
+                        'animation': animation,
                         'default': !shadowMode,
                         'shadow': shadowMode,
-                    }" tabindex="-1" :data-unique="uniqueName">
+                    }"
+                    tabindex="-1"
+                    :data-unique="uniqueName">
                     <header v-if="title" class="dialog-title">{{ title }}</header>
 
-                    <div class="dialog-content">
+                    <div class="dialog-content" :style="parseCSSRule(contentStyle)">
                         <slot></slot>
                     </div>
 
@@ -28,13 +37,13 @@
 </template>
 
 <script lang="ts" setup>
+import UserButton from "@/components/utils/user-button.vue";
 import { dom, findParent } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import { scrollbarWidth } from "@/lib/render";
 import _ from "lodash";
 import { nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref } from "vue";
-import UserButton from "../utils/user-button.vue";
 import { USER_DIALOG_ABNORMAL_TYPES } from "./constants";
 
 export interface UserDialogButton {
@@ -67,6 +76,8 @@ export interface UserDialogOpts<PayloadType = any> {
     /** 堆叠顺序 */
     zIndex?: number;
     /** 注入容器样式 */
+    containerStyle?: CSSRule;
+    /** 注入内容样式 */
     contentStyle?: CSSRule;
     /** 在点击遮罩部分是否会执行默认卸载函数（force 模式下永远不会执行默认函数） */
     clickModalToUnload?: boolean;
@@ -92,6 +103,7 @@ const props = withDefaults(defineProps<UserDialogOpts>(), {
     dialogButtons: () => [] as UserDialogButton[],
     zIndex: 2025,
     modalStyle: () => ({}),
+    containerStyle: () => ({}),
     contentStyle: () => ({}),
     clickModalToUnload: true,
     pressEscapeToUnload: true,
@@ -256,6 +268,21 @@ $dialog-radius: 12px;
     background-color: rgb(0 0 0 / 50%);
     inset: 0;
 
+    &.no-modal {
+        width: 0;
+        height: 0;
+        background: none;
+
+        .user-dialog.shadow {
+            width: 0;
+            height: 0;
+
+            .dialog-content {
+                padding: 0;
+            }
+        }
+    }
+
     .user-dialog {
         &.default {
             @include main-box-shadow;
@@ -268,19 +295,22 @@ $dialog-radius: 12px;
             margin: $dialog-padding;
             background-color: var(--default-background);
             font-size: 16px;
+            outline: none;
             transition: var(--default-duration);
         }
 
-        &.dialog-enter-active {
-            animation: v-bind("$props.renderAnimation");
-        }
+        &.animation {
+            &.dialog-enter-active {
+                animation: v-bind("$props.renderAnimation");
+            }
 
-        &.dialog-leave-active {
-            animation: v-bind("$props.unloadAnimation");
+            &.dialog-leave-active {
+                animation: v-bind("$props.unloadAnimation");
+            }
         }
 
         &.default.force-alert {
-            box-shadow: 0 0 0 2px var(--error-color) !important;
+            outline: 3px solid var(--error-color);
         }
 
         .dialog-title {
