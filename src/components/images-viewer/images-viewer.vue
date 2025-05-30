@@ -535,6 +535,7 @@ $panel-padding: 10px;
 
     .back,
     .forward {
+        width: min-content;
         height: 60px;
         box-shadow: 0 0 20px rgb(0 0 0 / 10%);
         font-size: large;
