@@ -125,11 +125,10 @@ export function waitUntil(pred: (() => boolean), timeout = Infinity) {
             } else if (performance.now() - startTime >= timeout) {
                 cancelAnimationFrame(id);
                 reject(new Error("等待超时"));
-                console.warn("[waitUntil] 等待超时，该函数未在指定时间内得到期望值：", pred);
-                console.trace("发生错误的调用者：");
 
                 if (GM_info.script.version === "developer-only") {
-                    alert(`等待超时，该函数未在指定时间内得到期望值：${pred}`);
+                    console.error(`等待超时，该函数未在指定时间内得到期望值：${pred}`);
+                    console.trace("发生错误的调用者：");
                 }
             } else {
                 id = requestAnimationFrame(tick);
