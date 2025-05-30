@@ -230,9 +230,45 @@ export const highQualityImage = new UserKey("highQualityImage", false);
 
 export const SymbolFont = "Material Symbols";
 
-export const currentStorage = new Map<string, any>();
-export const THREAD_IMAGES = "thread_images";
-export const THREAD_IMAGES_LZONLY = "thread_images_lzonly";
+export const currentStorageBase = new Map<string, any>();
+export type CurrentStorageEntry<T = any> = [string, T];
+
+export const HOME_FEED_IMAGES: CurrentStorageEntry<Record<number, ThreadPicture[]>> = ["home_feed_images", {}];
+export const THREAD_IMAGES: CurrentStorageEntry<ThreadPicture[]> = ["thread_images", []];
+export const THREAD_IMAGES_LZONLY: CurrentStorageEntry<ThreadPicture[]> = ["thread_images_lzonly", []];
+
+export const currentStorage = {
+    get<T extends CurrentStorageEntry>(entry: T): T[1] {
+        return currentStorageBase.get(entry[0]) as T[1];
+    },
+    set<T extends CurrentStorageEntry>(entry: T, value: T[1]): void {
+        currentStorageBase.set(entry[0], value);
+    },
+    has<T extends CurrentStorageEntry>(entry: T): boolean {
+        return currentStorageBase.has(entry[0]);
+    },
+    delete<T extends CurrentStorageEntry>(entry: T): void {
+        currentStorageBase.delete(entry[0]);
+    },
+    clear(): void {
+        currentStorageBase.clear();
+    },
+    entries(): IterableIterator<CurrentStorageEntry> {
+        return currentStorageBase.entries();
+    },
+    keys(): IterableIterator<string> {
+        return currentStorageBase.keys();
+    },
+    values(): IterableIterator<any> {
+        return currentStorageBase.values();
+    },
+    forEach(callback: (value: any, key: string) => void): void {
+        currentStorageBase.forEach(callback);
+    },
+    size(): number {
+        return currentStorageBase.size;
+    },
+};
 
 export interface GiteeRelease {
     "id": number

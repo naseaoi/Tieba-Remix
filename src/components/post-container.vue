@@ -38,9 +38,11 @@
 
 <script setup lang="ts">
 import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
-import { highQualityImage } from "@/lib/user-values";
+import { renderDialog } from "@/lib/render";
+import { currentStorage, highQualityImage, HOME_FEED_IMAGES } from "@/lib/user-values";
 import _ from "lodash";
 import { onMounted, ref } from "vue";
+import AwaitDialog, { AwaitDialogOpts } from "./await-dialog.vue";
 import { imagesViewer } from "./images-viewer";
 import UserButton from "./utils/user-button.vue";
 
@@ -83,22 +85,40 @@ onMounted(() => {
 
 async function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
-    const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
-    const pictureList: ThreadPicture[] = _(response.data.pic_list)
-        .keys()
-        .sortBy(key => parseInt(key.slice(1)))
-        .map(key => {
-            const value = response.data.pic_list[key];
-            return {
-                original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
-                thumbnail: value.img.medium.url,
-            };
-        })
-        .value();
-    imagesViewer({
-        content: pictureList,
-        defaultIndex: index,
-    });
+    if (!_.isNil(currentStorage.get(HOME_FEED_IMAGES)) && !_.isNil(currentStorage.get(HOME_FEED_IMAGES)[+props.post.id])) {
+        imagesViewer({
+            content: currentStorage.get(HOME_FEED_IMAGES)[+props.post.id],
+            defaultIndex: index,
+        });
+    } else {
+        renderDialog<AwaitDialogOpts>(AwaitDialog, {
+            unloadPred: () => (!_.isNil(currentStorage.get(HOME_FEED_IMAGES)) && !_.isNil(currentStorage.get(HOME_FEED_IMAGES)[+props.post.id])),
+        }, {
+            unloaded() {
+                imagesViewer({
+                    content: pictureList,
+                    defaultIndex: index,
+                });
+            },
+        });
+
+        const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(+props.post.id, true)).json();
+        const pictureList: ThreadPicture[] = _(response!.data.pic_list)
+            .keys()
+            .sortBy(key => parseInt(key.slice(1)))
+            .map(key => {
+                const value = response!.data.pic_list[key];
+                return {
+                    original: highQualityImage.get() ? value.img.original.waterurl : value.img.screen.waterurl,
+                    thumbnail: value.img.medium.url,
+                };
+            })
+            .value();
+        currentStorage.set(HOME_FEED_IMAGES, {
+            ...currentStorage.get(HOME_FEED_IMAGES),
+            [+props.post.id]: pictureList,
+        });
+    }
 }
 
 function addLoadedPost() {

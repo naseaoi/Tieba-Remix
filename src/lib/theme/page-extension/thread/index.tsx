@@ -1,3 +1,4 @@
+import AwaitDialog, { AwaitDialogOpts } from "@/components/await-dialog.vue";
 import { floatMessage } from "@/components/float-message";
 import { imagesViewer } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
@@ -13,7 +14,7 @@ import { renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
-import { compactLayout, experimental, pageExtension, perfProfile } from "@/lib/user-values";
+import { compactLayout, currentStorage, experimental, pageExtension, perfProfile, THREAD_IMAGES } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { VNode } from "vue";
@@ -100,7 +101,7 @@ export default async function () {
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
         insertJSX(<div id="title-wrapper">
-            <h3 class="thread-title">{_.unescape(PageData.thread.title)}</h3>
+            <h3 class="thread-title">{_.unescape(_(PageData.thread.title).split("回复：").last())}</h3>
 
             <div class="forum-wrapper-button">
                 <img class="forum-icon" src={forumIconLink} alt="吧头像" />
@@ -221,16 +222,32 @@ export default async function () {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 newEl.dataset.pid = _(findParent(el, "d_post_content")?.id).split("_").last();
                 newEl.addEventListener("click", async function () {
-                    if (_.isNil(newEl.dataset.index)) {
-                        newEl.dataset.index = _.findIndex(
-                            await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
-                            { postId: +(newEl.dataset.pid ?? 0) }
-                        ).toString();
+                    if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
+                        showImage();
+                    } else {
+                        renderDialog<AwaitDialogOpts>(AwaitDialog, {
+                            unloadPred: () => !_.isNil(currentStorage.get(THREAD_IMAGES)),
+                        }, {
+                            unloaded() {
+                                showImage();
+                            },
+                        });
                     }
-                    imagesViewer({
-                        content: await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
-                        defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
-                    });
+
+                    getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
+
+                    async function showImage() {
+                        if (_.isNil(newEl.dataset.index)) {
+                            newEl.dataset.index = _.findIndex(
+                                await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
+                                { postId: +(newEl.dataset.pid ?? 0) }
+                            ).toString();
+                        }
+                        imagesViewer({
+                            content: await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
+                            defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
+                        });
+                    }
                 });
                 el.replaceWith(newEl);
             });
