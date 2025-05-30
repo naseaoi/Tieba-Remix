@@ -40,7 +40,7 @@ const dialogOpts: UserDialogOpts = {
     blurEffect: false,
     animation: true,
     lockScroll: true,
-    contentStyle: {
+    containerStyle: {
         position: "fixed",
         width: "100%",
         maxWidth: "var(--content-max)",

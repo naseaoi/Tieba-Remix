@@ -153,7 +153,7 @@ const dialogOpts: UserDialogOpts = {
     modalStyle: {
         justifyContent: "flex-start",
     },
-    contentStyle: {
+    containerStyle: {
         display: "flex",
         flexDirection: "column",
         width: "100%",
