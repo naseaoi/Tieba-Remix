@@ -101,6 +101,7 @@ export default async function () {
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
         insertJSX(<div id="title-wrapper">
+            {/* BUG: &#039; -> ' */}
             <h3 class="thread-title">{_.unescape(_(PageData.thread.title).split("回复：").last())}</h3>
 
             <div class="forum-wrapper-button">
@@ -220,7 +221,9 @@ export default async function () {
             await waitUntil(() => !!PageData.thread.thread_id);
             _.forEach(dom<"img">(".BDE_Image", threadList, []), el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
-                newEl.dataset.pid = _(findParent(el, "d_post_content")?.id).split("_").last();
+                const postContent = findParent(el, "d_post_content");
+
+                newEl.dataset.pid = _(postContent?.id).split("_").last();
                 newEl.addEventListener("click", async function () {
                     if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
                         showImage();
@@ -238,10 +241,12 @@ export default async function () {
 
                     async function showImage() {
                         if (_.isNil(newEl.dataset.index)) {
-                            newEl.dataset.index = _.findIndex(
+                            newEl.dataset.index = `${_.findIndex(
                                 await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
                                 { postId: +(newEl.dataset.pid ?? 0) }
-                            ).toString();
+                            ) + _.findIndex(
+                                dom<"img">(".BDE_Image", postContent!, []), img => img === newEl
+                            )}`;
                         }
                         imagesViewer({
                             content: await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
