@@ -101,8 +101,11 @@ export default async function () {
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
         insertJSX(<div id="title-wrapper">
-            {/* BUG: &#039; -> ' */}
-            <h3 class="thread-title">{_.unescape(_(PageData.thread.title).split("回复：").last())}</h3>
+            <h3 class="thread-title">{
+                _.unescape(_(PageData.thread.title).split("回复：").last())
+                    .replace(/&#039;/g, "'")
+                    .replace(/&quot;/g, '"')
+            }</h3>
 
             <div class="forum-wrapper-button">
                 <img class="forum-icon" src={forumIconLink} alt="吧头像" />
