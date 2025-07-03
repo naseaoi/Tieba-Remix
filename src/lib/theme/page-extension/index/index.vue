@@ -120,7 +120,11 @@
                     <UserButton class="panel-button icon refresh" unset-background @click="feedsMasonry.refreshAndMove"
                         no-border>refresh
                     </UserButton>
-                    <UserButton class="panel-button icon settings" unset-background no-border>settings</UserButton>
+
+                    <UserButton
+                        class="panel-button icon settings"
+                        unset-background
+                        no-border>settings</UserButton>
                 </BlockPanel>
             </div>
 
@@ -153,13 +157,13 @@ import { renderDialog } from "@/lib/render";
 import { toast } from "@/lib/render/toast";
 import { errorMessage, requestInstance } from "@/lib/utils";
 
+import BlockPanel from "@/components/block-panel.vue";
+import FeedsMasonry from "@/components/feeds-masonry.vue";
+import Settings from "@/components/settings.vue";
+import UserButton from "@/components/utils/user-button.vue";
+import UserTextbox from "@/components/utils/user-textbox.vue";
 import { OneKeySignResponse } from "@/lib/api/tieba";
 import { BaiduPassport, GiteeRepo, GithubRepo, unreadFeeds } from "@/lib/user-values";
-import BlockPanel from "../block-panel.vue";
-import FeedsMasonry from "../feeds-masonry.vue";
-import Settings from "../settings.vue";
-import UserButton from "../utils/user-button.vue";
-import UserTextbox from "../utils/user-textbox.vue";
 
 const initFeeds = ref<TiebaPost[]>([]);
 const userInfo = ref<UserInfoResponse["data"]>();
@@ -351,16 +355,6 @@ function searchTextChange() {
 }
 
 const searchMatch = _.debounce(searchTextChange, 500);
-
-// function showImages(images: string[], index: number) {
-//     postImages.value = images;
-//     defaultIndex.value = index;
-
-//     renderDialog(ImagesViewer, {
-//         content: postImages.value,
-//         defaultIndex: defaultIndex.value
-//     });
-// }
 
 function getFollowedInstance() {
     requestInstance(tiebaAPI.followedForums()).then((response: FollowedForumsResponse) => {
