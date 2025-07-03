@@ -300,7 +300,7 @@ export default async function () {
                         ...additionalStyles,
                     })}>
                     {{
-                        tailSlot: () => `回帖 ${PageData.thread.reply_num}`,
+                        tailSlot: () => `回帖 ${PageData.thread.reply_num - 1}`,
                     }}
                 </Pager>;
             return pagerComponent;
