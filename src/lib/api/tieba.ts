@@ -658,7 +658,8 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
     ));
     const pictureList: ThreadPicture[] = picListConv(firstResponse.data.pic_list);
     if (pictureList.length < firstResponse.data.pic_amount) {
-        let lastPicId: string = _(picListConv(firstResponse.data.pic_list)).last()?.pictureId ?? "";
+        let lastPicId: string = _(pictureList).last()?.pictureId ?? "";
+        let lastPostId: number = _(pictureList).last()?.postId ?? 0;
         while (pictureList.length < firstResponse.data.pic_amount) {
             const response: GetThreadImagesResponse = await requestInstance(tiebaAPI.getThreadImages(
                 opts.threadId,
@@ -666,8 +667,9 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
                 0, firstResponse.data.pic_amount, lastPicId
             ));
             const newList = picListConv(response.data.pic_list);
-            pictureList.push(..._.slice(newList, _.findIndex(newList, { pictureId: lastPicId })));
+            pictureList.push(..._.slice(newList, _.findLastIndex(newList, { pictureId: lastPicId, postId: lastPostId }) + 1));
             lastPicId = _(picListConv(response.data.pic_list)).last()?.pictureId ?? "";
+            lastPostId = _(picListConv(response.data.pic_list)).last()?.postId ?? 0;
         }
     }
     currentStorage.set(THREAD_IMAGES, pictureList);
