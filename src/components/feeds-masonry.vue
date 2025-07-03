@@ -145,7 +145,7 @@ async function renderMasonry() {
         flexMasonry = new FlexMasonry({
             container: masonryContainer.value,
             // items: ".post-elem.assets-loaded",
-            columnWidth: 320,
+            columnWidth: 280,
             gap: 12,
             fixScrollOffset: true,
         });
