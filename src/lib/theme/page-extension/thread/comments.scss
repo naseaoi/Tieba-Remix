@@ -158,11 +158,32 @@ $lzl-content-margin: 12px;
                 }
             }
 
+            // 楼中楼编辑异常文本
+            .lzl_panel_error {
+                color: var(--error-color);
+            }
+
             .lzl_panel_wrapper {
                 width: 100%;
 
+                .lzl_insertsmiley_holder,
                 .lzl_panel_submit {
+                    @extend %anchor;
+                    width: max-content;
+                    height: max-content;
+                    padding: 0 8px;
                     background: none;
+                    font-size: 12px;
+                }
+
+                .lzl_panel_smile {
+                    width: max-content;
+                    height: max-content;
+                    margin: 0;
+
+                    .lzl_insertsmiley_holder::after {
+                        content: "😊表情";
+                    }
                 }
             }
         }
