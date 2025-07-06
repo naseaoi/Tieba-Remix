@@ -10,9 +10,10 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "libelemental": "^1.0.7",
         "lodash": "^4.17.21",
         "marked": "^9.1.6",
-        "user-view": "^0.0.10",
+        "user-view": "^0.0.11",
         "vue": "^3.5.13"
     },
     "devDependencies": {

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      libelemental:
+        specifier: ^1.0.7
+        version: 1.0.7
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -15,8 +18,8 @@ importers:
         specifier: ^9.1.6
         version: 9.1.6
       user-view:
-        specifier: ^0.0.10
-        version: 0.0.10(typescript@5.7.3)
+        specifier: ^0.0.11
+        version: 0.0.11(typescript@5.7.3)
       vue:
         specifier: ^3.5.13
         version: 3.5.13(typescript@5.7.3)
@@ -1910,8 +1913,8 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
-  libelemental@1.0.6:
-    resolution: {integrity: sha512-6/kt+V9PFBTGktOaOfZfBrTMLI/KqxZanLeo0XgLE7gBO2oNs4RsDGwjzaQ6T2to9u9JLVOMYGchqhwDyMalWg==}
+  libelemental@1.0.7:
+    resolution: {integrity: sha512-mCTKUhL/439qlf9utiFQm3th/7AighmTM8y5JoqQ+TK81+JN0DmxJKxkuFIaP3WsOea0sJr+7Aand3igl9p+gQ==}
 
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
@@ -2763,8 +2766,8 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
-  user-view@0.0.10:
-    resolution: {integrity: sha512-09h8sdbEWVx9w+FMaEK8sskUNucjEbyyRLSbpnxqc92+ZLlre3cwoHIp16PYPmyDnhJqlXl4wRVpBC8Ho6LtbA==}
+  user-view@0.0.11:
+    resolution: {integrity: sha512-sT6aWkXf0Ybh85A4MrcfZYIlMiiRVa7wy4bsbYowtK7jkvpDe9z/w/YXFPhqDa84y5ppFOkYcac8MALGIL2ckA==}
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -4786,7 +4789,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libelemental@1.0.6:
+  libelemental@1.0.7:
     dependencies:
       lodash: 4.17.21
 
@@ -5770,9 +5773,9 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  user-view@0.0.10(typescript@5.7.3):
+  user-view@0.0.11(typescript@5.7.3):
     dependencies:
-      libelemental: 1.0.6
+      libelemental: 1.0.7
       lodash: 4.17.21
       vue: 3.5.13(typescript@5.7.3)
     transitivePeerDependencies:
