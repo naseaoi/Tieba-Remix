@@ -2,9 +2,9 @@
     <UserDialog v-bind="dialogOpts">
         <div class="toggle-panel">
             <div v-for="toggle in props.toggles" class="toggle-container">
-                <ToggleButton class="panel-button" :model-value="toggle.defaultValue ?? false" icon-type shadow-border
+                <UserToggle class="panel-button" :model-value="toggle.defaultValue ?? false" icon-type shadow-border
                     @click="toggle.event">{{ toggle.icon }}
-                </ToggleButton>
+                </UserToggle>
                 <div class="toggle-name">{{ toggle.name }}</div>
             </div>
         </div>
@@ -12,8 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-import UserDialog, { UserDialogOpts } from "./user-dialog";
-import ToggleButton from "./utils/toggle-button.vue";
+import { UserDialog, UserDialogOpts, UserToggle } from "user-view";
 
 interface Toggle {
     icon: string;

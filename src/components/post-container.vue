@@ -41,10 +41,10 @@ import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
 import { renderDialog } from "@/lib/render";
 import { currentStorage, highQualityImage, HOME_FEED_IMAGES } from "@/lib/user-values";
 import _ from "lodash";
+import { UserButton } from "user-view";
 import { onMounted, ref } from "vue";
 import AwaitDialog, { AwaitDialogOpts } from "./await-dialog.vue";
 import { imagesViewer } from "./images-viewer";
-import UserButton from "./utils/user-button.vue";
 
 interface Props {
     post: TiebaPost

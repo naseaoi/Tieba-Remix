@@ -37,20 +37,18 @@
 </template>
 
 <script lang="ts" setup>
-import { messageBox } from "@/components/message-box";
 import { checkUpdateAndNotify, getResource } from "@/lib/api/remixed";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
 import { getFloatCoord } from "@/lib/render/layout/float";
-import { toast } from "@/lib/render/toast";
 import { experimental, GiteeRepo, GithubRepo, navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
+import { messageBox, toast, UserButton } from "user-view";
 import { onMounted, ref } from "vue";
+import DropdownMenu from "./dropdown-menu.vue";
 import Settings from "./settings.vue";
-import DropdownMenu from "./utils/dropdown-menu.vue";
-import UserButton from "./utils/user-button.vue";
 
 export type NavBarHideMode = "fold" | "alwaysFold" | "hideWhenScroll" | "fixedOnTop" | "never";
 

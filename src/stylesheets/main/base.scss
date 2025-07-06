@@ -13,6 +13,7 @@ body {
 
     &[no-scrollbar] {
         overflow: hidden;
+        padding-right: var(--scrollbar-width) !important;
     }
 }
 

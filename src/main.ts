@@ -1,5 +1,6 @@
 import { GM_registerMenuCommand } from "$";
 import _ from "lodash";
+import "user-view/build/index.css";
 import Settings from "./components/settings.vue";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { parseUserModules } from "./lib/common/packer";

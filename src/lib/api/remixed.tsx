@@ -1,10 +1,9 @@
 import { GM_getValue, GM_info, GM_listValues, GM_openInTab, GM_setValue } from "$";
-import { messageBox } from "@/components/message-box";
-import { toast } from "@/lib/render/toast";
 import { GiteeRelease, GiteeReleaseNotFound, GiteeRepo, Owner, RepoName, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
-import { outputFile, selectLocalFile, spawnOffsetTS } from "@/lib/utils";
+import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { marked } from "marked";
+import { messageBox, toast } from "user-view";
 import { parseCSSRule } from "../elemental/styles";
 import { userDialog } from "../render";
 import { darkPrefers } from "../theme";
@@ -193,12 +192,20 @@ export function setTheme(theme: ReturnType<typeof themeType.get>) {
         document.documentElement.classList.add("light-theme");
         document.documentElement.classList.remove("dark-theme");
         document.documentElement.classList.remove("dark");
+
+        waitUntil(() => !_.isNil(document.body)).then(function () {
+            document.body.classList.remove("dark-theme");
+        });
     }
 
     function darkTheme() {
         document.documentElement.classList.add("dark-theme");
         document.documentElement.classList.remove("light-theme");
         document.documentElement.classList.add("dark");
+
+        waitUntil(() => !_.isNil(document.body)).then(function () {
+            document.body.classList.add("dark-theme");
+        });
     }
 }
 

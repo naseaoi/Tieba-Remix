@@ -8,8 +8,8 @@
 
 <script lang="ts" setup>
 import ColorPicker from "@/components/color-picker.vue";
-import UserButton from "@/components/utils/user-button.vue";
 import { themeColor } from "@/lib/user-values";
+import { UserButton } from "user-view";
 import { ref } from "vue";
 
 const lightTheme = ref(themeColor.get().light);

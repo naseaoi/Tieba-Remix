@@ -100,12 +100,8 @@
 import { SupportedComponent } from "@/ex";
 import { getUserSettings } from "@/lib/common/settings";
 import _ from "lodash";
+import { UserButton, UserCheck, UserDialog, UserDialogOpts, UserSelect, UserSelectItem, UserTextbox } from "user-view";
 import { ref } from "vue";
-import UserCheck from "./user-check.vue";
-import UserDialog, { UserDialogOpts } from "./user-dialog";
-import UserSelect, { UserSelectItem } from "./user-select.vue";
-import UserButton from "./utils/user-button.vue";
-import UserTextbox from "./utils/user-textbox.vue";
 
 export interface UserSettings {
     [props: string]: MainSettingKey;

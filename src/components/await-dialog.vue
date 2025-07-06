@@ -8,8 +8,8 @@
 
 <script setup lang="ts">
 import { waitUntil } from "@/lib/utils";
+import { UserDialog, UserDialogOpts } from "user-view";
 import { onMounted, ref } from "vue";
-import UserDialog, { UserDialogOpts } from "./user-dialog";
 
 export interface AwaitDialogOpts {
     unloadPred?: () => boolean;

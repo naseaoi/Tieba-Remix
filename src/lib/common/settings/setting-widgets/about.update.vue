@@ -32,10 +32,10 @@
 
 <script lang="ts" setup>
 import { GM_info } from "$";
-import UserButton from "@/components/utils/user-button.vue";
 import { getLatestReleaseFromGitee } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
 import { marked } from "marked";
+import { UserButton } from "user-view";
 import { onMounted, ref } from "vue";
 
 const release = ref<GiteeRelease>();

@@ -1,6 +1,6 @@
 import { GM_info } from "$";
-import { toast } from "@/lib/render/toast";
 import _ from "lodash";
+import { toast } from "user-view";
 
 export function cookies(): LiteralObject;
 export function cookies(key: string): string | undefined;

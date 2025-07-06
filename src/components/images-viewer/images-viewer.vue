@@ -7,8 +7,8 @@
             </div>
 
             <div class="control-panel head-controls" :class="{ 'hide': !showControls.top }">
-                <ToggleButton class="vli-mode head-btn icon" title="长图模式" v-model="vliMode">chrome_reader_mode
-                </ToggleButton>
+                <UserToggle class="vli-mode head-btn icon" title="长图模式" v-model="vliMode">chrome_reader_mode
+                </UserToggle>
                 <span>|</span>
                 <UserButton class="zoom-in head-btn icon" title="缩小" @click="zoomImage(0.5)">
                     zoom_in
@@ -61,10 +61,8 @@ import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import _ from "lodash";
+import { UserButton, UserDialog, UserDialogOpts, UserToggle } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import UserDialog, { UserDialogOpts } from "../user-dialog";
-import ToggleButton from "../utils/toggle-button.vue";
-import UserButton from "../utils/user-button.vue";
 
 export interface ImagesViewerOpts {
     content: string | string[] | TiebaPost | ThreadPicture[];

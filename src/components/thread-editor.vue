@@ -16,10 +16,8 @@
 
 <script lang="tsx" setup>
 import { asyncdom } from "@/lib/elemental";
+import { UserButton, UserDialog, UserDialogOpts, UserTextbox } from "user-view";
 import { nextTick, onMounted, ref } from "vue";
-import UserDialog, { UserDialogOpts } from "./user-dialog";
-import UserButton from "./utils/user-button.vue";
-import UserTextbox from "./utils/user-textbox.vue";
 
 export interface ThreadEditorOpts {
     ueditor: Element;

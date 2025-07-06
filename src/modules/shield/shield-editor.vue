@@ -19,10 +19,7 @@
 </template>
 
 <script lang="tsx" setup>
-import UserCheck from "@/components/user-check.vue";
-import UserDialog from "@/components/user-dialog";
-import UserButton from "@/components/utils/user-button.vue";
-import UserTextbox from "@/components/utils/user-textbox.vue";
+import { UserButton, UserCheck, UserDialog, UserTextbox } from "user-view";
 import { ref } from "vue";
 import { ShieldRule } from "./shield";
 

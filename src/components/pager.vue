@@ -44,9 +44,8 @@
 <script lang="ts" setup>
 import { PagerType } from "@/lib/tieba-components/pager";
 import _ from "lodash";
+import { UserButton, UserTextbox } from "user-view";
 import { computed, ref } from "vue";
-import UserButton from "./utils/user-button.vue";
-import UserTextbox from "./utils/user-textbox.vue";
 
 export interface PagerProps {
     total: number;

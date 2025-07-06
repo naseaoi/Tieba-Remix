@@ -18,10 +18,9 @@
 </template>
 
 <script lang="ts" setup>
-import UserButton from "@/components/utils/user-button.vue";
-import UserTextbox from "@/components/utils/user-textbox.vue";
 import { customBackground } from "@/lib/user-values";
 import { selectLocalFile } from "@/lib/utils";
+import { UserButton, UserTextbox } from "user-view";
 import { onMounted, ref, watch } from "vue";
 
 const imageData = ref<Maybe<string>>(customBackground.get());

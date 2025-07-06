@@ -1,10 +1,8 @@
 import AwaitDialog, { AwaitDialogOpts } from "@/components/await-dialog.vue";
-import { floatMessage } from "@/components/float-message";
 import { imagesViewer } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
-import UserButton from "@/components/utils/user-button.vue";
 import { currentPageType } from "@/lib/api/remixed";
 import { getAllThreadImages, levelToClass } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
@@ -17,6 +15,7 @@ import { pager } from "@/lib/tieba-components/pager";
 import { compactLayout, currentStorage, experimental, pageExtension, perfProfile, THREAD_IMAGES } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
+import { floatMessage, UserButton } from "user-view";
 import { VNode } from "vue";
 import commentsStyle from "./comments.scss?inline";
 import compactStyle from "./compact.scss?inline";

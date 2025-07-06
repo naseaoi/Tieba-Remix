@@ -22,8 +22,8 @@
 
 <script setup lang="ts">
 import { findParent } from "@/lib/elemental";
+import { UserButton } from "user-view";
 import { onMounted } from "vue";
-import UserButton from "./user-button.vue";
 
 interface Props {
     menuItems: DropdownMenu[],

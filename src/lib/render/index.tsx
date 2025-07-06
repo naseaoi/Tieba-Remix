@@ -1,8 +1,8 @@
-import UserDialog, { UserDialogAbnormal, UserDialogOpts } from "@/components/user-dialog";
 import { SupportedComponent } from "@/ex";
 import { dom, domrd } from "@/lib/elemental";
 import { CSSRule, injectCSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import _ from "lodash";
+import { UserDialog, UserDialogAbnormal, UserDialogOpts } from "user-view";
 import { App, Component, ComponentPublicInstance, createApp, h } from "vue";
 
 export interface RenderedComponent<T extends Element = Element> {

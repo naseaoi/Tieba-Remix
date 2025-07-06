@@ -35,9 +35,9 @@
 
 <script lang="ts" setup>
 import { GM_info } from "$";
-import UserButton from "@/components/utils/user-button.vue";
 import { getResource } from "@/lib/api/remixed";
 import { GithubRepo, MainTitle } from "@/lib/user-values";
+import { UserButton } from "user-view";
 
 const scriptInfo = GM_info;
 

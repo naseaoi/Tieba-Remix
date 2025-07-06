@@ -151,19 +151,17 @@ import {
 import _ from "lodash";
 import { onMounted, ref } from "vue";
 
-import { messageBox } from "@/components/message-box";
 import { findParent } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
-import { toast } from "@/lib/render/toast";
 import { errorMessage, requestInstance } from "@/lib/utils";
+import { messageBox, toast } from "user-view";
 
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
 import Settings from "@/components/settings.vue";
-import UserButton from "@/components/utils/user-button.vue";
-import UserTextbox from "@/components/utils/user-textbox.vue";
 import { OneKeySignResponse } from "@/lib/api/tieba";
 import { BaiduPassport, GiteeRepo, GithubRepo, unreadFeeds } from "@/lib/user-values";
+import { UserButton, UserTextbox } from "user-view";
 
 const initFeeds = ref<TiebaPost[]>([]);
 const userInfo = ref<UserInfoResponse["data"]>();
