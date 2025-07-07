@@ -226,7 +226,7 @@ export const fontWeights = new UserKey("fontWeights", {
     "normal": 400,
     "bold": 700,
 });
-export const highQualityImage = new UserKey("highQualityImage", false);
+export const highQualityImage = new UserKey("highQualityImage", true);
 
 export const SymbolFont = "Material Symbols";
 
