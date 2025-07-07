@@ -4,14 +4,14 @@ import deepmerge from "deepmerge";
 import { resolve } from "path";
 import postcssPresetEnv from "postcss-preset-env";
 import { UserConfig, defineConfig } from "vite";
-import monkey, { MonkeyOption, cdn } from "vite-plugin-monkey";
+import monkey, { MonkeyOption, cdn, util } from "vite-plugin-monkey";
 
 const scriptOptions: MonkeyOption = {
     entry: "src/main.ts",
     userscript: {
         name: "Tieba Remix",
         namespace: "https://github.com/HacksawBlade/Tieba-Remix",
-        version: "0.4.6-beta",
+        version: "0.4.7-beta",
         description: "贴吧网页端重塑",
         author: "锯条",
         license: "MIT",
@@ -32,9 +32,12 @@ const scriptOptions: MonkeyOption = {
     },
     build: {
         externalGlobals: {
-            "vue": cdn.jsdelivrFastly("Vue", "dist/vue.global.prod.js"),
+            "vue": cdn.jsdelivrFastly("Vue", "dist/vue.global.prod.js")
+                .concat(util.dataUrl(";window.Vue=Vue;")),
             "marked": cdn.jsdelivrFastly("marked", "lib/marked.umd.min.js"),
             "lodash": cdn.jsdelivrFastly("_", "lodash.min.js"),
+            "libelemental": cdn.jsdelivrFastly("libelemental", "build/index.min.js"),
+            "user-view": cdn.jsdelivrFastly("user-view", "build/index.min.js"),
         },
     },
 };
@@ -56,6 +59,8 @@ const commonConfig = defineConfig({
                     "vue": "Vue",
                     "marked": "marked",
                     "lodash": "_",
+                    "libelemental": "libelemental",
+                    "user-view": "UserView",
                 },
             },
         },
