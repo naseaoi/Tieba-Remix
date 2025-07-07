@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { findParent } from "@/lib/elemental";
+import { findParent } from "libelemental";
 import { UserButton } from "user-view";
 import { onMounted } from "vue";
 
