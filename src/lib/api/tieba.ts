@@ -2,6 +2,7 @@ import { dom } from "@/lib/elemental";
 import { requestBody, requestInstance } from "@/lib/utils";
 import _ from "lodash";
 import { Except } from "type-fest";
+import { toast } from "user-view";
 import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values";
 
 /** 贴吧 API */
@@ -648,6 +649,8 @@ export interface GetAllThreadImagesOpts {
 }
 
 export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<ThreadPicture[]> {
+    const TIMEOUT = 3000;
+
     if (currentStorage.has(THREAD_IMAGES)) {
         return currentStorage.get(THREAD_IMAGES);
     }
@@ -657,10 +660,20 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
         opts.lzOnly
     ));
     const pictureList: ThreadPicture[] = picListConv(firstResponse.data.pic_list);
+    const startTime = Date.now();
+
     if (pictureList.length < firstResponse.data.pic_amount) {
         let lastPicId: string = _(pictureList).last()?.pictureId ?? "";
         let lastPostId: number = _(pictureList).last()?.postId ?? 0;
         while (pictureList.length < firstResponse.data.pic_amount) {
+            if (Date.now() - startTime > TIMEOUT) {
+                toast({
+                    type: "error",
+                    message: "获取贴子图片超时，请刷新后再试。",
+                });
+                return writeCurrent();
+            }
+
             const response: GetThreadImagesResponse = await requestInstance(tiebaAPI.getThreadImages(
                 opts.threadId,
                 opts.lzOnly,
@@ -672,8 +685,7 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
             lastPostId = _(picListConv(response.data.pic_list)).last()?.postId ?? 0;
         }
     }
-    currentStorage.set(THREAD_IMAGES, pictureList);
-    return pictureList;
+    return writeCurrent();
 
     function picListConv(picList: GetThreadImagesResponse["data"]["pic_list"]): ThreadPicture[] {
         return _(picList)
@@ -689,5 +701,10 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
                 };
             })
             .value();
+    }
+
+    function writeCurrent() {
+        currentStorage.set(THREAD_IMAGES, pictureList);
+        return pictureList;
     }
 }
