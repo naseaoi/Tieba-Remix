@@ -211,14 +211,14 @@
     /* 吧内搜索 */
     height: 24px !important;
     border-color: var(--border-color) !important;
-    border-radius: 8px 0 0 8px;
+    border-radius: 4px 0 0 4px;
     color: var(--default-fore) !important;
 }
 
 .search_internal_btn {
     /* 吧内搜索按钮 */
     height: 26px !important;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 4px 4px 0;
     background-color: var(--tieba-theme-color) !important;
     /* background-image: var(--svg-search) !important;
     background-size: 16px !important;
@@ -268,7 +268,7 @@
 .media_top img,
 .media-top img {
     /* 右侧图片 */
-    border-radius: 16px;
+    border-radius: 6px;
 }
 
 .aside_media_horizontal a,
@@ -312,16 +312,16 @@
 
 .threadlist_bright .threadlist_media li {
     /* 贴子图片 hover */
-    border-radius: 8px !important;
+    border-radius: 4px !important;
 }
 
 .threadlist_media li:hover .threadlist_pic_highlight {
     display: none !important;
-    border-radius: 8px;
+    border-radius: 4px;
 }
 
 .vpic_wrap img {
-    border-radius: 8px;
+    border-radius: 4px;
 }
 
 .threadlist_bright .media_disp {
@@ -331,13 +331,13 @@
 
 .threadlist_bright .threadlist_video {
     /* 视频预览 */
-    border-radius: 8px;
+    border-radius: 4px;
 }
 
 .threadlist_rep_num {
     /* 回贴数 */
     height: unset !important;
-    border-radius: 24px;
+    border-radius: 8px;
     background: none !important;
     background-color: var(--tieba-theme-background) !important;
     color: var(--tieba-theme-fore);
@@ -346,7 +346,7 @@
 
 .pagination-default .pagination-item {
     border: none !important;
-    border-radius: 8px;
+    border-radius: 4px;
     /* 跳页按钮 */
     background-color: var(--light-background) !important;
     color: var(--light-fore) !important;
@@ -375,7 +375,7 @@
 
 .tb_rich_poster .poster_body .editor_textfield {
     border-color: var(--border-color) !important;
-    border-radius: 8px;
+    border-radius: 4px;
     /* 标题文本框 */
     background-color: var(--default-background) !important;
     color: var(--default-fore) !important;

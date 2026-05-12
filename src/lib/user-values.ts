@@ -194,8 +194,8 @@ export const wideScreen = new UserKey("wideScreen", {
 });
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
-    light: "#614ec2",
-    dark: "#7161c1",
+    light: "#556987",
+    dark: "#a0afc3",
 });
 /** 用户自定义背景图 */
 export const customBackground = new UserKey<Maybe<string>>(

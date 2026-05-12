@@ -45,10 +45,10 @@ body.special_conf_skin {
             width: 100%;
             box-sizing: border-box;
             padding: $content-padding-y $content-padding-x;
-            border-radius: 6px 6px 0 0;
-            border-top: 6px solid var(--tieba-theme-color);
+            border-radius: 4px 4px 0 0;
+            border-top: 2px solid var(--tieba-theme-color);
             background-color: var(--default-background);
-            box-shadow: 0 12px 80px -32px rgb(0 0 0 / 40%);
+            box-shadow: 0 1px 4px rgb(0 0 0 / 4%);
         }
     }
 
@@ -136,7 +136,7 @@ body.special_conf_skin {
                     width: max-content;
                     max-width: 100%;
                     height: auto;
-                    border-radius: 12px;
+                    border-radius: 4px;
                     margin: 6px auto;
                 }
             }
@@ -309,7 +309,7 @@ body.special_conf_skin {
         height: max-content;
         align-items: center;
         padding: 0;
-        border-radius: 8px;
+        border-radius: 4px;
         background-color: var(--trans-light-background) !important;
         gap: 8px;
 
@@ -412,13 +412,16 @@ body.special_conf_skin {
             width: max-content !important;
             height: max-content !important;
             padding: 0 !important;
+            border-radius: 4px !important;
             grid-area: avatar;
 
             img {
                 @extend %avatar-fit;
                 width: $avatar-size;
                 height: $avatar-size;
-                border-radius: 8px;
+                aspect-ratio: 1 / 1;
+                border-radius: 4px;
+                object-fit: cover;
             }
         }
 
@@ -442,7 +445,7 @@ body.special_conf_skin {
                 display: flex;
                 width: fit-content;
                 padding: 0 6px;
-                border-radius: 6px;
+                border-radius: 4px;
                 background-color: var(--trans-light-background);
                 color: var(--light-fore);
                 gap: 6px;
@@ -469,11 +472,15 @@ body.special_conf_skin {
             width: max-content !important;
             height: max-content !important;
             padding: 0 !important;
+            border-radius: 4px !important;
             grid-area: avatar;
 
             img {
                 width: $avatar-size;
-                border-radius: 8px;
+                height: $avatar-size;
+                aspect-ratio: 1 / 1;
+                border-radius: 4px;
+                object-fit: cover;
             }
         }
 
@@ -488,7 +495,7 @@ body.special_conf_skin {
             display: flex;
             width: fit-content;
             padding: 0 6px;
-            border-radius: 6px;
+            border-radius: 4px;
             margin: 0 8px 8px;
             background-color: var(--trans-light-background);
             color: var(--light-fore);

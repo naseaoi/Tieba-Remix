@@ -225,8 +225,18 @@ export default async function () {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 const postContent = findParent(el, "d_post_content");
 
+                // 拆除原生 <a> 包裹（贴吧默认会用 a 标签包图片，点击跳转原图），确保点击只触发查看器
+                const parentAnchor = el.parentElement instanceof HTMLAnchorElement ? el.parentElement : null;
+                if (parentAnchor) {
+                    parentAnchor.removeAttribute("href");
+                    parentAnchor.removeAttribute("target");
+                    parentAnchor.style.cursor = "pointer";
+                }
+
                 newEl.dataset.pid = _(postContent?.id).split("_").last();
-                newEl.addEventListener("click", async function () {
+                newEl.addEventListener("click", async function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
                         showImage();
                     } else {

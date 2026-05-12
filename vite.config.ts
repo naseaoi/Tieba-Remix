@@ -9,16 +9,16 @@ import monkey, { MonkeyOption, cdn, util } from "vite-plugin-monkey";
 const scriptOptions: MonkeyOption = {
     entry: "src/main.ts",
     userscript: {
-        name: "Tieba Remix",
-        namespace: "https://github.com/HacksawBlade/Tieba-Remix",
+        name: "Tieba Remix Dev",
+        namespace: "https://github.com/naseaoi/Tieba-Remix",
         version: "0.4.7-beta",
         description: "贴吧网页端重塑",
         author: "锯条",
         license: "MIT",
-        updateURL: "https://gitee.com/HacksawBlade/Tieba-Remix/raw/beta/build/tieba-remix.user.js",
-        downloadURL: "https://gitee.com/HacksawBlade/Tieba-Remix/raw/beta/build/tieba-remix.user.js",
-        icon: "https://gitee.com/HacksawBlade/Tieba-Remix/raw/master/assets/images/main/icon16.png",
-        icon64: "https://gitee.com/HacksawBlade/Tieba-Remix/raw/master/assets/images/main/icon64.png",
+        updateURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
+        downloadURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
+        icon: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon16.png",
+        icon64: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon64.png",
         match: [
             "*://tieba.baidu.com/",
             "*://tieba.baidu.com/index.*",
