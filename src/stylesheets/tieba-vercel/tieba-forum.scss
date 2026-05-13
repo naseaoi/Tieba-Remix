@@ -366,14 +366,17 @@ html.style-vercel {
         .small_pic_num {
             flex-shrink: 0 !important;
             align-self: center !important;
-            padding: 2px 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px 10px !important;
             margin: 0 !important;
             border-radius: $vercel-radius-xs !important;
             background-color: var(--default-hover) !important;
             color: var(--light-fore) !important;
             font-family: $vercel-font-mono !important;
             font-size: $vercel-fs-xs !important;
-            line-height: 1.6 !important;
+            line-height: 1 !important;
             white-space: nowrap !important;
             float: none !important;
             position: static !important;
@@ -535,7 +538,7 @@ html.style-vercel {
         .threadlist_media {
             grid-area: media !important;
             display: flex !important;
-            flex-wrap: wrap !important;
+            flex-wrap: nowrap !important;
             flex: 1 1 auto !important;
             min-width: 0 !important;
             height: auto !important;
@@ -548,6 +551,10 @@ html.style-vercel {
             gap: 4px !important;
             line-height: 0 !important;
             list-style: none !important;
+            // 多图时只显示一行，右侧渐隐提示有更多内容
+            overflow: hidden !important;
+            mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%) !important;
+            -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%) !important;
 
             li {
                 margin: 0 !important;
@@ -556,6 +563,7 @@ html.style-vercel {
                 min-height: 0 !important;
                 max-height: none !important;
                 line-height: 0 !important;
+                flex: 0 0 auto !important;
                 border-radius: $vercel-radius-sm !important;
                 overflow: hidden !important;
             }
@@ -572,6 +580,7 @@ html.style-vercel {
             }
 
             img {
+                max-height: 120px !important;
                 vertical-align: top !important;
             }
         }

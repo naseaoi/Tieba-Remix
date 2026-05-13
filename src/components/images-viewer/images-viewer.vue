@@ -2,8 +2,9 @@
     <UserDialog ref="dialog" v-bind="dialogOpts">
         <div ref="imagesViewer" class="images-viewer" @click="clickModal">
             <div ref="imageContainer" class="image-container dialog-toggle">
-                <img ref="currImage" class="curr-image changing" :src="imageArray[curr]"
-                    :style="parseCSSRule(imageStyle)">
+                <div v-show="loading" class="image-loading-spinner"></div>
+                <img ref="currImage" class="curr-image changing" :class="{ 'loading-img': loading }"
+                    :src="imageArray[curr]" :style="parseCSSRule(imageStyle)">
             </div>
 
             <div class="control-panel head-controls" :class="{ 'hide': !showControls.top }">
@@ -60,6 +61,7 @@
 import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
+import { styleTheme } from "@/lib/user-values";
 import _ from "lodash";
 import { UserButton, UserDialog, UserDialogOpts, UserToggle } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
@@ -126,6 +128,7 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
     bottom: false,
 });
 const vliMode = ref(false);
+const loading = ref(true);
 
 const imageStyle = computed<CSSRule>(() => {
     return {
@@ -154,7 +157,24 @@ const dialogOpts: UserDialogOpts = {
     contentStyle: {
         width: "100%",
         height: "100%",
+        padding: "0",
     },
+    // 透明化 user-dialog 容器，去除其默认白底/边框/圆角，避免出现"圆角矩形白底"
+    containerStyle: {
+        background: "transparent",
+        border: "none",
+        boxShadow: "none",
+        margin: "0",
+        borderRadius: "0",
+        padding: "0",
+    },
+    // Vercel 主题：接管 modal mask 颜色 + 渐暗动画
+    ...(styleTheme.get() === "vercel" ? {
+        modalStyle: {
+            backgroundColor: "rgb(0 0 0 / 92%)",
+            animation: "kf-viewer-mask-fade 0.25s ease both",
+        },
+    } : {}),
     renderAnimation: "kf-fade-in var(--fast-duration)",
     unloadAnimation: "kf-fade-out var(--fast-duration)",
     uniqueName: "images-viewer",
@@ -166,9 +186,12 @@ const MAX_SIZE = 8.0 as const;
 // VLI = very long image
 const VLI_THRESHOLD = 5 as const;
 const VLI_WIDTH_SCALE = 2 as const;
-const DEFAULT_HIDE_CONTROLS_DELAY = 1000 as const;
+const DEFAULT_HIDE_CONTROLS_DELAY = 3000 as const;
 const SHOW_CONTROLS_THRESHOLD_X = 180 as const;
 const SHOW_CONTROLS_THRESHOLD_Y = 140 as const;
+// 看图 UI 占用空间预留（顶部控件 + 底部缩略图 / 两侧翻页）
+const UI_RESERVED_HEIGHT = 220 as const;
+const UI_RESERVED_WIDTH = 200 as const;
 
 const evproxy = new EventProxy();
 let lastMousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -220,8 +243,11 @@ onMounted(async () => {
         vliMode.value = false;
 
         (() => {
-            if (currImage.value.naturalHeight < window.innerHeight &&
-                currImage.value.naturalWidth < window.innerWidth) {
+            const availableW = window.innerWidth - UI_RESERVED_WIDTH;
+            const availableH = window.innerHeight - UI_RESERVED_HEIGHT;
+
+            if (currImage.value.naturalHeight < availableH &&
+                currImage.value.naturalWidth < availableW) {
                 scale.value = 1;
                 return;
             }
@@ -235,11 +261,12 @@ onMounted(async () => {
 
             vliMode.value = false;
             scale.value = Math.min(
-                window.innerWidth / currImage.value.naturalWidth,
-                window.innerHeight / currImage.value.naturalHeight,
+                availableW / currImage.value.naturalWidth,
+                availableH / currImage.value.naturalHeight,
             );
         })();
 
+        loading.value = false;
         currImage.value.classList.remove("changing");
     });
 
@@ -300,6 +327,11 @@ onMounted(async () => {
         imageLeft.value = e.clientX - offsetX;
         imageTop.value = e.clientY - offsetY;
     }
+
+    // 兜底：首张图若已在缓存中，load 事件可能早于监听绑定触发，主动同步一次
+    if (currImage.value?.complete && currImage.value.naturalHeight > 0) {
+        currImage.value.dispatchEvent(new Event("load"));
+    }
 });
 
 onUnmounted(function () {
@@ -308,6 +340,7 @@ onUnmounted(function () {
 });
 
 watch(curr, function () {
+    loading.value = true;
     currImage.value?.classList.add("changing");
     deg.value = 0;
     imageLeft.value = undefined;
@@ -450,6 +483,13 @@ function verifyPos(pos = lastMousePos) {
 }
 </script>
 
+<style lang="scss">
+// 全局 keyframes：由 modalStyle 的 animation 引用，必须在 scoped 之外（scoped 会加 hash）
+@keyframes kf-viewer-mask-fade {
+    from { background-color: transparent; }
+}
+</style>
+
 <style scoped lang="scss">
 $panel-margin: 16px;
 $panel-radius: 12px;
@@ -568,6 +608,7 @@ $panel-padding: 10px;
     }
 
     .image-container {
+        position: relative;
         display: flex;
         width: 100%;
         height: 100%;
@@ -577,12 +618,31 @@ $panel-padding: 10px;
         .curr-image {
             position: absolute;
             object-fit: contain;
+            transition: opacity 0.2s ease;
+
+            &.loading-img {
+                opacity: 0;
+            }
 
             &.changing {
-                display: none;
-                transition: none;
+                transition: none !important;
             }
         }
+
+        .image-loading-spinner {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgb(255 255 255 / 15%);
+            border-top-color: rgb(255 255 255 / 90%);
+            border-radius: 50%;
+            animation: kf-spin 0.8s linear infinite;
+            pointer-events: none;
+        }
+    }
+
+    @keyframes kf-spin {
+        to { transform: rotate(360deg); }
     }
 
     .bottom-controls-wrapper {
@@ -651,6 +711,93 @@ $panel-padding: 10px;
             background-color: var(--minimal-fore);
             opacity: 0;
             transition: opacity var(--default-duration);
+        }
+    }
+}
+
+// Vercel 主题：去除磨砂，强制深色界面，1px 边框
+html.style-vercel .images-viewer {
+    --viewer-bg: #0A0A0A;
+    --viewer-bg-hover: #1F1F1F;
+    --viewer-border: #2A2A2A;
+    --viewer-fore: #EDEDED;
+    --viewer-light-fore: #A1A1A1;
+    --viewer-accent: #FFFFFF;
+
+    .icon {
+        color: var(--viewer-light-fore);
+    }
+
+    .control-panel {
+        backdrop-filter: none;
+        border: 1px solid var(--viewer-border);
+        background-color: var(--viewer-bg);
+        box-shadow: none;
+    }
+
+    .head-controls {
+        border-radius: 8px;
+
+        &.hide {
+            box-shadow: none;
+        }
+
+        span {
+            color: var(--viewer-light-fore);
+        }
+
+        .head-btn {
+            border-radius: 6px;
+            color: var(--viewer-light-fore);
+
+            &:hover {
+                background-color: var(--viewer-bg-hover);
+                color: var(--viewer-fore);
+            }
+
+            &.toggle-on {
+                background-color: var(--viewer-accent);
+                color: var(--viewer-bg);
+
+                &:hover {
+                    background-color: var(--viewer-accent);
+                    color: var(--viewer-bg);
+                    filter: none;
+                }
+            }
+        }
+
+        .close:hover {
+            color: var(--error-color);
+        }
+    }
+
+    .back,
+    .forward {
+        border-radius: 8px;
+        box-shadow: none;
+        color: var(--viewer-light-fore);
+
+        &:hover {
+            background-color: var(--viewer-bg-hover);
+            color: var(--viewer-fore);
+        }
+
+        &:focus {
+            box-shadow: 0 0 0 1px var(--viewer-accent);
+        }
+    }
+
+    .bottom-controls-wrapper {
+        border-radius: 8px;
+
+        .bottom-controls-container .thumb-container .bottom-btn {
+            border-radius: 4px;
+            background-color: var(--viewer-bg-hover);
+        }
+
+        .bottom-controls-container .thumb-container .bottom-btn.selected {
+            border: 2px solid var(--viewer-accent);
         }
     }
 }

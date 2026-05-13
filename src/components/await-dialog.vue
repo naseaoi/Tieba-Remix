@@ -7,6 +7,7 @@
 </template>
 
 <script setup lang="ts">
+import { styleTheme } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import { UserDialog, UserDialogOpts } from "user-view";
 import { onMounted, ref } from "vue";
@@ -15,6 +16,8 @@ export interface AwaitDialogOpts {
     unloadPred?: () => boolean;
     timeout?: number;
     unloadAfterTimeout?: boolean;
+    /** 透明化容器（去白底/边框/圆角），用于嵌入式加载场景（如看图器入口） */
+    transparent?: boolean;
 }
 
 const props = withDefaults(defineProps<AwaitDialogOpts>(), {
@@ -22,6 +25,7 @@ const props = withDefaults(defineProps<AwaitDialogOpts>(), {
     unloadPred: () => false,
     timeout: Infinity,
     unloadAfterTimeout: true,
+    transparent: false,
 });
 
 const emit = defineEmits<{
@@ -32,6 +36,23 @@ const dialogOpts: UserDialogOpts = {
     animation: false,
     force: true,
     uniqueName: "await-dialog",
+    ...(props.transparent ? {
+        shadowMode: true,
+        containerStyle: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+            margin: "0",
+            borderRadius: "0",
+            padding: "0",
+        },
+        ...(styleTheme.get() === "vercel" ? {
+            modalStyle: {
+                backgroundColor: "rgb(0 0 0 / 92%)",
+                animation: "kf-viewer-mask-fade 0.25s ease both",
+            },
+        } : {}),
+    } : {}),
 };
 
 const dialog = ref<InstanceType<typeof UserDialog>>();
@@ -51,6 +72,13 @@ onMounted(() => {
     }
 });
 </script>
+
+<style lang="scss">
+// 全局 keyframes（与 images-viewer 共用），定义在非 scoped block 以保留原名
+@keyframes kf-viewer-mask-fade {
+    from { background-color: transparent; }
+}
+</style>
 
 <style scoped lang="scss">
 @keyframes rotate {
