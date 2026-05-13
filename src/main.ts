@@ -11,6 +11,8 @@ import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/t
 import index from "./lib/theme/page-extension/index";
 import thread from "./lib/theme/page-extension/thread";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
+import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
+import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType, wideScreen } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
@@ -21,6 +23,12 @@ darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
 
 // 吧首页：Vercel 主题下接管缩略图点击 → 复用项目内大图查看器
 installForumImageTakeover();
+
+// 吧首页：右侧栏 region 默认折叠 + 点击展开
+installForumAsideCollapse();
+
+// 吧首页：监听置顶帖折叠状态，给 .thread_top_list_folder 同步 .pinned-folded class
+installForumPinnedFoldWatcher();
 
 Promise.all([
     loadDynamicCSS(),

@@ -1,4 +1,3 @@
-import AwaitDialog, { AwaitDialogOpts } from "@/components/await-dialog.vue";
 import { imagesViewer } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
@@ -247,19 +246,22 @@ export default async function () {
                 newEl.addEventListener("click", async function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
+
+                    // 缓存命中：直接打开
                     if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
                         showImage();
-                    } else {
-                        renderDialog<AwaitDialogOpts>(AwaitDialog, {
-                            unloadPred: () => !_.isNil(currentStorage.get(THREAD_IMAGES)),
-                        }, {
-                            unloaded() {
-                                showImage();
-                            },
-                        });
+                        return;
                     }
 
-                    getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
+                    // 未命中：静默拉取，回来后直接打开
+                    // 不再使用 AwaitDialog，避免与 imagesViewer 自身的加载圈叠加产生「2 层加载圈」
+                    // 与 openThreadImages 的修复方式保持一致
+                    try {
+                        await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
+                        showImage();
+                    } catch (err) {
+                        console.warn("[Tieba-Remix] 拉取帖子图片失败:", err);
+                    }
 
                     async function showImage() {
                         if (_.isNil(newEl.dataset.index)) {

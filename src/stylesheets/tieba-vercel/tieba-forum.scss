@@ -10,8 +10,11 @@ html.style-vercel {
     // ---------------------------
     // 容器
     // ---------------------------
+    // 贴吧原生吧首页采用 float 布局，左侧 .forum_content (~690px) 与右侧 .aside (~250px) 宽度固定，
+    // 总和约 982px。若 #content 超出此宽度，会在两列中间出现异常空白；
+    // 因此在吧首页固定一个上限，与原默认主题保持一致（hardcoded 982px）。
     #content {
-        width: var(--content-max);
+        width: min(var(--content-max), 982px);
         max-width: 100%;
         background-color: transparent !important;
     }
@@ -169,7 +172,11 @@ html.style-vercel {
     // ---------------------------
     // 主容器
     // ---------------------------
+    // position:relative 作为「展开置顶」浮动按钮的定位锚点（见下方 .thread_top_list_folder）
+    // overflow:visible 保证按钮能延伸到容器外不被裁切
     .forum_content {
+        position: relative !important;
+        overflow: visible !important;
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-md !important;
         background: var(--default-background) !important;
@@ -216,15 +223,123 @@ html.style-vercel {
     }
 
     // ---------------------------
-    // 右侧栏
+    // 右侧栏（保持贴吧原生外观，仅做最小化主题适配）
+    // 4 个 .aside_region 默认折叠，点击 .region_header 切换展开
+    // 折叠态由 JS 在 .aside_region 上加 [data-collapsed] 属性控制
     // ---------------------------
+
+    // .celebrity 是百度会员推广卡片，h4 标题本身为空，折叠后会出现"无标题的空卡"
+    // 直接隐藏，对齐用户需求中的 4 个可折叠 region（my_tieba / app_download_box / forum_info / zyq_mod_friend）
+    .aside_region.celebrity {
+        display: none !important;
+    }
+
     .aside_region {
         border-bottom: none !important;
+    }
+
+    // 本吧信息标题的「查看详情>>」改造为简单圆角按钮
+    // 用 font-size:0 隐去原文本（含 >>），::after 注入纯 "查看详情" 4 字
+    .aside_region.forum_info .region_header .pull_right a {
+        display: inline-block;
+        padding: 0;
+        font-size: 0;
+        line-height: 1;
+        color: transparent;
+        text-decoration: none;
+        vertical-align: middle;
+
+        &::after {
+            content: "查看详情";
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-sm;
+            color: var(--default-fore);
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 1.4;
+            transition: border-color $vercel-trans-normal $vercel-ease;
+        }
+
+        &:hover::after {
+            border-color: var(--minimal-fore);
+            background-color: var(--default-hover);
+        }
+    }
+
+    // 「我在贴吧」标题的 [管理] 改造：默认隐藏，鼠标悬停到 .region_header 才显示
+    // 与「查看详情」相同的圆角按钮样式，但带淡入/淡出
+    .aside_region.my_tieba .region_header .pull_right a.p_balv_btnmanager {
+        display: inline-block;
+        padding: 0;
+        font-size: 0;
+        line-height: 1;
+        color: transparent;
+        text-decoration: none;
+        vertical-align: middle;
+        opacity: 0;
+        transition: opacity $vercel-trans-normal $vercel-ease;
+
+        &::after {
+            content: "管理";
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-sm;
+            color: var(--default-fore);
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 1.4;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        background-color $vercel-trans-normal $vercel-ease;
+        }
+
+        &:hover::after {
+            border-color: var(--minimal-fore);
+            background-color: var(--default-hover);
+        }
+    }
+
+    // 鼠标悬停在标题行时显示「管理」按钮
+    .aside_region.my_tieba .region_header:hover .pull_right a.p_balv_btnmanager {
+        opacity: 1;
     }
 
     .aside_region .region_header {
         color: var(--default-fore) !important;
         font-weight: var(--font-weight-bold);
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 24px;
+    }
+
+    // 折叠箭头：使用 Unicode ▸ 字符，绕自身中心旋转
+    // 折叠态：旋转 0deg → ▸ 指向右；展开态：旋转 90deg → 指向下
+    // 与 border 拼接方案相比，字符方案 glyph 自带视觉中心，translateY(-50%) 始终保持垂直居中，
+    // 状态切换时不会出现位置漂移
+    .aside_region .region_header::after {
+        content: "▸";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        color: var(--minimal-fore);
+        font-size: 12px;
+        line-height: 1;
+        transform: translateY(-50%) rotate(0);
+        transform-origin: center;
+        transition: transform $vercel-trans-normal $vercel-ease;
+    }
+
+    .aside_region:not([data-collapsed="true"]) .region_header::after {
+        transform: translateY(-50%) rotate(90deg);
+    }
+
+    // 折叠态：隐藏内容主体与底部
+    .aside_region[data-collapsed="true"] .region_cnt,
+    .aside_region[data-collapsed="true"] .region_footer {
+        display: none !important;
     }
 
     .my_current_forum .badge {
@@ -317,6 +432,250 @@ html.style-vercel {
             border-left: 2px solid var(--default-fore) !important;
         }
 
+        // 置顶帖展开态（非 .pinned-folded）：外壳 + ul 透明化，让内层 li 直接参与父级 grid 流
+        > li.thread_top_list_folder:not(.pinned-folded) {
+            display: contents !important;
+
+            > ul.thread_top_list,
+            > .thread_top_list {
+                display: contents !important;
+                list-style: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        // 内层置顶帖卡片：单行布局（标题 | 回复数 | 用户名），更紧凑
+        // 注意：内层 li 不是 .threadlist_bright 的直系子项，所以 `> li { display: grid }` 不会作用到它，
+        // 这里独立给它复制一份卡片样式
+        .thread_top_list > li.j_thread_list.thread_top {
+            display: grid !important;
+            position: relative !important;
+            box-sizing: border-box !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            grid-template-rows: auto !important;
+            grid-template-areas: "title rep author" !important;
+            grid-auto-rows: 0 !important;
+            align-items: center !important;
+            column-gap: 12px !important;
+            row-gap: 0 !important;
+            min-height: 56px !important;
+            padding: 12px 16px !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-left: 2px solid var(--default-fore) !important;
+            border-radius: $vercel-radius-md !important;
+            background-color: var(--default-background) !important;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        box-shadow $vercel-trans-normal $vercel-ease !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+                background-color: var(--default-background) !important;
+                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
+            }
+
+            html.dark-theme & {
+                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
+
+                &:hover {
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
+                }
+            }
+        }
+
+        // 内层置顶帖被单条 X 关闭后，尊重 inline display:none（用属性选择器抬高特异性）
+        .thread_top_list > li.j_thread_list.thread_top[style*="display: none"],
+        .thread_top_list > li.j_thread_list.thread_top[style*="display:none"],
+        .thread_top_list > li.j_thread_list.thread_top[hidden] {
+            display: none !important;
+        }
+
+        // 置顶帖标题行：让 icon + 链接同行（避免 .threadlist_title 默认 block 把 icon 推到上一行）
+        .thread_top_list .threadlist_title {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
+        }
+
+        .thread_top_list a.j_th_tit {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+
+        // 置顶 / 精品 icon 改为文字 chip，保留贴吧原本红/橙色调
+        .thread_top_list .threadlist_title .icon-top,
+        .thread_top_list .threadlist_title .icon-good {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0 !important;
+            padding: 1px 6px !important;
+            margin-right: 6px !important;
+            border-radius: $vercel-radius-xs !important;
+            color: #fff !important;
+            font-size: $vercel-fs-xs !important;
+            font-style: normal !important;
+            font-weight: var(--font-weight-normal) !important;
+            line-height: 1.4 !important;
+            background-image: none !important;
+            width: auto !important;
+            height: auto !important;
+            text-indent: 0 !important;
+            vertical-align: middle !important;
+        }
+
+        // 置顶：红
+        .thread_top_list .threadlist_title .icon-top {
+            background-color: var(--error-color) !important;
+        }
+
+        // 精品：橙/黄
+        .thread_top_list .threadlist_title .icon-good {
+            background-color: var(--warning-color) !important;
+        }
+
+        .thread_top_list .threadlist_title .icon-top::before {
+            content: "置顶";
+        }
+
+        .thread_top_list .threadlist_title .icon-good::before {
+            content: "精";
+        }
+
+        // 隐藏置顶帖右侧时间标记（统一与常规卡片）
+        .thread_top_list .is_show_create_time {
+            display: none !important;
+        }
+
+        // 关闭按钮（×）：绝对定位到卡片右上角，hover 卡片时淡入
+        .thread_top_list .j_thread_hidden,
+        .thread_top_list .icon_thread_hidden {
+            position: absolute !important;
+            top: 4px;
+            right: 6px;
+            width: 16px;
+            height: 16px;
+            background: none !important;
+            background-image: none !important;
+            text-indent: 0 !important;
+            opacity: 0;
+            color: var(--minimal-fore);
+            cursor: pointer;
+            transition: opacity $vercel-trans-normal $vercel-ease,
+                        color $vercel-trans-normal $vercel-ease;
+
+            &::before {
+                content: "×";
+                display: block;
+                font-size: 16px;
+                line-height: 16px;
+                text-align: center;
+            }
+
+            &:hover {
+                color: var(--default-fore);
+            }
+        }
+
+        .thread_top_list > li.j_thread_list.thread_top:hover .j_thread_hidden,
+        .thread_top_list > li.j_thread_list.thread_top:hover .icon_thread_hidden {
+            opacity: 1;
+        }
+
+        // 修复：贴吧原生「关闭置顶帖」或 shield 模块通过 inline `style="display:none"` 隐藏 li 时
+        // 上方 `> li { display: grid !important }` 会覆盖掉 inline 样式，留下空白占位框
+        // 此规则用更高特异性的属性选择器把 inline display:none 恢复为隐藏
+        > li[style*="display: none"],
+        > li[style*="display:none"],
+        > li[hidden] {
+            display: none !important;
+        }
+
+        // 兜底：默认隐藏 #thread_top_folder。
+        // 贴吧原生在「关闭单条置顶」时会把它切到 display:block 显示原版"展开置顶"按钮，
+        // 我们只希望在「所有置顶都被关闭」（即外壳带 .pinned-folded 时）才显示自己的 SVG 箭头按钮；
+        // 因此先全局隐藏，再在 .pinned-folded 作用域里 override 回显示（见下方）
+        #thread_top_folder {
+            display: none !important;
+        }
+
+        // 置顶帖外壳：当所有内部置顶帖被关闭（折叠态）时，
+        // 由 forum-pinned-fold-watcher.ts 在 .thread_top_list_folder 上动态加 .pinned-folded class
+        // CSS 用 class 选择器直接匹配（替代 :has()，更稳定）
+        // 把外壳改造为一个紧贴 .forum_content 左外侧的小展开按钮：
+        // - 外壳脱离 grid 流（absolute），不占帖子列表空间
+        // - 内层 .thread_top_list（ul）隐藏，避免空白
+        // - #thread_top_folder 改为 28×28 圆角按钮，内部用 SVG mask 渲染向下箭头
+        // - 显式 left:-36px 把按钮完全推到容器外侧，并用 z-index 提高层级避免被 tab 栏遮挡
+        > li.thread_top_list_folder.pinned-folded {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: -36px !important;
+            right: auto !important;
+            width: 28px !important;
+            min-height: 0 !important;
+            height: 28px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            background: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            z-index: 100 !important;
+            grid-template-areas: none !important;
+            grid-template-columns: none !important;
+            grid-template-rows: none !important;
+            overflow: visible !important;
+
+            > ul,
+            > .thread_top_list {
+                display: none !important;
+            }
+
+            #thread_top_folder {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                margin: 0;
+                padding: 0;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-sm;
+                background: var(--default-background);
+                cursor: pointer;
+                transition: border-color $vercel-trans-normal $vercel-ease;
+
+                // SVG 向下箭头（mask 后用背景色着色，跟随主题 token）
+                &::before {
+                    content: "";
+                    display: block;
+                    width: 14px;
+                    height: 14px;
+                    background-color: var(--light-fore);
+                    transition: background-color $vercel-trans-normal $vercel-ease;
+                    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+                    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+                }
+
+                &:hover {
+                    border-color: var(--minimal-fore);
+
+                    &::before {
+                        background-color: var(--default-fore);
+                    }
+                }
+            }
+        }
+
         // ---------------------------
         // 中间嵌套 wrapper 透明化（让孙元素直接参与 li 的 grid 布局）
         // 注意：.small_wrap 不在此列表 —— 它单独作为 grid item（含图片+张数标签），见下方
@@ -396,7 +755,7 @@ html.style-vercel {
         }
 
         .threadlist_title a,
-        .j_th_tit {
+        a.j_th_tit {
             display: -webkit-box !important;
             color: var(--default-fore) !important;
             font-size: $vercel-fs-lg !important;
