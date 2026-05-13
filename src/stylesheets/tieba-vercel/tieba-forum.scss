@@ -1,0 +1,668 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+// =============================================
+// Vercel 风格 - 吧首页 (forum)
+// 核心：帖子列表卡片网格化
+// =============================================
+
+html.style-vercel {
+    // ---------------------------
+    // 容器
+    // ---------------------------
+    #content {
+        width: var(--content-max);
+        max-width: 100%;
+        background-color: transparent !important;
+    }
+
+    #head {
+        background: none !important;
+        background-color: var(--page-background) !important;
+
+        .head_inner {
+            background-color: var(--default-background) !important;
+        }
+    }
+
+    // 隐藏装饰性大卡 / 推荐轮播
+    .card_banner,
+    .plat_recom_carousel {
+        display: none !important;
+    }
+
+    // ---------------------------
+    // 顶部搜索区
+    // ---------------------------
+    .search_main {
+        padding-bottom: 24px;
+    }
+
+    .search_bright .search_inp_border,
+    .search_bright .search_ipt {
+        height: 36px !important;
+        box-sizing: border-box;
+        padding: 0 12px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        box-shadow: none !important;
+        transition: border-color $vercel-trans-normal $vercel-ease !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+            box-shadow: 0 0 0 1px var(--default-fore) !important;
+        }
+    }
+
+    .search_bright .search_btn {
+        height: 36px !important;
+        box-sizing: border-box;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        box-shadow: none !important;
+        line-height: 36px !important;
+        transition: border-color $vercel-trans-normal $vercel-ease !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+            background-color: var(--default-background) !important;
+            filter: none;
+        }
+    }
+
+    .search_bright .search_btn_enter_ba {
+        background-color: var(--default-fore) !important;
+        border: 1px solid var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    // 隐藏固定导航栏（保留脚本注入的 #nav-bar）
+    .search_main_fixed {
+        display: none !important;
+    }
+
+    // ---------------------------
+    // 吧标题区（card_top）
+    // ---------------------------
+    .card_top_theme {
+        border: none !important;
+
+        .card_top {
+            position: relative;
+            padding-left: 120px !important;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-lg;
+            background-color: var(--default-background);
+
+            // dotted 装饰背景（限制在标题区上方）
+            &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                pointer-events: none;
+                opacity: 0.4;
+                @include dotted-bg($size: 20px);
+                mask-image: linear-gradient(to bottom, rgb(0 0 0 / 100%), transparent);
+            }
+        }
+    }
+
+    .card_title_fname {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold);
+    }
+
+    .card_slogan {
+        color: var(--light-fore) !important;
+    }
+
+    // 关注/取关按钮
+    .islike_focus {
+        background-color: var(--default-fore) !important;
+        background-image: none !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-background) !important;
+    }
+
+    .cancel_focus {
+        background: none !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-fore) !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+    }
+
+    // 签到按钮
+    .sign_box_bright,
+    .sign_box_bright_hover {
+        background: none !important;
+        background-color: var(--default-fore) !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-background) !important;
+    }
+
+    .sign_box_bright_signed,
+    .sign_box_bright_noclass_hover {
+        background: none !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--default-fore) !important;
+    }
+
+    // ---------------------------
+    // 主容器
+    // ---------------------------
+    .forum_content {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background: var(--default-background) !important;
+    }
+
+    // tab 导航
+    .nav_wrap {
+        border-color: var(--border-color) !important;
+    }
+
+    .nav_list li.focus {
+        background: none !important;
+        border-bottom: 2px solid var(--default-fore);
+    }
+
+    .nav_list a {
+        color: var(--default-fore) !important;
+    }
+
+    .j_tabnav_tab:hover,
+    .nav_list a:hover {
+        background-color: var(--default-hover) !important;
+    }
+
+    // 吧内搜索
+    .search_internal_input {
+        height: 28px !important;
+        border-color: var(--border-color) !important;
+        border-radius: $vercel-radius-sm 0 0 $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+    }
+
+    .search_internal_btn {
+        height: 30px !important;
+        border-radius: 0 $vercel-radius-sm $vercel-radius-sm 0 !important;
+        background-color: var(--default-fore) !important;
+        background-image: none !important;
+        color: var(--default-background) !important;
+
+        &::after {
+            color: var(--default-background) !important;
+        }
+    }
+
+    // ---------------------------
+    // 右侧栏
+    // ---------------------------
+    .aside_region {
+        border-bottom: none !important;
+    }
+
+    .aside_region .region_header {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold);
+    }
+
+    .my_current_forum .badge {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-xs !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+    }
+
+    // ===============================================================
+    // 帖子列表 - 单列卡片
+    // 卡片内布局：第一行 = 标题 | 回复数 | 发帖人
+    //            第二行 = 摘要
+    //            第三行 = 缩略图
+    // 通过 display:contents 把贴吧多层嵌套 wrapper 透明化，再用 grid-area 重新分配位置
+    // ===============================================================
+    .threadlist_bright {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 16px !important;
+        background: none !important;
+        list-style: none !important;
+        margin: 0 !important;
+
+        > li {
+            display: grid !important;
+            box-sizing: border-box !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            grid-template-rows: auto auto auto !important;
+            grid-template-areas:
+                "title rep author"
+                "abs   abs abs"
+                "media media media" !important;
+            grid-auto-flow: row !important;
+            // 关键：贴吧的 .clearfix::after 伪元素在 display:contents 透明化后仍被生成，
+            // 会成为 li 的隐式 grid 子项；强制隐式行高度为 0 以消除空白
+            grid-auto-rows: 0 !important;
+            align-items: center !important;
+            column-gap: 12px !important;
+            row-gap: 8px !important;
+            min-height: 80px !important;
+            padding: 16px !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-md !important;
+            background-color: var(--default-background) !important;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: hidden !important;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        box-shadow $vercel-trans-normal $vercel-ease !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+                background-color: var(--default-background) !important;
+                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
+            }
+
+            html.dark-theme & {
+                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
+
+                &:hover {
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
+                }
+            }
+        }
+
+        // 抑制 clearfix 类的 ::after 伪元素 —— 它们在 display:contents 后会作为 li 的 grid 子项扰乱布局
+        > li::after,
+        > li::before,
+        .t_con::after,
+        .t_con::before,
+        .threadlist_lz::after,
+        .threadlist_lz::before,
+        .threadlist_detail::after,
+        .threadlist_detail::before,
+        .threadlist_text::after,
+        .threadlist_text::before {
+            content: none !important;
+            display: none !important;
+        }
+
+        // 置顶帖：左边框强调
+        > li.thread_top_list_folder,
+        > li.thread_top_list_folder:hover {
+            background-color: var(--default-background) !important;
+            border-left: 2px solid var(--default-fore) !important;
+        }
+
+        // ---------------------------
+        // 中间嵌套 wrapper 透明化（让孙元素直接参与 li 的 grid 布局）
+        // 注意：.small_wrap 不在此列表 —— 它单独作为 grid item（含图片+张数标签），见下方
+        // ---------------------------
+        .t_con,
+        .t_con > .col2_left,
+        .t_con > .col2_right,
+        > li > .t_con,
+        .threadlist_lz,
+        .threadlist_detail,
+        .threadlist_text,
+        .small_list,
+        .j_small_list,
+        .small_list_gallery {
+            display: contents !important;
+        }
+
+        // 带图帖子的图片容器：作为 grid item 占 media 行
+        // 内部用 flex 把图片列表与"共X张"标签左右分开
+        // 配合中间层 .small_list/.small_list_gallery 的 display:contents
+        // .threadlist_media 与 .small_pic_num 直接成为 .small_wrap 的 flex 子项
+        .small_wrap,
+        .j_small_wrap {
+            grid-area: media !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 8px !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 0 !important;
+        }
+
+        // 隐藏带图列表的左右切换占位按钮（贴吧默认 inline display:none，保险起见）
+        .small_btn_pre,
+        .small_btn_next,
+        .j_small_pic_pre,
+        .j_small_pic_next {
+            display: none !important;
+        }
+
+        // "共 X 张" 数量标签：放在图片缩略图右侧
+        .small_pic_num {
+            flex-shrink: 0 !important;
+            align-self: center !important;
+            padding: 2px 8px !important;
+            margin: 0 !important;
+            border-radius: $vercel-radius-xs !important;
+            background-color: var(--default-hover) !important;
+            color: var(--light-fore) !important;
+            font-family: $vercel-font-mono !important;
+            font-size: $vercel-fs-xs !important;
+            line-height: 1.6 !important;
+            white-space: nowrap !important;
+            float: none !important;
+            position: static !important;
+        }
+
+        // ---------------------------
+        // 标题：左侧主区
+        // ---------------------------
+        .threadlist_title,
+        .threadlist_lz > .threadlist_title {
+            grid-area: title !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            float: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .threadlist_title a,
+        .j_th_tit {
+            display: -webkit-box !important;
+            color: var(--default-fore) !important;
+            font-size: $vercel-fs-lg !important;
+            font-weight: var(--font-weight-bold) !important;
+            line-height: 1.4 !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        // ---------------------------
+        // 回复数：第一行中间
+        // ---------------------------
+        .threadlist_rep_num {
+            @include mono-meta($vercel-fs-sm);
+            grid-area: rep !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-self: end !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            background: none !important;
+            color: var(--default-fore) !important;
+            font-weight: var(--font-weight-bold) !important;
+            float: none !important;
+
+            &::before {
+                content: "▸ ";
+                margin-right: 2px;
+                color: var(--minimal-fore);
+            }
+        }
+
+        // ---------------------------
+        // 发帖人：第一行最右
+        // 仅保留 .threadlist_lz 内的作者（发帖人），隐藏 .threadlist_detail 内的回复者
+        // ---------------------------
+        .threadlist_author {
+            grid-area: author !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-self: end !important;
+            width: auto !important;
+            max-width: 280px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            float: none !important;
+            border-top: none !important;
+            gap: 6px !important;
+            text-align: right !important;
+
+            @include mono-meta($vercel-fs-xs);
+        }
+
+        // 解开作者名内部的宽度限制，让长 ID 完整显示
+        .threadlist_author .tb_icon_author,
+        .threadlist_author .frs-author-name-wrap,
+        .threadlist_author .frs-author-name {
+            max-width: none !important;
+            width: auto !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: nowrap !important;
+        }
+
+        // 隐藏：发帖人后的印记/等级图标，及发帖时间
+        .threadlist_author .icon_author,
+        .threadlist_author .icon_replyer,
+        .threadlist_author i,
+        .threadlist_author .frs_pp_icon,
+        .threadlist_author .gold_member_icon,
+        .threadlist_author .like_forum_user_icon,
+        .threadlist_author .tb_icon_grade,
+        .threadlist_author img,
+        .threadlist_author .icon_wrap,
+        .threadlist_author .frs_bright_icons,
+        .threadlist_author .icon_wrap_theme1,
+        .threadlist_author .j_icon_slot,
+        .threadlist_author .is_show_create_time,
+        .threadlist_author .threadlist_reply_date,
+        // 印记在某些贴吧 DOM 中位于 .tb_icon_author 外侧
+        .icon_wrap.frs_bright_icons,
+        .icon_wrap_theme1,
+        .j_icon_slot {
+            display: none !important;
+        }
+
+        // 隐藏：最新回复者整块（.threadlist_detail 内的作者）
+        .threadlist_author_replyer,
+        .threadlist_author.threadlist_author_replyer,
+        .threadlist_detail > .threadlist_author {
+            display: none !important;
+        }
+
+        // 作者名样式
+        .frs-author-name-wrap,
+        .frs-author-name-wrap a,
+        .frs-author-name,
+        .tb_icon_author > a,
+        .tb_icon_author > .frs-author-name-wrap {
+            color: var(--light-fore) !important;
+            font-family: inherit !important;
+            margin: 0 !important;
+            float: none !important;
+        }
+
+        // ---------------------------
+        // 摘要：第二行
+        // ---------------------------
+        .threadlist_abs,
+        .threadlist_abs_onlyline {
+            grid-area: abs !important;
+            display: -webkit-box !important;
+            float: none !important;
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--light-fore) !important;
+            font-size: $vercel-fs-sm !important;
+            line-height: $vercel-lh-normal !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        // ---------------------------
+        // 缩略图：第三行
+        // 注意：贴吧通过 <img> inline style 控制 background-image + background-position
+        // 不可强制覆盖 img 的 width/height/object-fit，否则图片消失或位置错乱
+        // 两种 DOM 形态：
+        //   1) .small_wrap > .small_list > .small_list_gallery > .threadlist_media —— 作为 .small_wrap 的 flex 子项（左侧占满）
+        //   2) 直接位于 .threadlist_text 下的旧版 DOM —— 自身作为 grid item，落到 media 行
+        // ---------------------------
+        .threadlist_media {
+            grid-area: media !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            float: none !important;
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 4px !important;
+            line-height: 0 !important;
+            list-style: none !important;
+
+            li {
+                margin: 0 !important;
+                width: auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                line-height: 0 !important;
+                border-radius: $vercel-radius-sm !important;
+                overflow: hidden !important;
+            }
+
+            // 内部链接/img：去除 inline-gap（baseline 间距）
+            a,
+            .thumbnail,
+            .vpic_wrap {
+                display: inline-block !important;
+                height: auto !important;
+                min-height: 0 !important;
+                line-height: 0 !important;
+                vertical-align: top !important;
+            }
+
+            img {
+                vertical-align: top !important;
+            }
+        }
+
+        .vpic_wrap img:not([style]) {
+            opacity: 0;
+        }
+
+        .vpic_wrap img {
+            border-radius: $vercel-radius-sm !important;
+        }
+
+        .threadlist_pic_highlight {
+            display: none !important;
+        }
+
+        .threadlist_video {
+            border-radius: $vercel-radius-sm !important;
+        }
+
+        // ---------------------------
+        // 原生预览框：完全隐藏（已由 forum-image-takeover 接管点击）
+        // ---------------------------
+        .media_box,
+        .j_media_box {
+            display: none !important;
+        }
+
+        // 隐藏冗余标记
+        .threadlist_icon,
+        .threadlist_pin {
+            opacity: 0.6;
+        }
+    }
+
+    // ---------------------------
+    // 分页器
+    // ---------------------------
+    .pagination-default .pagination-item {
+        @include vercel-button($vercel-radius-sm);
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-sm;
+        min-width: 32px;
+        text-align: center;
+    }
+
+    .pagination-default .pagination-current {
+        background-color: var(--default-fore) !important;
+        border-color: var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    .pagination-default .pagination-item:not(.pagination-current):hover {
+        border-color: var(--minimal-fore) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    // ---------------------------
+    // 底部发帖编辑器
+    // ---------------------------
+    #tb_rich_poster_container {
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color);
+    }
+
+    .tb_rich_poster .poster_body .editor_textfield {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+            box-shadow: 0 0 0 1px var(--default-fore) !important;
+        }
+    }
+
+    .old_style_wrapper {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .edui-editor-body .edui-body-container {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    // 隐藏页脚
+    .footer {
+        display: none !important;
+    }
+}

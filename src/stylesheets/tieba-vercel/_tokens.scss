@@ -1,0 +1,37 @@
+// Vercel 主题专用设计令牌
+
+// 圆角
+$vercel-radius-xs: 4px;
+$vercel-radius-sm: 6px;
+$vercel-radius-md: 8px;
+$vercel-radius-lg: 12px;
+
+// 阴影（Vercel 极少用阴影，仅 hover 与浮层使用）
+$vercel-shadow-sm: 0 1px 2px rgb(0 0 0 / 4%);
+$vercel-shadow-md: 0 4px 12px rgb(0 0 0 / 8%);
+$vercel-shadow-lg: 0 8px 24px rgb(0 0 0 / 12%);
+
+// 字号梯度
+$vercel-fs-xs: 11px;
+$vercel-fs-sm: 13px;
+$vercel-fs-md: 14px;
+$vercel-fs-lg: 16px;
+$vercel-fs-xl: 20px;
+$vercel-fs-2xl: 24px;
+$vercel-fs-3xl: 32px;
+
+// 行高
+$vercel-lh-tight: 1.2;
+$vercel-lh-normal: 1.5;
+$vercel-lh-loose: 1.7;
+
+// Mono 字体栈：读取用户在设置中配置的等宽字体（loadDynamicCSS 注入 --code-monospace）
+// 兜底 fallback 防止未注入时无字体
+$vercel-font-mono: var(--code-monospace, ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace);
+
+// 过渡时长（Vercel 风格短促）
+$vercel-trans-fast: 0.12s;
+$vercel-trans-normal: 0.18s;
+
+// 标准缓动
+$vercel-ease: cubic-bezier(0.4, 0, 0.2, 1);

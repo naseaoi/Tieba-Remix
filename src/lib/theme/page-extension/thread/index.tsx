@@ -225,18 +225,28 @@ export default async function () {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 const postContent = findParent(el, "d_post_content");
 
-                // 拆除原生 <a> 包裹（贴吧默认会用 a 标签包图片，点击跳转原图），确保点击只触发查看器
-                const parentAnchor = el.parentElement instanceof HTMLAnchorElement ? el.parentElement : null;
-                if (parentAnchor) {
-                    parentAnchor.removeAttribute("href");
-                    parentAnchor.removeAttribute("target");
-                    parentAnchor.style.cursor = "pointer";
+                // 拆除所有祖先 <a> 包裹（贴吧用 a 标签包图片跳转原图，且可能存在多层包裹）
+                let ancestor: HTMLElement | null = el.parentElement;
+                while (ancestor && ancestor !== postContent) {
+                    if (ancestor instanceof HTMLAnchorElement) {
+                        ancestor.removeAttribute("href");
+                        ancestor.removeAttribute("target");
+                        ancestor.style.cursor = "pointer";
+                    }
+                    ancestor = ancestor.parentElement;
                 }
 
                 newEl.dataset.pid = _(postContent?.id).split("_").last();
+                // 捕获阶段拦截点击 / 中键 / 鼠标按下，避免事件冒泡到贴吧自有处理逻辑
+                const stop = (e: Event) => {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                };
+                newEl.addEventListener("mousedown", stop, true);
+                newEl.addEventListener("auxclick", stop, true);
                 newEl.addEventListener("click", async function (e) {
                     e.preventDefault();
-                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
                         showImage();
                     } else {

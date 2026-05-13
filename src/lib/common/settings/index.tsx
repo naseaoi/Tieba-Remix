@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
+import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -24,13 +24,13 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "switch-theme": {
                         title: "主题偏好设置",
                         description:
-                            `在自动模式下，将根据当前系统设置自动选择合适的主题。你也可以手动应用某一种主题。`,
+                            `在自动模式下，将根据当前系统设置自动选择合适的主题`,
                         widgets: [{
                             type: "select",
                             content: [
-                                { value: "auto", text: "自动", desc: "根据系统设置自动切换主题。" },
-                                { value: "dark", text: "深色", desc: "使用深色主题。" },
-                                { value: "light", text: "浅色", desc: "使用浅色主题。" },
+                                { value: "auto", text: "自动", desc: "根据系统设置自动切换主题" },
+                                { value: "dark", text: "深色", desc: "使用深色主题" },
+                                { value: "light", text: "浅色", desc: "使用浅色主题" },
                             ] as UserSelectItem<ReturnType<typeof themeType.get>>[],
                             init() {
                                 return themeType.get();
@@ -41,10 +41,29 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
+                    "style-theme": {
+                        title: "样式风格",
+                        description:
+                            `Remixed 为脚本默认风格；Vercel 风格采用极简中性骨架（黑/白 + 极细灰边框）+ 卡片网格列表 + 等宽元数据，切换后即时生效`,
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "remixed", text: "Remixed", desc: "脚本默认风格，圆润色彩与品牌紫" },
+                                { value: "vercel", text: "Vercel", desc: "极简中性，吧首页帖子列表为卡片网格" },
+                            ] as UserSelectItem<ReturnType<typeof styleTheme.get>>[],
+                            init() {
+                                return styleTheme.get();
+                            },
+                            event(value: ReturnType<typeof styleTheme.get>) {
+                                styleTheme.set(value);
+                            },
+                        }],
+                    },
+
                     "color": {
                         title: "主题颜色",
                         description:
-                            `自定义主题色。由于存在深浅两种主题，需要设置两种主题色。`,
+                            `自定义主题色，由于存在深浅两种主题，需要设置两种主题色。`,
                         widgets: [{
                             type: "component",
                             component: markRaw(ThemeColor),
@@ -60,7 +79,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "紧凑布局",
                         widgets: [{
                             type: "toggle",
-                            content: `在尽量保证视觉观感的请款下，针对部分页面应用更加紧凑的布局，以提高信息密度。当前会受到影响的页面有：新版看贴页面。`,
+                            content: `在尽量保证视觉观感的情况下，针对部分页面应用更紧凑的布局以提高信息密度。当前会受到影响的页面有：新版看贴页面`,
                             init() {
                                 return compactLayout.get();
                             },
@@ -68,6 +87,23 @@ export const getUserSettings = _.once((): UserSettings => ({
                                 compactLayout.set(!compactLayout.get());
                                 document.body.toggleAttribute("compact-layout");
                                 return compactLayout.get();
+                            },
+                        }],
+                    },
+
+                    "forum-bottom-editor": {
+                        title: "显示吧首页底部发帖模块",
+                        widgets: [{
+                            type: "toggle",
+                            content: `开启后会在吧首页底部显示贴吧原生的发帖编辑器`,
+                            init() {
+                                return showBottomEditor.get();
+                            },
+                            event() {
+                                const next = !showBottomEditor.get();
+                                showBottomEditor.set(next);
+                                document.body.toggleAttribute("hide-bottom-editor", !next);
+                                return next;
                             },
                         }],
                     },
@@ -121,10 +157,12 @@ export const getUserSettings = _.once((): UserSettings => ({
                                     return String(wideScreen.get().maxWidth);
                                 },
                                 event(e) {
-                                    const newValue = (e.target as HTMLInputElement).value;
-                                    if (!isNaN(+newValue)) {
+                                    const newValue = (e.target as HTMLInputElement).value.trim();
+                                    const parsed = parseInt(newValue, 10);
+                                    // 防御：空值、非数字、过小值不写入（避免布局崩坏）
+                                    if (newValue !== "" && Number.isFinite(parsed) && parsed >= 320) {
                                         wideScreen.merge({
-                                            maxWidth: +newValue,
+                                            maxWidth: parsed,
                                         });
                                     }
                                 },
@@ -141,7 +179,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "首页扩展",
                         widgets: [{
                             type: "toggle",
-                            content: `首页扩展旨在提供更纯粹的浏览体验，提供管理关注的吧、贴吧热议、瀑布流推送等功能。`,
+                            content: `首页扩展旨在提供更纯粹的浏览体验，提供管理关注的吧、贴吧热议、瀑布流推送等功能`,
                             init() {
                                 return pageExtension.get().index;
                             },
@@ -156,7 +194,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "帖子浏览页面扩展",
                         widgets: [{
                             type: "toggle",
-                            content: `使用全新的 UI 简化帖子浏览，并改进屏幕空间利用率。`,
+                            content: `使用全新的 UI 简化帖子浏览，并改进屏幕空间利用率`,
                             init() {
                                 return pageExtension.get().thread;
                             },
@@ -175,10 +213,10 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "code-zh": {
                         title: "主要字体组合",
                         description:
-                            `应用在贴吧绝大多数场景的字体组合。`,
+                            `应用在贴吧绝大多数场景的字体组合`,
                         widgets: [{
                             type: "textarea",
-                            placeHolder: "写入字体名，以换行分隔。若需要中英文混排，需将英文字体写在中文字体之前。",
+                            placeHolder: "填入字体名，以换行分隔。若需要中英文混排，需将英文字体写在中文字体之前",
                             init() {
                                 return _.join(userFonts.get(), "\n");
                             },
@@ -191,10 +229,10 @@ export const getUserSettings = _.once((): UserSettings => ({
 
                     "code-monospace": {
                         title: "等宽字体组合",
-                        description: `应用在数据显示等场景的等宽字体组合。`,
+                        description: `应用在数据显示等场景的等宽字体组合`,
                         widgets: [{
                             type: "textarea",
-                            placeHolder: "写入字体名，以换行分隔。建议在此处写入等宽字体。",
+                            placeHolder: "填入字体名，以换行分隔。建议在此处写入等宽字体",
                             init() {
                                 return _.join(monospaceFonts.get(), "\n");
                             },
@@ -208,7 +246,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "font-weights": {
                         title: "字重调整",
                         description:
-                            `设置字体的字重。`,
+                            `设置字体的字重`,
                         widgets: [
                             {
                                 type: "subTitle",
@@ -251,15 +289,15 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "nav-bar-mode": {
                         title: "导航栏隐藏模式",
                         description:
-                            `设置导航栏的隐藏模式。`,
+                            `设置导航栏的隐藏模式`,
                         widgets: [{
                             type: "select",
                             content: [
-                                { value: "fold", text: "滚动折叠", desc: "当页面以一定速度向下滚动时，会将导航栏折叠，只会占据很小的屏幕空间，但能更方便地重新访问导航栏。" },
-                                { value: "alwaysFold", text: "始终折叠", desc: "导航栏始终保持折叠状态。" },
-                                { value: "hideWhenScroll", text: "滚动隐藏", desc: "当页面以一定速度向下滚动时，彻底隐藏导航栏，重新访问导航栏则需要以一定速度向上滚动页面。" },
-                                { value: "fixedOnTop", text: "顶部固定", desc: "导航栏不会在视图上跟随移动，仅在页面最顶部固定。" },
-                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏。" },
+                                { value: "fold", text: "滚动折叠", desc: "当页面以一定速度向下滚动时，会将导航栏完全隐藏，将鼠标移至屏幕最顶端可重新呼出" },
+                                { value: "alwaysFold", text: "始终折叠", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
+                                { value: "hideWhenScroll", text: "滚动隐藏", desc: "当页面以一定速度向下滚动时，会将导航栏完全隐藏，重新呼出则需要以一定速度向上滚动页面" },
+                                { value: "fixedOnTop", text: "顶部固定", desc: "导航栏不会在视图上跟随移动，仅在页面最顶部固定" },
+                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
                             ] as UserSelectItem<NavBarHideMode>[],
                             init() {
                                 return navBarHideMode.get();
@@ -334,7 +372,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                 content: {
                     "persets": {
                         title: "性能预设",
-                        description: "从以下预设性能等级选择其一，将会自动对相关场景进行行为调整。",
+                        description: "从以下预设性能等级选择其一，将会自动对相关场景进行行为调整",
                         widgets: [{
                             type: "select",
                             content: [
@@ -359,7 +397,7 @@ export const getUserSettings = _.once((): UserSettings => ({
             //             title: "高清图像",
             //             widgets: [{
             //                 type: "toggle",
-            //                 content: `部分场景下展示最高品质的原始尺寸图像。需要较高的网络速度和设备性能，可能造成更多的流量消耗。`,
+            //                 content: `部分场景下展示最高品质的原始尺寸图像。需要较高的网络速度和设备性能，可能造成更多的流量消耗`,
             //                 init() {
             //                     return highQualityImage.get();
             //                 },
@@ -384,9 +422,9 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "title": {
                         title: "实验室",
                         description:
-                            `本版块列举了一些实验性功能，这些功能正处于开发阶段，它们当中的大部分都是默认关闭的。
-                            这些功能可能会产生已知、未知的错误或性能问题，如果这些问题能被更及时全面地反馈，将有助于整个项目的发展。
-                            需要注意的是，这些特性并不保证会保留到后续版本中。`,
+                            `本版块列举了一些实验性功能，这些功能正处于开发阶段，它们当中的大部分都是默认关闭的
+                            这些功能可能会产生已知、未知的错误或性能问题，如果这些问题能被更及时全面地反馈，将有助于整个项目的发展
+                            需要注意的是，这些特性并不保证会保留到后续版本中`,
                         widgets: [{
                             type: "icon",
                             content: "lab_research",
@@ -397,7 +435,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "更多模糊效果",
                         widgets: [{
                             type: "toggle",
-                            content: `优先考虑提供更多的模糊效果。仅当性能预设为“高性能”时，才会生效。`,
+                            content: `优先考虑提供更多的模糊效果，仅当性能预设为“高性能”时才会生效`,
                             init() {
                                 return experimental.get().moreBlurEffect;
                             },
@@ -411,7 +449,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "栅格特效",
                         widgets: [{
                             type: "toggle",
-                            content: `将部分场景的模糊效果替换为栅格特效。可能会使文字可见度降低。存在性能问题。`,
+                            content: `将部分场景的模糊效果替换为栅格特效，可能会使文字可见度降低，存在性能问题`,
                             init() {
                                 return experimental.get().rasterEffect;
                             },
@@ -460,7 +498,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "content": {
                         title: "自定义样式",
                         description:
-                            `你可以在这里添加一些自定义的CSS代码，用以覆盖脚本内置的一些样式。`,
+                            `你可以在这里添加一些自定义的CSS代码，用以覆盖脚本内置的一些样式`,
                         widgets: [{
                             type: "textarea",
                             init() {
@@ -480,7 +518,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "title": {
                         title: "重置所有配置",
                         description:
-                            `如果你需要将脚本的一切配置恢复默认，请使用此功能。`,
+                            `如果你需要将脚本的一切配置恢复默认，请使用此功能`,
                     },
 
                     "reset": {
@@ -490,7 +528,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                             async event() {
                                 if (await messageBox({
                                     title: "重置所有配置",
-                                    content: "该操作是不可逆的，请做最后一次确认。",
+                                    content: "该操作是不可逆的，请做最后一次确认",
                                     type: "forceTrueFalse",
                                 }) === "positive") {
                                     _.forEach(GM_listValues(), (key) => {
@@ -538,7 +576,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "update-notify": {
                         widgets: [{
                             type: "toggle",
-                            content: `启用一个对话框提示用户更新。该对话框可以立即安装更新，也可以推迟更新操作。`,
+                            content: `启用一个对话框提示用户更新，该对话框可以立即安装更新，也可以推迟更新操作`,
                             init() {
                                 return updateConfig.get().notify;
                             },

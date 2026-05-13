@@ -1,0 +1,134 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+// =============================================
+// Vercel 风格 - 通用元素覆盖
+// 作用域：html.style-vercel 下的所有贴吧页面
+// =============================================
+
+html.style-vercel {
+    body {
+        background-color: var(--page-background);
+        color: var(--default-fore);
+    }
+
+    // ---------------------------
+    // 顶部导航栏（脚本注入的 #nav-bar）
+    // ---------------------------
+    #nav-bar {
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--default-background);
+        box-shadow: none !important;
+        backdrop-filter: none;
+
+        html.dark-theme & {
+            box-shadow: none !important;
+        }
+    }
+
+    // ---------------------------
+    // 通用按钮覆盖
+    // ---------------------------
+    button,
+    .user-button {
+        transition: border-color $vercel-trans-normal $vercel-ease,
+                    background-color $vercel-trans-normal $vercel-ease;
+    }
+
+    // 通用 anchor / 按钮去毛刺
+    .anchor,
+    .anchor-noback {
+        color: var(--default-fore);
+        transition: color $vercel-trans-normal $vercel-ease;
+
+        &:hover {
+            color: var(--default-fore);
+            background-color: transparent;
+        }
+    }
+
+    // ---------------------------
+    // 侧边浮动按钮栏（贴吧原生）
+    // ---------------------------
+    .tbui_aside_float_bar li {
+        border-radius: $vercel-radius-sm;
+        background-color: transparent;
+        transition: background-color $vercel-trans-normal $vercel-ease;
+
+        &:hover {
+            background-color: var(--default-hover);
+        }
+
+        &:active {
+            background-color: var(--default-active);
+        }
+    }
+
+    .tbui_aside_float_bar a {
+        color: var(--minimal-fore);
+        transition: color $vercel-trans-normal $vercel-ease;
+
+        &:hover {
+            color: var(--default-fore);
+        }
+    }
+
+    // ---------------------------
+    // 移除 Remixed 的圆角与阴影遗留
+    // ---------------------------
+    .head_inner {
+        background-color: var(--default-background) !important;
+        box-shadow: none !important;
+    }
+
+    // 移除模糊背景效果（与 Vercel 极简原则冲突）
+    .blur-effect,
+    .blur-if-custom-background {
+        backdrop-filter: none;
+    }
+
+    // ---------------------------
+    // 等级牌（保留语义但脱饱和）
+    // ---------------------------
+    .level-green,
+    .d_badge_icon1 .d_badge_lv,
+    .tieba-lvl-green {
+        background-color: var(--level-green-background) !important;
+        color: var(--level-green-fore) !important;
+    }
+
+    .level-blue,
+    .d_badge_icon2 .d_badge_lv,
+    .d_badge_icon2_1 .d_badge_lv,
+    .d_badge_icon2_2 .d_badge_lv,
+    .tieba-lvl-blue {
+        background-color: var(--level-blue-background) !important;
+        color: var(--level-blue-fore) !important;
+    }
+
+    .level-yellow,
+    .d_badge_icon3 .d_badge_lv,
+    .d_badge_icon3_1 .d_badge_lv,
+    .d_badge_icon3_2 .d_badge_lv,
+    .tieba-lvl-yellow {
+        background-color: var(--level-yellow-background) !important;
+        color: var(--level-yellow-fore) !important;
+    }
+
+    .level-orange,
+    .d_badge_icon4 .d_badge_lv,
+    .d_badge_icon4_1 .d_badge_lv,
+    .d_badge_icon4_2 .d_badge_lv,
+    .tieba-lvl-orange {
+        background-color: var(--level-orange-background) !important;
+        color: var(--level-orange-fore) !important;
+    }
+
+    // ---------------------------
+    // 选区颜色
+    // ---------------------------
+    ::selection {
+        background-color: var(--default-fore);
+        color: var(--default-background);
+    }
+}

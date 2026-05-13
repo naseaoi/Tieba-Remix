@@ -133,11 +133,13 @@ body.special_conf_skin {
 
                 .BDE_Image {
                     display: flex;
-                    width: max-content;
-                    max-width: 100%;
+                    width: auto;
+                    max-width: min(100%, 320px);
                     height: auto;
+                    max-height: 400px;
                     border-radius: 4px;
                     margin: 6px auto;
+                    object-fit: contain;
                 }
             }
         }
@@ -400,8 +402,9 @@ body.special_conf_skin {
 
     .author-container {
         display: grid;
+        align-items: center;
         margin-bottom: 8px;
-        gap: $author-container-gap;
+        gap: 4px;
         grid-template:
             "avatar name" auto
             "avatar tags" auto
@@ -430,6 +433,7 @@ body.special_conf_skin {
             color: var(--highlight-fore);
             font-size: 14px;
             font-weight: var(--font-weight-bold);
+            line-height: 18px;
             grid-area: name;
 
             @extend %anchor;
@@ -437,18 +441,22 @@ body.special_conf_skin {
 
         .badge-container {
             display: flex;
-            margin-top: -4px;
+            align-items: center;
             gap: 4px;
             grid-area: tags;
 
             .floor-badge {
                 display: flex;
+                align-items: center;
                 width: fit-content;
-                padding: 0 6px;
-                border-radius: 4px;
+                height: 14px;
+                padding: 0 4px;
+                border-radius: 3px;
                 background-color: var(--trans-light-background);
                 color: var(--light-fore);
-                gap: 6px;
+                font-size: 11px;
+                gap: 4px;
+                line-height: 14px;
 
                 .badge-level {
                     font-weight: var(--font-weight-bold);

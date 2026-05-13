@@ -1,5 +1,10 @@
 @use "@/stylesheets/components/user-button" as *;
 
+// 隐藏吧首页底部贴吧原生发帖模块
+body[hide-bottom-editor] .editor_wrap_bright {
+    display: none !important;
+}
+
 #head {
     background: unset !important;
     background-color: var(--page-background) !important;

@@ -3,6 +3,7 @@ import "@/stylesheets/main/animations.scss";
 import baseStyle from "@/stylesheets/main/base.scss?inline";
 import "@/stylesheets/main/material-symbols.css";
 import "@/stylesheets/main/palette.scss";
+import "@/stylesheets/main/palette-vercel.scss";
 import universalStyle from "@/stylesheets/main/universal.scss?inline";
 import "@/stylesheets/main/variables.scss";
 import tiebaErrorStyle from "@/stylesheets/tieba/tieba-error.scss?inline";
@@ -10,6 +11,11 @@ import tiebaForumStyle from "@/stylesheets/tieba/tieba-forum.scss?inline";
 import tiebaHomeStyle from "@/stylesheets/tieba/tieba-home.scss?inline";
 import tiebaMainStyle from "@/stylesheets/tieba/tieba-main.scss?inline";
 import tiebaThreadStyle from "@/stylesheets/tieba/tieba-thread.scss?inline";
+import vercelErrorStyle from "@/stylesheets/tieba-vercel/tieba-error.scss?inline";
+import vercelForumStyle from "@/stylesheets/tieba-vercel/tieba-forum.scss?inline";
+import vercelHomeStyle from "@/stylesheets/tieba-vercel/tieba-home.scss?inline";
+import vercelMainStyle from "@/stylesheets/tieba-vercel/tieba-main.scss?inline";
+import vercelThreadStyle from "@/stylesheets/tieba-vercel/tieba-thread.scss?inline";
 import _ from "lodash";
 import { getResource } from "../api/remixed";
 import { domrd } from "../elemental";
@@ -84,6 +90,12 @@ export async function loadMainCSS() {
         tiebaHomeStyle,
         tiebaMainStyle,
         tiebaThreadStyle,
+        // Vercel 主题样式（仅 html.style-vercel 时通过选择器作用域生效）
+        vercelMainStyle,
+        vercelForumStyle,
+        vercelThreadStyle,
+        vercelHomeStyle,
+        vercelErrorStyle,
     );
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -93,6 +105,16 @@ export async function loadMainCSS() {
             href: getResource("/assets/images/main/favicon32.ico"),
         }));
     }, { once: true });
+}
+
+/**
+ * 设置样式风格主题（Remixed / Vercel）
+ * 通过切换 <html> 的 class 控制 CSS 选择器作用域，无需重新加载
+ */
+export function setStyleTheme(value: "remixed" | "vercel") {
+    const html = document.documentElement;
+    html.classList.toggle("style-vercel", value === "vercel");
+    html.classList.toggle("style-remixed", value === "remixed");
 }
 
 let customBackgroundElement: Maybe<HTMLStyleElement> = undefined;

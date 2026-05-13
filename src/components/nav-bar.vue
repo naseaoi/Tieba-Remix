@@ -1,7 +1,6 @@
 <template>
     <nav ref="navBar" id="nav-bar" class="nav-bar remove-default"
-        :class="{ 'fold': hideMode === 'alwaysFold', 'blur-effect': !experimental.get().rasterEffect, 'raster-effect': experimental.get().rasterEffect, 'fixed-on-top': hideMode === 'fixedOnTop' }">
-        <div v-show="teiggerHide" id="fold-bar"></div>
+        :class="{ 'fold': hideMode === 'alwaysFold', 'fixed-on-top': hideMode === 'fixedOnTop' }">
 
         <div id="nav-container">
             <div class="left-container">
@@ -42,7 +41,7 @@ import { tiebaAPI } from "@/lib/api/tieba";
 import { dom } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
 import { getFloatCoord } from "@/lib/render/layout/float";
-import { experimental, GiteeRepo, GithubRepo, navBarHideMode } from "@/lib/user-values";
+import { GiteeRepo, GithubRepo, navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { messageBox, toast, UserButton } from "user-view";
@@ -61,7 +60,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const navBar = ref<HTMLDivElement>();
-const teiggerHide = ref(false);
 
 const navAvatar = ref<HTMLImageElement>();
 const userPortrait = ref<string>("");
@@ -103,7 +101,6 @@ async function init() {
 
     switch (props.hideMode) {
         case "alwaysFold":
-            teiggerHide.value = true;
             break;
 
         case "fold":
@@ -115,11 +112,9 @@ async function init() {
             const handle = _.throttle(function () {
                 if (window.scrollY > lastScrollY + threshold) {
                     navBar.value?.classList.add(modeClass);
-                    teiggerHide.value = true;
                     clearTimeout(timer);
                 } else if (window.scrollY < lastScrollY - threshold) {
                     navBar.value?.classList.remove(modeClass);
-                    teiggerHide.value = false;
                     clearTimeout(timer);
                 } else {
                     clearTimeout(timer);
@@ -286,8 +281,7 @@ function loadNavMenuContent() {
 
 <style lang="scss" scoped>
 $nav-height: 48px;
-$nav-fold-height: 16px;
-$fold-bar-height: 3px;
+$hover-trigger-height: 16px;
 
 #nav-bar {
     position: fixed;
@@ -300,54 +294,36 @@ $fold-bar-height: 3px;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--trans-page-background);
+    background-color: var(--page-background);
     box-shadow: 0 0 10px rgb(0 0 0 / 10%);
-    transition: all var(--default-duration), width 0s;
+    transition: transform var(--default-duration);
 
     html.dark-theme & {
         box-shadow: 0 0 16px rgb(0 0 0 / 60%);
     }
 
+    // 全隐藏 + 顶部 8px 悬停触发区
     &.fold {
-        transform: translateY(calc(-1 * $nav-height + $nav-fold-height));
+        transform: translateY(-100%);
+        box-shadow: none;
 
+        // 在原导航栏正下方延伸出一条不可见的触发条，覆盖到视口顶部 0 ~ 8px
         &::after {
             position: absolute;
-            top: $nav-height;
+            top: 100%;
+            left: 0;
             width: 100%;
-            height: calc($nav-height - $nav-fold-height);
+            height: $hover-trigger-height;
             content: "";
         }
 
         &:hover {
             transform: translateY(0);
-
-            #nav-container {
-                display: flex;
-            }
-
-            #fold-bar {
-                display: none;
-            }
-        }
-
-        #fold-bar {
-            position: absolute;
-            bottom: calc(($nav-fold-height - $fold-bar-height) / 2);
-            width: 60px;
-            height: $fold-bar-height;
-            border-radius: 3px;
-            margin: 0 auto;
-            background-color: var(--border-color);
-        }
-
-        #nav-container {
-            display: none;
+            box-shadow: 0 0 10px rgb(0 0 0 / 10%);
         }
     }
 
     &.hide {
-        // height: 0;
         box-shadow: none !important;
         transform: translateY(-100%);
     }

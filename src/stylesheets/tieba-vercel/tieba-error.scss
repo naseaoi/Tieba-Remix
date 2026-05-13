@@ -1,0 +1,30 @@
+@use "./tokens" as *;
+
+// =============================================
+// Vercel 风格 - 错误页 (404)
+// =============================================
+
+html.style-vercel {
+    .search-form {
+        background-color: var(--default-background);
+    }
+
+    .page404 {
+        background-color: var(--default-background);
+    }
+
+    .main-title {
+        color: var(--default-fore);
+    }
+
+    .main-title a {
+        color: var(--default-fore);
+        text-decoration: underline 1px var(--minimal-fore);
+        text-underline-offset: 2px;
+    }
+
+    .app_download_box,
+    #error_404_iframe {
+        display: none;
+    }
+}

@@ -1,0 +1,433 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+// =============================================
+// Vercel 风格 - 帖子页 (thread)
+// 同时覆盖原版与 pageExtension.thread 扩展模式
+// =============================================
+
+html.style-vercel {
+    // ---------------------------
+    // 容器
+    // ---------------------------
+    #container .content {
+        border-radius: $vercel-radius-md !important;
+        background: unset !important;
+    }
+
+    .card_top_wrap {
+        border-radius: $vercel-radius-md !important;
+        background: var(--default-background) !important;
+    }
+
+    .card_top_theme2 {
+        border: none !important;
+    }
+
+    // ---------------------------
+    // 吧图标
+    // ---------------------------
+    .card_head,
+    .plat_head_theme2 .plat_picbox {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    // ---------------------------
+    // 吧名 / 跳转
+    // ---------------------------
+    .card_top_theme2 .card_title_fname,
+    .plat_title_h3,
+    .plat_title_h3:hover,
+    .plat_title_h3:visited {
+        color: var(--default-fore) !important;
+    }
+
+    // 关注/取关按钮
+    .islike_focus {
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    .cancel_focus {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-background) !important;
+        color: var(--default-fore) !important;
+    }
+
+    // 签到按钮
+    .sign_box_bright {
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    .sign_box_bright_signed {
+        background-color: var(--default-background) !important;
+        border-color: var(--border-color) !important;
+        color: var(--default-fore) !important;
+    }
+
+    .sign_keep_span {
+        color: var(--default-fore) !important;
+    }
+
+    // ---------------------------
+    // 跳页
+    // ---------------------------
+    .jump_input_bright {
+        @include vercel-input;
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    // ---------------------------
+    // 标题栏
+    // ---------------------------
+    .core_title_wrap_bright {
+        border-color: var(--border-color) !important;
+        backdrop-filter: none !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .core_title_theme_bright,
+    .core_title_absolute_bright .core_title_theme_bright {
+        border-color: var(--border-color) !important;
+        background: var(--default-background) !important;
+    }
+
+    .left_section .core_title_absolute_bright {
+        backdrop-filter: none;
+        background-color: var(--default-background) !important;
+    }
+
+    .core_title h1 {
+        color: var(--default-fore) !important;
+    }
+
+    // 导航
+    .nav_wrap {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-background) !important;
+        background-image: none !important;
+    }
+
+    .nav_list a {
+        color: var(--default-fore) !important;
+    }
+
+    span.tP {
+        color: var(--default-fore) !important;
+    }
+
+    // 跳页按钮
+    .thread_theme_5 {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .btn_sub,
+    .btn-sub,
+    .btn-sub-b,
+    .core_title_btns li a,
+    .p_favthr_main {
+        @include vercel-button($vercel-radius-sm);
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+    }
+
+    // ---------------------------
+    // 左侧用户栏（原版）
+    // ---------------------------
+    .l_post_bright {
+        border-color: var(--border-color) !important;
+        background: none !important;
+    }
+
+    .p_author_face,
+    .icon_relative {
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    .icon_relative img {
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    .d_name .p_author_name {
+        color: var(--default-fore) !important;
+    }
+
+    // 等级牌
+    .d_badge_bright,
+    .user_level .badge {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-xs !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .d_badge_bright .d_badge_lv,
+    .user_level .badge_index {
+        background-color: var(--default-hover) !important;
+        background-image: none !important;
+        color: var(--default-fore) !important;
+        font-family: $vercel-font-mono !important;
+    }
+
+    // ---------------------------
+    // 右侧栏
+    // ---------------------------
+    .region_bright {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background: var(--default-background) !important;
+    }
+
+    .region_bright .region_title {
+        color: var(--default-fore) !important;
+    }
+
+    .pb_content {
+        border: none !important;
+        background: var(--default-background) !important;
+    }
+
+    // ---------------------------
+    // 正文
+    // ---------------------------
+    .p_content {
+        border: none !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .BDE_Image {
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    // 楼层尾
+    .post-tail-wrap,
+    .core_reply_tail:not(.clearfix) {
+        @include mono-meta;
+        color: var(--minimal-fore) !important;
+
+        .tail-info,
+        .tail-info a {
+            color: var(--minimal-fore) !important;
+        }
+
+        a:hover {
+            color: var(--default-fore) !important;
+        }
+    }
+
+    // ---------------------------
+    // 楼中楼回复
+    // 不使用外框，保持与楼层正文视觉连续，仅靠左缩进区分
+    // ---------------------------
+    .core_reply_wrapper {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: var(--default-fore) !important;
+        box-shadow: none !important;
+    }
+
+    .core_reply_content,
+    .core_reply_content li,
+    .l_post_bright .core_reply_wrapper .core_reply_border_top,
+    .core_reply_border_bottom,
+    .l_post_bright .core_reply_wrapper .core_reply_content {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .lzl_content_main {
+        color: var(--default-fore) !important;
+    }
+
+    .core_reply div.hideLzl {
+        background-color: var(--default-background) !important;
+    }
+
+    .lzl_cnt .lzl_s_r,
+    .j_lzl_m {
+        color: var(--default-fore) !important;
+    }
+
+    .lzl_cnt .lzl_time {
+        @include mono-meta($vercel-fs-xs);
+    }
+
+    .lzl_p_p {
+        border: none !important;
+        border-radius: $vercel-radius-xs !important;
+    }
+
+    .lzl_p_p img {
+        border-radius: $vercel-radius-xs !important;
+    }
+
+    // 帖子内容超链接
+    .d_post_content a,
+    .lzl_cnt .lzl_content_main a:not(.at) {
+        color: var(--default-fore) !important;
+        text-decoration: underline 1px var(--minimal-fore);
+        text-underline-offset: 2px;
+        transition: text-decoration-color $vercel-trans-normal $vercel-ease;
+
+        &:hover {
+            text-decoration-color: var(--default-fore);
+        }
+    }
+
+    // 跳页
+    .pager_theme_5 a,
+    .pager_theme_5 span,
+    .jump_btn_bright {
+        @include vercel-button($vercel-radius-sm);
+        font-family: $vercel-font-mono;
+    }
+
+    .pager_theme_5 a:hover,
+    .jump_btn_bright:hover {
+        background-color: var(--default-background) !important;
+        border-color: var(--minimal-fore) !important;
+        color: var(--default-fore) !important;
+    }
+
+    // ---------------------------
+    // 底部编辑器
+    // ---------------------------
+    .thread_theme_7 {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    #pb-footer-header {
+        background-color: var(--default-background) !important;
+    }
+
+    #tb_rich_poster_container {
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .edui-editor-body {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    .edui-container .edui-editor-body.body-container-focus,
+    .edui-container .edui-editor-body.body-container-focus .edui-body-container {
+        border-color: var(--default-fore) !important;
+    }
+
+    .old_style_wrapper {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+    }
+
+    .edui-editor-body .edui-body-container {
+        border-radius: $vercel-radius-sm !important;
+    }
+
+    .save-to-quick-reply-btn {
+        @include vercel-button($vercel-radius-sm);
+    }
+
+    // ---------------------------
+    // pageExtension.thread = true 扩展模式
+    // ---------------------------
+
+    // 标题
+    #title-wrapper {
+        .thread-title {
+            color: var(--default-fore) !important;
+            font-weight: var(--font-weight-bold) !important;
+        }
+
+        .forum-wrapper-button {
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-sm !important;
+            background-color: var(--default-background) !important;
+            backdrop-filter: none !important;
+
+            .forum-button {
+                color: var(--default-fore) !important;
+            }
+        }
+    }
+
+    // 移除装饰圆光
+    .forum-mask-wrapper {
+        display: none !important;
+    }
+
+    // 内容主容器：扩展模式下的 pb_content
+    #container .content .pb_content {
+        border-top: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md $vercel-radius-md 0 0 !important;
+        background-color: var(--default-background) !important;
+        box-shadow: none !important;
+    }
+
+    // 楼层卡片
+    .content-wrapper {
+        .author-container {
+            .floor-avatar {
+                border-radius: $vercel-radius-sm !important;
+
+                img {
+                    border-radius: $vercel-radius-sm !important;
+                }
+            }
+
+            .floor-name {
+                color: var(--default-fore) !important;
+            }
+
+            .badge-container .floor-badge {
+                border-radius: $vercel-radius-xs !important;
+                background-color: var(--default-hover) !important;
+                color: var(--light-fore) !important;
+                font-family: $vercel-font-mono;
+            }
+        }
+
+        .floor-wrapper {
+            .floor-avatar {
+                border-radius: $vercel-radius-sm !important;
+
+                img {
+                    border-radius: $vercel-radius-sm !important;
+                }
+            }
+
+            .floor-badge {
+                border-radius: $vercel-radius-xs !important;
+                background-color: var(--default-hover) !important;
+                color: var(--light-fore) !important;
+            }
+
+            .floor-info {
+                @include mono-meta;
+            }
+        }
+    }
+
+    // 回复输入框 dummy
+    #thread-jsx-components .dummy-button {
+        border-bottom: 1px solid var(--border-color) !important;
+        color: var(--minimal-fore) !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+        }
+    }
+}

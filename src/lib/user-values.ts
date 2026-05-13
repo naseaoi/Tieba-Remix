@@ -3,7 +3,7 @@ import { NavBarHideMode } from "@/components/nav-bar.vue";
 import _ from "lodash";
 import { setTheme } from "./api/remixed";
 import { setPerfAttr } from "./perf";
-import { setCustomBackground } from "./theme";
+import { setCustomBackground, setStyleTheme } from "./theme";
 import { isLiteralObject, spawnOffsetTS } from "./utils";
 
 export const MainTitle = "Tieba Remix";
@@ -185,13 +185,41 @@ export const themeType = new UserKey<"auto" | "dark" | "light">(
             setTheme(value);
         },
     });
+/** 样式风格（Remixed / Vercel） */
+export const styleTheme = new UserKey<"remixed" | "vercel">(
+    "styleTheme",
+    "remixed",
+    {
+        setter(value) {
+            setStyleTheme(value);
+        },
+    });
 /** 紧凑布局 */
 export const compactLayout = new UserKey("compactLayout", false);
 /** 宽屏设置 */
-export const wideScreen = new UserKey("wideScreen", {
-    maxWidth: 1080,
-    noLimit: false,
-});
+export const wideScreen = new UserKey(
+    "wideScreen",
+    {
+        maxWidth: 1080,
+        noLimit: false,
+    },
+    undefined,
+    // 兜底：maxWidth 缺失/非数字/过小（含历史误清空导致的 0）时回落到 1080
+    (value) => {
+        if (!value || typeof value !== "object") {
+            return { maxWidth: 1080, noLimit: false };
+        }
+        const v = value as { maxWidth?: unknown, noLimit?: unknown };
+        const mw = Number(v.maxWidth);
+        if (!Number.isFinite(mw) || mw < 320) {
+            v.maxWidth = 1080;
+        } else {
+            v.maxWidth = mw;
+        }
+        v.noLimit = Boolean(v.noLimit);
+        return v as { maxWidth: number, noLimit: boolean };
+    },
+);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#556987",
@@ -212,6 +240,8 @@ export const pageExtension = new UserKey("pageExtension", {
     index: true,
     thread: true,
 });
+/** 是否显示吧首页底部贴吧原生发帖模块 */
+export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */
 export const userFonts = new UserKey<string[]>("userFonts", []);
 /** 自定义等宽字体组合 */

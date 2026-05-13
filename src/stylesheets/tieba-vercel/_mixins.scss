@@ -1,0 +1,87 @@
+@use "./tokens" as *;
+
+// 点阵背景
+@mixin dotted-bg($color: var(--border-color), $size: 16px, $dot: 1px) {
+    background-image: radial-gradient($color $dot, transparent $dot);
+    background-size: $size $size;
+}
+
+// 网格背景
+@mixin grid-bg($color: var(--light-border-color), $size: 32px, $line: 1px) {
+    background-image:
+        linear-gradient(to right, $color $line, transparent $line),
+        linear-gradient(to bottom, $color $line, transparent $line);
+    background-size: $size $size;
+}
+
+// Vercel 风格卡片：1px 边框，无阴影，hover 仅描边变化
+@mixin vercel-card($radius: $vercel-radius-md) {
+    border: 1px solid var(--border-color);
+    border-radius: $radius;
+    background-color: var(--default-background);
+    transition: border-color $vercel-trans-normal $vercel-ease;
+
+    &:hover {
+        border-color: var(--minimal-fore);
+    }
+}
+
+// 元数据 Mono 字体
+@mixin mono-meta($size: $vercel-fs-sm) {
+    font-family: $vercel-font-mono;
+    font-size: $size;
+    color: var(--light-fore);
+    font-feature-settings: "tnum" 1; // 等宽数字
+    letter-spacing: 0;
+}
+
+// Vercel 按钮
+@mixin vercel-button($radius: $vercel-radius-sm) {
+    box-sizing: border-box;
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: $radius;
+    background-color: var(--default-background);
+    box-shadow: none;
+    color: var(--default-fore);
+    cursor: pointer;
+    transition: border-color $vercel-trans-normal $vercel-ease,
+                background-color $vercel-trans-normal $vercel-ease;
+
+    &:hover:not([disabled]) {
+        border-color: var(--minimal-fore);
+        background-color: var(--default-background);
+    }
+
+    &:active:not([disabled]) {
+        background-color: var(--default-hover);
+    }
+
+    &:focus:not([disabled]) {
+        border-color: var(--default-fore);
+        box-shadow: 0 0 0 1px var(--default-fore);
+        outline: none;
+    }
+}
+
+// Vercel 输入框
+@mixin vercel-input {
+    box-sizing: border-box;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: $vercel-radius-sm;
+    background-color: var(--default-background);
+    color: var(--default-fore);
+    outline: none;
+    transition: border-color $vercel-trans-normal $vercel-ease,
+                box-shadow $vercel-trans-normal $vercel-ease;
+
+    &:hover {
+        border-color: var(--minimal-fore);
+    }
+
+    &:focus {
+        border-color: var(--default-fore);
+        box-shadow: 0 0 0 1px var(--default-fore);
+    }
+}
