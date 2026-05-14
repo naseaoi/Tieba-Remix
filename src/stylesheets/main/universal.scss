@@ -135,7 +135,7 @@
 }
 
 .remove-default {
-    font-size: 16px;
+    font-size: 14px;
     line-height: normal !important;
 
     button,
@@ -144,7 +144,7 @@
     select,
     textarea {
         font-family: var(--code-zh);
-        font-size: 16px;
+        font-size: 14px;
     }
 
     .content {
@@ -170,6 +170,26 @@
     h4 {
         font-family: var(--code-zh);
     }
+}
+
+// user-view 库内 .check-button 默认未对齐图标，全局校准让打勾居中显示
+.user-check .check-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+    font-size: 14px !important;
+}
+
+.user-check .check-label {
+    line-height: 1.4 !important;
+    font-size: 13px !important;
 }
 
 .blur-if-custom-background {

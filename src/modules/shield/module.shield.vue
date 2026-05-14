@@ -150,7 +150,7 @@ function updateShieldList() {
             max-height: 6em;
             box-sizing: border-box;
             padding: 6px;
-            font-size: 16px;
+            font-size: 13px;
             resize: none;
         }
 

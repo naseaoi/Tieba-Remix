@@ -1,0 +1,167 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+// Vercel 风格 - 设置面板覆盖
+// 作用域：html.style-vercel 下的 .settings-wrapper 及对话框外壳
+
+html.style-vercel {
+    // UserDialog 外壳
+    .user-dialog-modal .user-dialog.default {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        box-shadow: $vercel-shadow-md !important;
+        transition: border-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    &.dark-theme .user-dialog-modal .user-dialog.default {
+        box-shadow: 0 4px 16px rgb(0 0 0 / 24%) !important;
+    }
+
+    // 把 user-view 库的 --user-* 命名空间桥接到项目中性变量
+    .settings-wrapper {
+        --user-back: var(--default-background);
+        --user-back-deep: var(--deep-background);
+        --user-back-light: var(--light-background);
+        --user-hover: var(--default-hover);
+        --user-active: var(--default-active);
+        --user-fore: var(--default-fore);
+        --user-fore-light: var(--light-fore);
+        --user-fore-minimal: var(--minimal-fore);
+        --user-fore-highlight: var(--highlight-fore);
+        --user-border: var(--border-color);
+        --user-border-light: var(--light-border-color);
+        --user-theme: var(--default-fore);
+        --user-theme-hover: var(--default-fore);
+        --user-theme-active: var(--default-fore);
+        --user-theme-fore: var(--default-fore);
+        --user-theme-back: var(--default-hover);
+        --user-theme-transp: var(--default-hover);
+    }
+
+    // 文本输入：1px 边框 + Vercel 聚焦环（user-view 内置 2px 需显式覆盖）
+    .settings-wrapper .sidebar-search.user-textbox,
+    .settings-wrapper .widget-textbox.user-textbox {
+        padding: 6px 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        transition:
+            border-color $vercel-trans-normal $vercel-ease,
+            box-shadow $vercel-trans-normal $vercel-ease !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+            box-shadow: 0 0 0 1px var(--default-fore) !important;
+        }
+    }
+
+    .settings-wrapper .widget-textbox.is-textarea {
+        font-family: $vercel-font-mono;
+    }
+
+    .settings-wrapper .user-button {
+        padding: 6px 12px;
+        border-radius: $vercel-radius-sm;
+        font-size: $vercel-fs-sm;
+        transition:
+            border-color $vercel-trans-normal $vercel-ease,
+            background-color $vercel-trans-normal $vercel-ease;
+    }
+
+    .settings-wrapper .user-select .select-toggle {
+        border-radius: $vercel-radius-sm;
+    }
+
+    .settings-wrapper .sidebar-title {
+        letter-spacing: -0.01em;
+    }
+
+    .settings-wrapper .breadcrumb {
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-xs;
+        letter-spacing: 0;
+    }
+
+    .settings-wrapper .nav-group-label {
+        font-family: $vercel-font-mono;
+        letter-spacing: 0.06em;
+    }
+
+    .settings-wrapper .about-wrapper {
+        .main-title .title {
+            font-size: $vercel-fs-2xl;
+            font-style: normal;
+        }
+
+        .script-info .author-info {
+            .version,
+            .author {
+                font-family: $vercel-font-mono;
+                font-size: $vercel-fs-sm;
+                color: var(--light-fore);
+                font-feature-settings: "tnum" 1;
+                letter-spacing: 0;
+            }
+
+            .version {
+                padding: 1px 6px;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-xs;
+            }
+        }
+    }
+
+    .settings-wrapper .update-wrapper {
+        .latest-info {
+            border-radius: $vercel-radius-sm;
+            font-size: $vercel-fs-sm;
+        }
+
+        .title-container .title {
+            font-size: $vercel-fs-lg;
+        }
+
+        .is-pre-release {
+            border-radius: $vercel-radius-xs;
+            font-family: $vercel-font-mono;
+            font-size: $vercel-fs-xs;
+        }
+
+        .main-info .owner {
+            font-family: $vercel-font-mono;
+            color: var(--light-fore);
+        }
+
+        .release-body.markdown {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-md;
+            background-color: var(--default-background);
+            font-size: $vercel-fs-sm;
+            line-height: $vercel-lh-normal;
+
+            code {
+                padding: 0 4px;
+                border-radius: $vercel-radius-xs;
+                background-color: var(--deep-background);
+                font-family: $vercel-font-mono;
+                font-size: 0.9em;
+            }
+
+            pre {
+                padding: 12px;
+                border-radius: $vercel-radius-sm;
+                background-color: var(--deep-background);
+                overflow-x: auto;
+            }
+        }
+
+        .update-controls .up-button.download-button {
+            border-radius: $vercel-radius-sm;
+            font-size: $vercel-fs-sm;
+        }
+    }
+}

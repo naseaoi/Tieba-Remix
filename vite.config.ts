@@ -13,7 +13,7 @@ const scriptOptions: MonkeyOption = {
         namespace: "https://github.com/naseaoi/Tieba-Remix",
         version: "0.4.7-beta",
         description: "贴吧网页端重塑",
-        author: "锯条",
+        author: "naseaoi",
         license: "MIT",
         updateURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
         downloadURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
@@ -53,6 +53,8 @@ const commonConfig = defineConfig({
         outDir: "build",
         reportCompressedSize: false,
         cssCodeSplit: false,
+        // 静态资源 base64 内联上限
+        assetsInlineLimit: 4 * 1024 * 1024,
         rollupOptions: {
             output: {
                 globals: {

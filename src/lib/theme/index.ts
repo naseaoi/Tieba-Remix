@@ -15,6 +15,7 @@ import vercelErrorStyle from "@/stylesheets/tieba-vercel/tieba-error.scss?inline
 import vercelForumStyle from "@/stylesheets/tieba-vercel/tieba-forum.scss?inline";
 import vercelHomeStyle from "@/stylesheets/tieba-vercel/tieba-home.scss?inline";
 import vercelMainStyle from "@/stylesheets/tieba-vercel/tieba-main.scss?inline";
+import vercelSettingsStyle from "@/stylesheets/tieba-vercel/settings.scss?inline";
 import vercelThreadStyle from "@/stylesheets/tieba-vercel/tieba-thread.scss?inline";
 import _ from "lodash";
 import { getResource } from "../api/remixed";
@@ -96,6 +97,7 @@ export async function loadMainCSS() {
         vercelThreadStyle,
         vercelHomeStyle,
         vercelErrorStyle,
+        vercelSettingsStyle,
     );
 
     document.addEventListener("DOMContentLoaded", function () {

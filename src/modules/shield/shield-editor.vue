@@ -73,7 +73,7 @@ function deleteRule() {
 
         #shield-editor-rule {
             flex: 1;
-            font-size: 16px;
+            font-size: 13px;
         }
 
         label {

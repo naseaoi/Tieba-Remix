@@ -109,9 +109,6 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
 
                     "custom-background": {
-                        title: "自定义背景图",
-                        description:
-                            `上传图片作为页面背景图`,
                         widgets: [{
                             type: "component",
                             component: markRaw(LayoutCustomBack),
@@ -515,13 +512,10 @@ export const getUserSettings = _.once((): UserSettings => ({
             "factory-reset": {
                 name: "重置所有配置",
                 content: {
-                    "title": {
+                    "reset": {
                         title: "重置所有配置",
                         description:
                             `如果你需要将脚本的一切配置恢复默认，请使用此功能`,
-                    },
-
-                    "reset": {
                         widgets: [{
                             type: "button",
                             content: "重置",
@@ -574,6 +568,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
 
                     "update-notify": {
+                        title: "弹窗更新",
                         widgets: [{
                             type: "toggle",
                             content: `启用一个对话框提示用户更新，该对话框可以立即安装更新，也可以推迟更新操作`,

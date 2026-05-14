@@ -14,6 +14,7 @@ import { installForumImageTakeover } from "./lib/tieba-components/forum-image-ta
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
+import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType, wideScreen } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
@@ -21,6 +22,11 @@ import { AllModules, waitUntil } from "./lib/utils";
 setTheme(themeType.get());
 setStyleTheme(styleTheme.get());
 darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
+
+// 将页面类型标记到 <html data-page-type="..."> 上，供 CSS 按页面类型限定作用域。
+// 这样 vercel/tieba-thread.scss 等"虽然按文件名属于某页"但实际全局注入的样式，
+// 可以通过 html[data-page-type="..."] 真正约束在对应页面，避免误伤其它页面。
+document.documentElement.dataset.pageType = currentPageType();
 
 // 吧首页：Vercel 主题下接管缩略图点击 → 复用项目内大图查看器
 installForumImageTakeover();
@@ -33,6 +39,9 @@ installForumPinnedFoldWatcher();
 
 // 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
 installThreadFloorTag();
+
+// 帖子页：一行多图智能排列（包成 grid，删除组内 <br>）
+installThreadImageGrid();
 
 Promise.all([
     loadDynamicCSS(),

@@ -109,7 +109,9 @@ html.style-vercel {
     }
 
     // 帖子页隐藏顶部「看帖/图片/吧主推荐」导航栏（与帖子阅读无关，且与 vercel 极简风冲突）
-    .nav_wrap {
+    // loadMainCSS() 把本文件全局注入，必须用 [data-page-type="thread"] 限定到 thread 页，
+    // 否则会误伤 forum (吧首页) 等同样存在 .nav_wrap 的页面
+    &[data-page-type="thread"] .nav_wrap {
         display: none !important;
     }
 
@@ -204,18 +206,54 @@ html.style-vercel {
         border-radius: $vercel-radius-sm !important;
     }
 
-    // ---------------------------
-    // 长图折叠占位（贴吧原生 .replace_div + .replace_tip）
-    // 原生 JS 按图片"自然尺寸 > 阈值"判定，给 <img> 加 inline display:none 并插入展开按钮。
-    // vercel 主题下图片已通过 CSS 限制在合理尺寸（扩展模式下 max-width: 320px / max-height: 400px），
-    // "点击展开"中间态不再有意义；强制直接显示图片，并彻底隐藏占位按钮。
-    // ---------------------------
+    // 长图占位：贴吧原生 JS 在 .replace_div 上注入 inline width/height（按原图自然尺寸）作为
+    // 「点击展开」占位，必须强制覆盖否则图片缩小后容器仍按原始高度撑开 → 下方留大块空白
+    .replace_div {
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        text-align: center !important;
+    }
+
     .replace_div .BDE_Image {
         display: inline-block !important;
     }
 
     .replace_tip {
         display: none !important;
+    }
+
+    // 一行多图智能排列：installThreadImageGrid 把连续图片包到 .vercel-image-grid，删除组内 <br>
+    // - auto-fit（非 auto-fill）：空轨道宽度折叠为 0，少图组才能被 justify-content 居中
+    // - grid-auto-rows 固定 180px + object-fit: cover：避免行高跟随图片自然尺寸，单元格内不再
+    //   留白；否则留白属于 <img> 元素，鼠标点击间距空白会触发图片预览
+    .vercel-image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 200px));
+        grid-auto-rows: 180px;
+        gap: 3px;
+        justify-content: center;
+        margin: 8px 0;
+
+        .BDE_Image {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            object-fit: cover !important;
+            border-radius: $vercel-radius-sm !important;
+        }
+
+        > .replace_div {
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden;
+            text-align: unset !important;
+        }
     }
 
     // 楼层尾

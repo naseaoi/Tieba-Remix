@@ -1,107 +1,151 @@
 <template>
     <UserDialog v-bind="dialogOpts">
         <div class="settings-wrapper remove-default">
-            <div class="left-container">
-                <div class="search-controls">
-                    <div class="title">设置</div>
+            <!-- 左栏：标题 + 搜索 + 目录 -->
+            <aside class="settings-sidebar">
+                <header class="sidebar-header">
+                    <h1 class="sidebar-title">设置</h1>
+                    <UserTextbox v-model="searchText" class="sidebar-search" placeholder="搜索设置..."
+                        @update:model-value="debSearchKey" />
+                </header>
 
-                    <!-- 搜索文本框 -->
-                    <UserTextbox v-model="searchText" class="search-box" placeholder="输入需要搜索的设置"
-                        @update:model-value="debSearchKey"></UserTextbox>
-                </div>
-
-                <div class="left-panel">
-                    <UserButton v-for="setting in userSettings" class="key-button main-key"
-                        :class="{ 'selected': selectedKey?.name === setting.name }" @click="selectMainKey(setting)"
-                        no-border="all">
-                        <div class="main-key-selected"></div>
-                        <div class="icon">{{ setting.icon }}</div>
-
-                        <div class="key-info">
-                            <div class="key-title">{{ setting.name }}</div>
-                            <div class="key-desc">{{ setting.description }}</div>
+                <nav class="sidebar-nav">
+                    <div v-for="main in userSettings" :key="main.name" class="nav-group">
+                        <div class="nav-group-label">
+                            <span class="material-symbols-outlined nav-group-icon">{{ main.icon }}</span>
+                            <span class="nav-group-name">{{ main.name }}</span>
                         </div>
-                    </UserButton>
-                </div>
-            </div>
+                        <ul class="nav-list">
+                            <li v-for="sub in main.sub" :key="sub.name" class="nav-item"
+                                :class="{ active: selectedSubKey?.name === sub.name && selectedKey?.name === main.name }"
+                                @click="selectSubByPath(main, sub)">
+                                {{ sub.name }}
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </aside>
 
-            <div class="middle-container" v-show="selectedKey">
-                <UserButton v-for="setting in selectedKey?.sub" class="key-button sub-key"
-                    :class="{ 'selected': selectedSubKey?.name === setting.name }" @click="selectSubKey(setting)"
-                    no-border="all">
-                    <div class="key-title">{{ setting.name }}</div>
-                </UserButton>
-            </div>
+            <!-- 右栏：面包屑 + 大标题 + 滚动内容 -->
+            <main class="settings-main">
+                <header class="main-header" v-if="selectedSubKey">
+                    <div class="breadcrumb">
+                        <span class="crumb">{{ selectedKey?.name }}</span>
+                        <span class="material-symbols-outlined crumb-sep">chevron_right</span>
+                        <span class="crumb current">{{ selectedSubKey?.name }}</span>
+                    </div>
+                    <h2 class="main-title">{{ selectedSubKey?.name }}</h2>
+                    <p class="main-desc" v-if="selectedSubKey?.description">{{ selectedSubKey.description }}</p>
+                </header>
 
-            <div class="right-container">
-                <div :key="Math.random()" v-if="selectedSubKey?.name" v-for="content in selectedSubKey.content"
-                    class="setting-content">
-                    <h3 v-if="content?.title" class="content-title">{{ content?.title }}</h3>
-                    <p v-if="content?.description" class="content-desc">
-                    <p v-if="content?.description" v-for="line in content.description.split('\n')" class="line">
-                        {{ line }}
-                    </p>
-                    </p>
-
-                    <div v-if="content?.widgets" v-for="widget in content.widgets" class="setting-control">
-                        <!-- Toggle -->
-                        <UserCheck v-if="widget.type === 'toggle'" class="settings-toggle"
-                            :model-value="widget.init ? widget.init() : undefined"
-                            :text="typeof widget.content === 'string' ? widget.content : undefined"
-                            @change="widget.event" />
-
-                        <!-- Icon -->
-                        <div v-if="widget.type === 'icon'" class="icon-component icon">{{ widget.content }}
+                <section class="main-body" v-if="selectedSubKey">
+                    <template v-for="(content, key) in selectedSubKey.content" :key="key">
+                        <!-- 纯组件页（about 项目信息 / 更新页等）：不包卡片 -->
+                        <div v-if="content && isComponentOnly(content)" class="setting-component-wrap">
+                            <component :is="content.widgets![0].component" @change-view="changeView" />
                         </div>
 
-                        <!-- Button -->
-                        <UserButton v-if="widget.type === 'button'" @click="widget.event" shadow-border>
-                            {{ widget.content }}</UserButton>
+                        <!-- 简单行：title + 描述 在左，单一控件 在右 -->
+                        <div v-else-if="content && isSimpleRow(content)" class="setting-row simple">
+                            <div class="row-text">
+                                <div v-if="content.title" class="row-title">{{ content.title }}</div>
+                                <p v-for="(line, idx) in resolveSimpleDesc(content)" :key="idx" class="row-desc">{{ line }}</p>
+                            </div>
+                            <div class="row-control">
+                                <SettingSwitch v-if="content.widgets![0].type === 'toggle'"
+                                    :model-value="!!content.widgets![0].init?.()"
+                                    @change="content.widgets![0].event?.($event)" />
 
-                        <!-- Select -->
-                        <UserSelect v-if="widget.type === 'select' && Array.isArray(widget.content)"
-                            class="settings-select" :data="widget.content as UserSelectItem[]"
-                            :default-value="widget.init?.()" @change="widget.event" />
+                                <UserButton v-else-if="content.widgets![0].type === 'button'"
+                                    class="row-button" @click="content.widgets![0].event">
+                                    {{ content.widgets![0].content }}
+                                </UserButton>
 
-                        <!-- SubTitle -->
-                        <h4 v-if="widget.type === 'subTitle'" class="content-sub-title">{{ widget.content }}</h4>
-
-                        <!-- Description -->
-                        <div v-if="widget.type === 'desc'" class="content-desc">
-                            <div v-if="widget.content && typeof widget.content === 'string'"
-                                v-for="line in widget.content.split('\n')" class="line">
-                                {{ line }}
+                                <SettingSelect v-else-if="content.widgets![0].type === 'select'"
+                                    class="row-select"
+                                    :data="content.widgets![0].content as UserSelectItem[]"
+                                    :default-value="content.widgets![0].init?.()"
+                                    @change="content.widgets![0].event" />
                             </div>
                         </div>
 
-                        <!-- Textbox & TextArea -->
-                        <UserTextbox v-if="_.includes(['textbox', 'textarea'], widget.type)" class="content-textbox"
-                            :class="{ 'textarea': widget.type === 'textarea' }"
-                            :value="widget.init ? widget.init() : ''" :muti-lines="widget.type === 'textarea'"
-                            :placeholder="widget.placeHolder" @change="widget.event">
-                        </UserTextbox>
+                        <!-- 复合行：顶部 title/描述，下方按序渲染 widgets -->
+                        <div v-else-if="content" class="setting-row composite">
+                            <div v-if="content.title || content.description" class="row-head">
+                                <div v-if="content.title" class="row-title">{{ content.title }}</div>
+                                <div v-if="content.description" class="row-desc">
+                                    <p v-for="(line, idx) in splitLines(content.description)" :key="idx">{{ line }}</p>
+                                </div>
+                            </div>
 
-                        <!-- Image -->
-                        <img v-if="widget.type === 'image'" class="content-image" :src="widget.content?.toString()"
-                            :alt="widget.altContent" :title="widget.altContent" @load="widget.init">
+                            <div v-if="content.widgets?.length" class="row-body">
+                                <template v-for="(widget, widx) in content.widgets" :key="widx">
+                                    <h4 v-if="widget.type === 'subTitle'" class="widget-subtitle">{{ widget.content }}</h4>
 
-                        <!-- Component -->
-                        <component v-if="widget.component" :is="widget?.component" @change-view="changeView">
-                        </component>
-                    </div>
-                </div>
-                <div v-else class="empty-container filled-icon">settings</div>
-            </div>
+                                    <div v-else-if="widget.type === 'desc'" class="widget-desc">
+                                        <p v-for="(line, idx) in splitLines(widget.content as string)" :key="idx">{{ line }}</p>
+                                    </div>
+
+                                    <!-- 复合内嵌 toggle：横向 标签 + 滑块 -->
+                                    <div v-else-if="widget.type === 'toggle'" class="widget-toggle">
+                                        <div class="toggle-label">{{ widget.content }}</div>
+                                        <SettingSwitch :model-value="!!widget.init?.()" @change="widget.event?.($event)" />
+                                    </div>
+
+                                    <UserButton v-else-if="widget.type === 'button'" class="widget-button"
+                                        @click="widget.event">{{ widget.content }}</UserButton>
+
+                                    <SettingSelect v-else-if="widget.type === 'select' && Array.isArray(widget.content)"
+                                        class="widget-select"
+                                        :data="widget.content as UserSelectItem[]"
+                                        :default-value="widget.init?.()" @change="widget.event" />
+
+                                    <UserTextbox v-else-if="widget.type === 'textbox' || widget.type === 'textarea'"
+                                        class="widget-textbox"
+                                        :class="{ 'is-textarea': widget.type === 'textarea' }"
+                                        :value="widget.init ? widget.init() : ''"
+                                        :muti-lines="widget.type === 'textarea'"
+                                        :placeholder="widget.placeHolder" @change="widget.event" />
+
+                                    <div v-else-if="widget.type === 'icon'" class="widget-icon material-symbols-outlined">
+                                        {{ widget.content }}
+                                    </div>
+
+                                    <img v-else-if="widget.type === 'image'" class="widget-image"
+                                        :src="widget.content?.toString()" :alt="widget.altContent"
+                                        :title="widget.altContent" @load="widget.init">
+
+                                    <component v-else-if="widget.component" class="widget-component"
+                                        :is="widget.component" @change-view="changeView" />
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </section>
+
+                <!-- 默认空态 -->
+                <section v-else class="main-empty">
+                    <span class="material-symbols-outlined empty-icon">tune</span>
+                    <p class="empty-tip">从左侧选择一项以开始配置</p>
+                </section>
+
+                <!-- 底部 desc 悬浮提示条（由 SettingSelect 等控件 hover 时填充） -->
+                <transition name="desc-pop">
+                    <div v-if="hoverDesc" class="main-desc-floater">{{ hoverDesc }}</div>
+                </transition>
+            </main>
         </div>
     </UserDialog>
 </template>
 
 <script lang="tsx" setup>
+import SettingSelect from "@/components/setting-select.vue";
+import SettingSwitch from "@/components/setting-switch.vue";
 import { SupportedComponent } from "@/ex";
 import { getUserSettings } from "@/lib/common/settings";
 import _ from "lodash";
-import { UserButton, UserCheck, UserDialog, UserDialogOpts, UserSelect, UserSelectItem, UserTextbox } from "user-view";
-import { ref } from "vue";
+import { UserButton, UserDialog, UserDialogOpts, UserSelectItem, UserTextbox } from "user-view";
+import { onMounted, provide, ref } from "vue";
 
 export interface UserSettings {
     [props: string]: MainSettingKey;
@@ -147,14 +191,17 @@ const dialogOpts: UserDialogOpts = {
     modal: true,
     lockScroll: true,
     modalStyle: {
-        justifyContent: "flex-start",
+        alignItems: "center",
+        justifyContent: "center",
     },
     containerStyle: {
         display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "max-content",
-        maxWidth: "var(--content-max)",
+        flexDirection: "row",
+        width: "min(960px, 92vw)",
+        height: "min(640px, 86vh)",
+        maxWidth: "92vw",
+        maxHeight: "86vh",
+        padding: "0",
         overflow: "hidden",
     },
 };
@@ -163,13 +210,16 @@ const searchText = ref("");
 const selectedKey = ref<MainSettingKey>();
 const selectedSubKey = ref<SubSettingKey>();
 
-function selectMainKey(key: MainSettingKey) {
-    selectedKey.value = key;
-    selectedSubKey.value = undefined;
-}
+// 底部 desc 悬浮提示：由 SettingSelect 等子控件通过 inject 写入
+const hoverDesc = ref("");
+provide("settingHoverDesc", {
+    set: (text: string) => { hoverDesc.value = text || ""; },
+    clear: () => { hoverDesc.value = ""; },
+});
 
-function selectSubKey(key: SubSettingKey) {
-    selectedSubKey.value = key;
+function selectSubByPath(main: MainSettingKey, sub: SubSettingKey) {
+    selectedKey.value = main;
+    selectedSubKey.value = sub;
 }
 
 function changeView(key: string, sub: string) {
@@ -183,26 +233,62 @@ function clearSelections() {
 }
 
 function searchKey() {
-    if (searchText.value.length <= 0) {
-        clearSelections();
-        return;
-    }
+    if (searchText.value.length <= 0) return;
 
     if (!_.find(userSettings, (mainKey) => {
-        if (_.find(mainKey.sub, (subKey) => {
+        return !!_.find(mainKey.sub, (subKey) => {
             if (subKey.name.toLowerCase().includes(searchText.value.toLowerCase())) {
                 selectedKey.value = mainKey;
                 selectedSubKey.value = subKey;
                 return true;
-            } else {
-                return false;
             }
-        })) return true;
-        else return false;
+            return false;
+        });
     })) clearSelections();
 }
 
-const debSearchKey = _.debounce(searchKey, 500);
+const debSearchKey = _.debounce(searchKey, 300);
+
+// 渲染辅助
+const SIMPLE_TYPES = new Set(["toggle", "button", "select"]);
+
+function isSimpleRow(content: SettingContent): boolean {
+    const widgets = content.widgets ?? [];
+    if (widgets.length !== 1) return false;
+    return SIMPLE_TYPES.has(widgets[0].type);
+}
+
+function isComponentOnly(content: SettingContent): boolean {
+    if (content.title || content.description) return false;
+    const widgets = content.widgets ?? [];
+    if (widgets.length !== 1) return false;
+    return widgets[0].type === "component" && !!widgets[0].component;
+}
+
+function splitLines(text?: string): string[] {
+    if (!text) return [];
+    return text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+}
+
+function resolveSimpleDesc(content: SettingContent): string[] {
+    if (content.description) return splitLines(content.description);
+    const w = content.widgets?.[0];
+    // toggle 的 widget.content 通常是描述文字
+    if (w?.type === "toggle" && typeof w.content === "string") return splitLines(w.content);
+    return [];
+}
+
+// 首次打开默认选中第一个分类的第一个子分类
+onMounted(() => {
+    const firstMain = _.values(userSettings)[0];
+    if (firstMain) {
+        const firstSub = _.values(firstMain.sub)[0];
+        if (firstSub) {
+            selectedKey.value = firstMain;
+            selectedSubKey.value = firstSub;
+        }
+    }
+});
 
 defineExpose({
     dialogOpts,
@@ -210,269 +296,439 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-$wrapper-padding: 16px;
+// ---------- 设计令牌（本组件内私有）----------
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$gap-row: 12px;
+$pad-row: 14px 16px;
+$sidebar-width: 240px;
+$ease: cubic-bezier(0.4, 0, 0.2, 1);
+$dur: 0.18s;
 
-@keyframes content-in {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
-.key-button {
-    display: flex;
-    overflow: hidden;
-    min-width: 120px;
-    align-items: center;
-    padding: 12px;
-    border-radius: 0;
-    font-size: 16px;
-    gap: 12px;
-    text-align: justify;
-    transition: var(--default-duration);
-    white-space: nowrap;
-
-    .icon {
-        font-size: 20px;
-        font-variation-settings: "FILL" 0, "wght" 300;
-        transition:
-            all var(--default-duration),
-            margin-left var(--fast-duration) ease-out;
-    }
-
-    .key-info {
-        display: flex;
-        width: calc(100% - 2 * $wrapper-padding);
-        flex-direction: column;
-    }
-
-    .key-title,
-    .key-desc {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .key-desc {
-        color: var(--minimal-fore);
-        font-size: 14px;
-    }
-
-    &.main-key {
-        box-sizing: content-box;
-
-        .main-key-selected {
-            position: relative;
-            width: 0;
-            height: 100%;
-            border-radius: 24px;
-            margin-left: -12px;
-            background-color: var(--tieba-theme-color);
-
-            &::after {
-                position: absolute;
-                top: 0;
-                width: 0;
-                height: 100%;
-                border-radius: 24px;
-                background-color: var(--tieba-theme-color);
-                content: "";
-            }
-        }
-
-        &.selected {
-            color: var(--tieba-theme-fore) !important;
-
-            .main-key-selected {
-                padding-right: 4px;
-
-                &::after {
-                    width: 4px;
-                }
-            }
-
-            .icon {
-                margin-left: 4px;
-                font-variation-settings: "FILL" 1, "GRAD" 48, "wght" 300;
-                font-weight: var(--font-weight-normal);
-            }
-
-            .key-desc {
-                color: var(--tieba-theme-color);
-            }
-        }
-    }
-
-    &.sub-key {
-        text-decoration: none;
-        transition: var(--default-duration);
-
-        &.selected {
-            color: var(--tieba-theme-fore);
-            text-decoration: underline var(--tieba-theme-color) 2px;
-        }
-    }
-}
-
+// ---------- 整体容器 ----------
 .settings-wrapper {
     display: flex;
+    overflow: hidden;
     width: 100%;
-    max-width: var(--content-max);
     height: 100%;
-    box-sizing: border-box;
+    background-color: var(--default-background);
+    font-size: 14px;
+}
 
-    .left-container {
+// ---------- 左栏侧边目录 ----------
+.settings-sidebar {
+    display: flex;
+    overflow: hidden;
+    width: $sidebar-width;
+    min-width: $sidebar-width;
+    flex-direction: column;
+    background-color: var(--deep-background);
+    border-right: 1px solid var(--border-color);
+
+    .sidebar-header {
         display: flex;
-        width: 30%;
-        max-width: 280px;
         flex-direction: column;
-        border-right: 2px solid var(--light-border-color);
+        padding: 16px 16px 12px;
+        gap: 10px;
 
-        .search-controls {
-            display: flex;
-            flex-direction: column;
-            padding: 0 $wrapper-padding $wrapper-padding 0;
-            gap: 8px;
-
-            .title {
-                margin-top: 8px;
-                color: var(--default-fore) !important;
-                font-size: 20px;
-                font-weight: var(--font-weight-bold);
-                line-height: normal;
-            }
-
-            .search-box {
-                padding: 6px;
-                font-size: 14px;
-            }
+        .sidebar-title {
+            margin: 0;
+            color: var(--highlight-fore);
+            font-size: 18px;
+            font-weight: var(--font-weight-bold);
+            line-height: 1.2;
         }
 
-        .left-panel {
-            display: flex;
+        .sidebar-search {
             box-sizing: border-box;
-            flex-direction: column;
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 13px;
         }
     }
 
-    .middle-container {
+    .sidebar-nav {
         display: flex;
-        width: 20%;
-        max-width: 220px;
+        overflow-y: auto;
+        flex: 1;
         flex-direction: column;
-        padding: 0 6px;
-        border-right: 2px solid var(--light-border-color);
+        padding: 4px 8px 16px;
+        gap: 4px;
+
+        // 细滚动条（无 track 背景）
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: var(--minimal-fore);
+        }
+
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 0 4px;
+        }
+
+        .nav-group-label {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            color: var(--minimal-fore);
+            font-size: 11px;
+            font-weight: var(--font-weight-bold);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            gap: 6px;
+            user-select: none;
+
+            .nav-group-icon {
+                font-size: 14px;
+                font-variation-settings: "FILL" 0, "wght" 400;
+            }
+        }
+
+        .nav-list {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            margin: 2px 0 0;
+            list-style: none;
+            gap: 1px;
+        }
+
+        .nav-item {
+            padding: 7px 10px 7px 28px;
+            border-radius: $radius-sm;
+            color: var(--default-fore);
+            cursor: pointer;
+            font-size: 13px;
+            transition:
+                background-color $dur $ease,
+                color $dur $ease;
+
+            &:hover:not(.active) {
+                background-color: var(--default-hover);
+            }
+
+            &.active {
+                background-color: var(--default-hover);
+                color: var(--highlight-fore);
+                font-weight: var(--font-weight-bold);
+            }
+        }
+    }
+}
+
+// ---------- 右栏主区 ----------
+.settings-main {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    flex: 1;
+    flex-direction: column;
+    background-color: var(--default-background);
+
+    .main-header {
+        display: flex;
+        flex-direction: column;
+        padding: 18px 24px 14px;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--default-background);
         gap: 6px;
 
-        .sub-key {
+        .breadcrumb {
             display: flex;
-            padding: 8px 16px;
-            border-radius: 12px;
+            align-items: center;
+            color: var(--minimal-fore);
+            font-size: 12px;
             gap: 4px;
 
-            .key-title {
+            .crumb-sep {
                 font-size: 14px;
             }
+
+            .crumb.current {
+                color: var(--default-fore);
+            }
         }
 
-        .sub-key:not(:hover, :active, :focus) {
-            background-color: unset;
+        .main-title {
+            margin: 0;
+            color: var(--highlight-fore);
+            font-size: 20px;
+            font-weight: var(--font-weight-bold);
+            line-height: 1.3;
+        }
+
+        .main-desc {
+            margin: 0;
+            color: var(--light-fore);
+            font-size: 13px;
         }
     }
 
-    $wrapper-padding-2x: $wrapper-padding * 2;
-    $wrapper-padding-nega: -$wrapper-padding;
-
-    .right-container {
+    .main-body {
         display: flex;
-        overflow: auto;
-        width: 50%;
+        overflow-y: auto;
+        flex: 1;
         flex-direction: column;
-        flex-grow: 1;
-        padding: $wrapper-padding;
-        margin: $wrapper-padding-nega $wrapper-padding-nega $wrapper-padding-nega 0;
-        font-size: 16px;
-        gap: 32px;
+        padding: 16px 24px 24px;
+        gap: $gap-row;
 
-        .setting-content {
+        // 细滚动条（无 track 背景）
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: var(--minimal-fore);
+        }
+    }
+
+    .main-empty {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--minimal-fore);
+        gap: 12px;
+
+        .empty-icon {
+            font-size: 56px;
+            font-variation-settings: "FILL" 0, "wght" 300;
+        }
+
+        .empty-tip {
+            margin: 0;
+            font-size: 13px;
+        }
+    }
+
+    // 底部 desc 悬浮提示条：位于 settings-main 右下，跨 main-body 滚动区，从下方滑入
+    .main-desc-floater {
+        position: absolute;
+        z-index: 30;
+        right: 16px;
+        bottom: 14px;
+        left: 16px;
+        max-width: 720px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin: 0 auto;
+        background-color: var(--default-background);
+        box-shadow: 0 6px 18px rgb(0 0 0 / 12%);
+        color: var(--light-fore);
+        font-size: 12.5px;
+        line-height: 1.5;
+        pointer-events: none;
+    }
+}
+
+// 悬浮条进入/退出动画
+.desc-pop-enter-active,
+.desc-pop-leave-active {
+    transition:
+        opacity 0.18s $ease,
+        transform 0.18s $ease;
+}
+
+.desc-pop-enter-from,
+.desc-pop-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+// ---------- 设置行 ----------
+.setting-row {
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-md;
+    background-color: var(--default-background);
+    transition: border-color $dur $ease;
+
+    &:hover {
+        border-color: var(--minimal-fore);
+    }
+
+    // 简单行：左标题右控件
+    &.simple {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $pad-row;
+        gap: 16px;
+
+        .row-text {
+            display: flex;
+            min-width: 0;
+            flex: 1;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .row-control {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+        }
+    }
+
+    // 复合行：上下堆叠
+    &.composite {
+        display: flex;
+        flex-direction: column;
+        padding: $pad-row;
+        gap: 12px;
+
+        .row-head {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 3px;
+        }
 
-            .content-title {
-                margin: 8px 0 0;
-                color: var(--highlight-fore);
-                font-size: 18px;
-                font-weight: var(--font-weight-bold);
-            }
-
-            .content-sub-title {
-                margin: 4px 0 0;
-                color: var(--default-fore);
-                font-size: 16px;
-                font-weight: var(--font-weight-bold);
-            }
-
-            .content-desc {
-                display: flex;
-                flex-direction: column;
-                color: var(--light-fore);
-                gap: 6px;
-            }
-
-            .content-textbox {
-                box-sizing: content-box;
-
-                &.textarea {
-                    width: 100%;
-                    height: 6em;
-                    resize: none;
-                }
-            }
-
-            .content-image {
-                max-width: 100%;
-                max-height: 320px;
-                border-radius: 8px;
-                margin: 0 auto;
-            }
-
-            .setting-control {
-                display: flex;
-
-                .settings-toggle {
-                    background: none;
-                    font-size: 36px;
-
-                    &.toggle-on {
-                        color: var(--tieba-theme-color);
-                    }
-
-                    &.toggle-on:hover {
-                        color: var(--tieba-theme-fore);
-                    }
-                }
-
-                .icon-component {
-                    margin-left: auto;
-                    font-size: 64px;
-                    font-variation-settings: "FILL" 1;
-                }
-
-                .settings-select {
-                    width: min(100%, 280px);
-                }
-            }
+        .row-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
     }
 
-    .empty-container {
-        margin: auto;
-        color: var(--minimal-fore);
-        font-size: 72px;
+    .row-title {
+        color: var(--highlight-fore);
+        font-size: 14px;
+        font-weight: var(--font-weight-bold);
+        line-height: 1.35;
     }
+
+    .row-desc {
+        margin: 0;
+        color: var(--light-fore);
+        font-size: 12.5px;
+        line-height: 1.5;
+    }
+}
+
+// ---------- 行内控件样式 ----------
+.row-button,
+.widget-button {
+    min-width: 72px;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+
+.row-select,
+.widget-select {
+    width: min(100%, 240px);
+}
+
+.widget-subtitle {
+    margin: 6px 0 0;
+    color: var(--default-fore);
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+}
+
+.widget-desc {
+    color: var(--light-fore);
+    font-size: 12.5px;
+    line-height: 1.5;
+
+    p {
+        margin: 0;
+    }
+}
+
+.widget-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px solid var(--light-border-color);
+    gap: 16px;
+
+    &:first-child {
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .toggle-label {
+        flex: 1;
+        color: var(--default-fore);
+        font-size: 13px;
+        line-height: 1.5;
+    }
+}
+
+.widget-textbox {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 13px;
+
+    &.is-textarea {
+        min-height: 7em;
+        font-family: var(--code-monospace);
+        resize: vertical;
+    }
+}
+
+.widget-icon {
+    margin: 4px auto;
+    color: var(--minimal-fore);
+    font-size: 52px;
+    font-variation-settings: "FILL" 1;
+    text-align: center;
+}
+
+.widget-image {
+    max-width: 100%;
+    max-height: 280px;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-md;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.widget-component {
+    display: block;
+}
+
+// 纯组件页容器（不包卡片）：撑满 main-body 让内部组件自行控制居中
+.setting-component-wrap {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
 }
 </style>

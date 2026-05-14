@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!forbidden" class="update-wrapper">
+    <div v-if="release" class="update-wrapper">
         <div v-if="isLatest !== undefined" class="latest-info" :class="{ 'is-latest': isLatest }">
             <div class="icon">{{ isLatest ? 'check' : 'warning' }}</div>
             <div class="content">{{ isLatest ? '当前是最新版本' : '检测到新版本' }}</div>
@@ -24,36 +24,68 @@
         </div>
     </div>
 
-    <div v-else class="forbidden-wrapper">
-        <div class="icon">warning</div>
-        <div class="forbidden-text">请求过于频繁，请稍后重试</div>
+    <div v-else-if="loading" class="status-wrapper">
+        <div class="icon">sync</div>
+        <div class="status-text">正在检查更新...</div>
+    </div>
+
+    <div v-else class="status-wrapper">
+        <div class="icon">{{ errorIcon }}</div>
+        <div class="status-text">{{ errorText }}</div>
+        <UserButton v-if="canRetry" class="retry-button" shadow-border @click="loadRelease">重新检查</UserButton>
     </div>
 </template>
 
 <script lang="ts" setup>
 import { GM_info } from "$";
-import { getLatestReleaseFromGitee } from "@/lib/api/remixed";
+import { ReleaseFetchErrorKind, getLatestReleaseFromGitee } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
 import { marked } from "marked";
 import { UserButton } from "user-view";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const release = ref<GiteeRelease>();
-const forbidden = ref(false);
 const isLatest = ref<boolean>();
+const loading = ref(true);
+const errorKind = ref<ReleaseFetchErrorKind>();
+const errorText = ref("");
 
 const scriptInfo = GM_info;
 
-onMounted(async () => {
-    const latest = await getLatestReleaseFromGitee();
-    if (latest) {
-        forbidden.value = false;
-        release.value = latest;
-        isLatest.value = `v${scriptInfo.script.version}` >= release.value.tag_name;
-    } else {
-        forbidden.value = true;
+const errorIcon = computed(() => {
+    switch (errorKind.value) {
+        case "disabled": return "do_not_disturb_on";
+        case "ratelimit": return "hourglass_top";
+        case "network": return "wifi_off";
+        case "notfound": return "inventory_2";
+        default: return "warning";
     }
 });
+
+const canRetry = computed(() => errorKind.value !== "disabled");
+
+async function loadRelease() {
+    loading.value = true;
+    errorKind.value = undefined;
+    errorText.value = "";
+    release.value = undefined;
+    isLatest.value = undefined;
+
+    // 强制刷新跳过缓存
+    const outcome = await getLatestReleaseFromGitee(true);
+
+    loading.value = false;
+
+    if (outcome.release) {
+        release.value = outcome.release;
+        isLatest.value = `v${scriptInfo.script.version}` >= outcome.release.tag_name;
+    } else {
+        errorKind.value = outcome.errorKind;
+        errorText.value = outcome.errorMessage ?? "未知错误";
+    }
+}
+
+onMounted(loadRelease);
 </script>
 
 <style lang="scss" scoped>
@@ -129,22 +161,38 @@ onMounted(async () => {
             font-size: 15px;
             font-weight: var(--font-weight-bold);
         }
-
-        .up-name {
-            font-family: var(--code-monospace);
-        }
     }
 }
 
-.forbidden-wrapper {
+.status-wrapper {
     display: flex;
-    width: 100%;
-    height: 100%;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    padding: 24px 12px;
+    gap: 10px;
+    color: var(--light-fore);
+    text-align: center;
 
     .icon {
-        font-size: 64px;
+        font-family: var(--symbol-font, "Material Symbols Outlined");
+        font-size: 56px;
+        color: var(--minimal-fore);
+        line-height: 1;
+    }
+
+    .status-text {
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 360px;
+    }
+
+    .retry-button {
+        margin-top: 4px;
+        padding: 6px 14px;
+        font-size: 13px;
+        border-radius: 6px;
     }
 }
 </style>

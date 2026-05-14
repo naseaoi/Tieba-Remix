@@ -1,5 +1,5 @@
 import { GM_getValue, GM_info, GM_listValues, GM_openInTab, GM_setValue } from "$";
-import { GiteeRelease, GiteeReleaseNotFound, GiteeRepo, Owner, RepoName, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
+import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { marked } from "marked";
@@ -46,35 +46,75 @@ export function currentPageType(): PageType {
     return "unhandled";
 }
 
-export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<Maybe<GiteeRelease>> {
+export type ReleaseFetchErrorKind = "disabled" | "ratelimit" | "network" | "server" | "notfound";
+
+export interface ReleaseFetchOutcome {
+    release?: GiteeRelease;
+    errorKind?: ReleaseFetchErrorKind;
+    errorMessage?: string;
+}
+
+/** 拉取最新 Release，区分成功 / 禁用 / 速率限制 / 网络 / 服务器 / 未找到 */
+export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<ReleaseFetchOutcome> {
     if (latestRelease.get() && !forceUpdate) {
-        return latestRelease.get();
-    } else {
-        const TTL = (function () {
-            switch (updateConfig.get().time) {
-                case "1h": return 1;
-                case "3h": return 3;
-                case "6h": return 6;
-                case "never": return -1;
-            }
-        })();
-
-        if (TTL < 0) return;
-
-        const updateUrl = `https://gitee.com/api/v5/repos/${Owner}/${RepoName}/releases/latest/`;
-
-        const response = await fetch(updateUrl);
-
-        if (response.ok) {
-            const result = await response.json();
-            if ((result as GiteeReleaseNotFound).message) return;
-
-            latestRelease.set(result, spawnOffsetTS(0, 0, 0, TTL));
-            return result;
-        } else {
-            return;
-        }
+        return { release: latestRelease.get() };
     }
+
+    const TTL = (function () {
+        switch (updateConfig.get().time) {
+            case "1h": return 1;
+            case "3h": return 3;
+            case "6h": return 6;
+            case "never": return -1;
+        }
+    })();
+
+    if (TTL < 0) {
+        return { errorKind: "disabled", errorMessage: "自动检查更新已关闭，请前往「检查更新设置」开启" };
+    }
+
+    const updateUrl = `https://api.github.com/repos/${Owner}/${RepoName}/releases/latest`;
+
+    let response: Response;
+    try {
+        response = await fetch(updateUrl);
+    } catch (err) {
+        return {
+            errorKind: "network",
+            errorMessage: `网络请求失败：${(err as Error)?.message ?? "未知错误"}`,
+        };
+    }
+
+    if (response.status === 403 || response.status === 429) {
+        return { errorKind: "ratelimit", errorMessage: "GitHub 接口请求频率限制，请稍后再试" };
+    }
+    if (response.status === 404) {
+        return { errorKind: "notfound", errorMessage: "尚未发布任何 Release" };
+    }
+    if (!response.ok) {
+        return {
+            errorKind: "server",
+            errorMessage: `请求失败：HTTP ${response.status} ${response.statusText}`,
+        };
+    }
+
+    let result: any;
+    try {
+        result = await response.json();
+    } catch {
+        return { errorKind: "server", errorMessage: "响应解析失败" };
+    }
+
+    if ((result as GiteeReleaseNotFound)?.message && !result?.tag_name) {
+        return { errorKind: "server", errorMessage: (result as GiteeReleaseNotFound).message };
+    }
+
+    if (result?.author && !result.author.name) {
+        result.author.name = result.author.login;
+    }
+
+    latestRelease.set(result, spawnOffsetTS(0, 0, 0, TTL));
+    return { release: result };
 }
 
 export function checkUpdateAndNotify(showLatest = false) {
@@ -88,7 +128,7 @@ export function checkUpdateAndNotify(showLatest = false) {
     // 开发者专用
     if (GM_info.script.version === "developer-only") return;
 
-    getLatestReleaseFromGitee().then((latestRelease) => {
+    getLatestReleaseFromGitee().then(({ release: latestRelease }) => {
         if (latestRelease && latestRelease.tag_name.slice(1) !== GM_info.script.version) {
             // 忽略当前版本
             if (ignoredTag.get() === latestRelease.tag_name) return;
@@ -169,7 +209,8 @@ export function installFromRelease(release: GiteeRelease) {
 }
 
 export function getResource(path: string) {
-    return `${GiteeRepo}/raw/beta/${path}`;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+    return `https://raw.githubusercontent.com/${Owner}/${RepoName}/master/${cleanPath}`;
 }
 
 export function setTheme(theme: ReturnType<typeof themeType.get>) {
