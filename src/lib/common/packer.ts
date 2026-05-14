@@ -22,8 +22,8 @@ export function parseUserModules(
         // 先判断模块是否开启
         const runnable = (() => {
             if (currentModule.switch || currentModule.switch === undefined) {
-                // 用户配置优先级最高，可以直接否决
-                if (disabledSet.has(currentModule.id)) {
+                // 用户配置优先级最高，可以直接否决（remixed-theme 为常驻模块，不可禁用）
+                if (currentModule.id !== "remixed-theme" && disabledSet.has(currentModule.id)) {
                     return false;
                 }
 

@@ -18,6 +18,7 @@ body[hide-bottom-editor] .editor_wrap_bright {
 .threadlist_title a:hover,
 .threadlist_title a:visited {
     color: var(--tieba-theme-fore) !important;
+    text-decoration: none !important;
 }
 
 .u_menu_item a {

@@ -28,25 +28,18 @@ import { hexToRGBA, rgbaToHSLA } from "../utils/color";
 
 export const darkPrefers = matchMedia("(prefers-color-scheme: dark)");
 
-/** 动态样式 */
-export async function loadDynamicCSS() {
+/** 主题色专用 style 元素，可反复替换内容 */
+let themeColorStyleEl: HTMLStyleElement | undefined;
+
+/** 实时应用主题色到 CSS 变量（同时覆盖 dark/light 两种模式） */
+export function applyThemeColor() {
     const theme = themeColor.get();
     const darkRGBA = hexToRGBA(theme.dark);
     const lightRGBA = hexToRGBA(theme.light);
     const darkHSLA = rgbaToHSLA(darkRGBA);
     const lightHSLA = rgbaToHSLA(lightRGBA);
 
-    const dynCSS = parseMultiCSS({
-        ":root": {
-            "--content-max": wideScreen.get().noLimit
-                ? "100vw"
-                : `${wideScreen.get().maxWidth}px`,
-            "--code-zh": `${_.join(userFonts.get(), ",")}`,
-            "--code-monospace": `${_.join(monospaceFonts.get(), ",")}`,
-            "--font-weight-normal": `${fontWeights.get().normal}`,
-            "--font-weight-bold": `${fontWeights.get().bold}`,
-        },
-
+    const css = parseMultiCSS({
         "html.dark-theme": {
             "--tieba-theme-color": theme.dark,
             "--trans-tieba-theme-color": `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 80%)`,
@@ -55,7 +48,6 @@ export async function loadDynamicCSS() {
             "--tieba-theme-background": `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 24%)`,
             "--tieba-theme-fore": `hsl(${darkHSLA.h}deg 100% 75%)`,
         },
-
         "html.light-theme": {
             "--tieba-theme-color": theme.light,
             "--trans-tieba-theme-color": `rgb(${lightRGBA.r} ${lightRGBA.g} ${lightRGBA.b} / 80%)`,
@@ -66,7 +58,32 @@ export async function loadDynamicCSS() {
         },
     });
 
+    if (!themeColorStyleEl) {
+        themeColorStyleEl = document.createElement("style");
+        themeColorStyleEl.id = "remixed-theme-color";
+        document.head.appendChild(themeColorStyleEl);
+    }
+    themeColorStyleEl.textContent = css;
+}
+
+/** 动态样式 */
+export async function loadDynamicCSS() {
+    const dynCSS = parseMultiCSS({
+        ":root": {
+            "--content-max": wideScreen.get().noLimit
+                ? "100vw"
+                : `${wideScreen.get().maxWidth}px`,
+            "--code-zh": `${_.join(userFonts.get(), ",")}`,
+            "--code-monospace": `${_.join(monospaceFonts.get(), ",")}`,
+            "--font-weight-normal": `${fontWeights.get().normal}`,
+            "--font-weight-bold": `${fontWeights.get().bold}`,
+        },
+    });
+
     GM_addStyle(dynCSS);
+
+    // 主题色通过独立 <style> 标签注入，支持实时替换
+    applyThemeColor();
 
     window.addEventListener("load", function () {
         GM_addStyle(

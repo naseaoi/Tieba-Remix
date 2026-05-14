@@ -160,11 +160,6 @@ export const perfProfile = new UserKey<PerfType>("perfProfile", "default", {
 export const disabledModules = new UserKey<string[]>("disabledModules", []);
 /** 未读推送 */
 export const unreadFeeds = new UserKeyTS<TiebaPost[]>("unreadFeeds", []);
-/** 实验性功能配置 */
-export const experimental = new UserKey("experimental", {
-    moreBlurEffect: false,
-    rasterEffect: false,
-});
 /** 最新发行版相关信息 */
 export const latestRelease = new UserKeyTS<Maybe<GiteeRelease>>("latestRelease", undefined);
 /** 更新配置 */
@@ -188,7 +183,7 @@ export const themeType = new UserKey<"auto" | "dark" | "light">(
 /** 样式风格（Remixed / Vercel） */
 export const styleTheme = new UserKey<"remixed" | "vercel">(
     "styleTheme",
-    "remixed",
+    "vercel",
     {
         setter(value) {
             setStyleTheme(value);
@@ -200,19 +195,19 @@ export const compactLayout = new UserKey("compactLayout", false);
 export const wideScreen = new UserKey(
     "wideScreen",
     {
-        maxWidth: 1080,
+        maxWidth: 982,
         noLimit: false,
     },
     undefined,
-    // 兜底：maxWidth 缺失/非数字/过小（含历史误清空导致的 0）时回落到 1080
+    // 兜底：maxWidth 缺失/非数字/过小（含历史误清空导致的 0）时回落到 982
     (value) => {
         if (!value || typeof value !== "object") {
-            return { maxWidth: 1080, noLimit: false };
+            return { maxWidth: 982, noLimit: false };
         }
         const v = value as { maxWidth?: unknown, noLimit?: unknown };
         const mw = Number(v.maxWidth);
         if (!Number.isFinite(mw) || mw < 320) {
-            v.maxWidth = 1080;
+            v.maxWidth = 982;
         } else {
             v.maxWidth = mw;
         }
@@ -243,18 +238,18 @@ export const pageExtension = new UserKey("pageExtension", {
 /** 是否显示吧首页底部贴吧原生发帖模块 */
 export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */
-export const userFonts = new UserKey<string[]>("userFonts", []);
+export const userFonts = new UserKey<string[]>("userFonts", ["Microsoft YaHei"]);
 /** 自定义等宽字体组合 */
 export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
     "Consolas", "JetBrains Mono", "Fira Code", "Menlo", "monospace",
 ]);
 /** 导航栏模式 */
-export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "fold");
+export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "never");
 /** 自定义样式 */
 export const customStyle = new UserKey<string>("customStyle", "");
 export const fontWeights = new UserKey("fontWeights", {
     "normal": 400,
-    "bold": 700,
+    "bold": 600,
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
 

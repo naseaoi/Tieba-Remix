@@ -953,10 +953,19 @@ html.style-vercel {
             font-size: $vercel-fs-lg !important;
             font-weight: var(--font-weight-bold) !important;
             line-height: 1.4 !important;
+            text-decoration: none !important;
             -webkit-line-clamp: 2 !important;
             -webkit-box-orient: vertical !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
+
+            &:hover,
+            &:focus,
+            &:active,
+            &:visited {
+                color: var(--default-fore) !important;
+                text-decoration: none !important;
+            }
         }
 
         // ---------------------------
@@ -967,6 +976,7 @@ html.style-vercel {
             grid-area: rep !important;
             display: inline-flex !important;
             align-items: center !important;
+            align-self: center !important;
             justify-self: end !important;
             height: auto !important;
             width: auto !important;
@@ -977,11 +987,17 @@ html.style-vercel {
             color: var(--default-fore) !important;
             font-weight: var(--font-weight-bold) !important;
             float: none !important;
+            gap: 4px !important;
+            line-height: 1 !important;
 
             &::before {
-                content: "▸ ";
-                margin-right: 2px;
-                color: var(--minimal-fore);
+                content: "";
+                width: 14px;
+                height: 14px;
+                flex: 0 0 14px;
+                background-color: var(--minimal-fore);
+                mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
+                -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
             }
         }
 
@@ -993,14 +1009,17 @@ html.style-vercel {
             grid-area: author !important;
             display: inline-flex !important;
             align-items: center !important;
+            align-self: center !important;
             justify-self: end !important;
             width: auto !important;
-            max-width: 280px !important;
+            max-width: 420px !important;
+            min-width: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
             float: none !important;
             border-top: none !important;
             gap: 6px !important;
+            line-height: 1 !important;
             text-align: right !important;
 
             @include mono-meta($vercel-fs-xs);
@@ -1010,10 +1029,14 @@ html.style-vercel {
         .threadlist_author .tb_icon_author,
         .threadlist_author .frs-author-name-wrap,
         .threadlist_author .frs-author-name {
+            display: inline-flex !important;
+            align-items: center !important;
             max-width: none !important;
             width: auto !important;
+            margin: 0 !important;
             overflow: visible !important;
             text-overflow: clip !important;
+            line-height: 1 !important;
             white-space: nowrap !important;
         }
 

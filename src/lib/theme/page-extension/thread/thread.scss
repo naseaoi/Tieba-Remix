@@ -162,7 +162,7 @@ body.special_conf_skin {
     flex-direction: column;
     padding: $floor-padding;
     margin: auto;
-    margin-top: 48px;
+    margin-top: 64px;
 
     @media (min-width: 1200px) {
         max-width: 60%;
@@ -298,8 +298,14 @@ body.special_conf_skin {
     }
 
     .thread-title {
+        display: flex;
         max-width: 60%;
-        font-size: 32px;
+        margin: 0;
+        padding-left: 12px;
+        border-left: 4px solid var(--tieba-theme-color);
+        align-items: center;
+        font-size: 28px;
+        font-weight: var(--font-weight-normal);
         line-height: 36px;
         text-align: left;
     }
@@ -310,36 +316,17 @@ body.special_conf_skin {
         width: max-content;
         height: max-content;
         align-items: center;
-        padding: 0;
-        border-radius: 4px;
+        padding: 3px 6px 3px 3px;
+        border-radius: 8px;
         background-color: var(--trans-light-background) !important;
-        gap: 8px;
+        gap: 4px;
 
         @include blur-if-custom-background;
 
-        &:last-child {
-            padding-right: 8px;
-        }
-
         .forum-icon {
-            width: 36px;
-            height: 36px;
-        }
-
-        .forum-name {
-            font-size: 14px;
-            font-weight: var(--font-weight-bold);
-        }
-
-        .forum-info {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-
-            .forum-members {
-                display: flex;
-                gap: 8px;
-            }
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
         }
 
         .button-container {
@@ -347,9 +334,9 @@ body.special_conf_skin {
             align-items: center;
 
             .forum-button {
-                padding: 0 4px;
+                padding: 0 2px;
                 color: var(--tieba-theme-color);
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: var(--font-weight-bold);
 
                 &:not(:hover, :active, :focus) {

@@ -16,10 +16,9 @@ html.style-vercel {
     // 顶部导航栏（脚本注入的 #nav-bar）
     // ---------------------------
     #nav-bar {
-        border-bottom: 1px solid var(--border-color);
-        background-color: var(--default-background);
+        border: 1px solid var(--border-color);
+        background-color: var(--trans-default-background);
         box-shadow: none !important;
-        backdrop-filter: none;
 
         html.dark-theme & {
             box-shadow: none !important;

@@ -1,12 +1,12 @@
 <template>
     <button type="button" class="setting-switch" role="switch" :aria-checked="innerValue" :disabled="disabled"
-        :class="{ on: innerValue }" @click="toggle">
+        :class="{ on: innerValue }" :style="switchStyle" @click="toggle">
         <span class="switch-thumb"></span>
     </button>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
     modelValue: boolean;
@@ -22,6 +22,13 @@ const innerValue = ref(!!props.modelValue);
 
 watch(() => props.modelValue, v => {
     innerValue.value = !!v;
+});
+
+const switchStyle = computed(() => {
+    if (innerValue.value) {
+        return { background: "var(--tieba-theme-color)" };
+    }
+    return {};
 });
 
 function toggle() {
@@ -42,7 +49,7 @@ function toggle() {
     padding: 0;
     border: none;
     border-radius: 999px;
-    background-color: var(--border-color);
+    background: var(--border-color);
     cursor: pointer;
     outline: none;
     transition:
@@ -63,45 +70,27 @@ function toggle() {
             background-color 0.2s ease;
     }
 
-    &:hover:not(:disabled) {
-        background-color: var(--minimal-fore);
+    &:hover:not(:disabled):not(.on) {
+        background: var(--minimal-fore);
     }
 
     &.on {
-        background-color: #000 !important;
-
         .switch-thumb {
             transform: translateX(16px);
         }
 
-        &:hover {
-            background-color: #222 !important;
+        &:hover:not(:disabled) {
+            background: var(--tieba-theme-hover) !important;
         }
     }
 
     &:focus-visible {
-        box-shadow: 0 0 0 2px var(--default-background), 0 0 0 4px #000;
+        box-shadow: 0 0 0 2px var(--default-background), 0 0 0 4px var(--tieba-theme-color);
     }
 
     &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
     }
-}
-
-.dark-theme .setting-switch.on {
-    background-color: #fff !important;
-
-    .switch-thumb {
-        background-color: #000;
-    }
-
-    &:hover {
-        background-color: #e6e6e6 !important;
-    }
-}
-
-.dark-theme .setting-switch:focus-visible {
-    box-shadow: 0 0 0 2px var(--default-background), 0 0 0 4px #fff;
 }
 </style>

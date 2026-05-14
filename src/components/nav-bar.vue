@@ -1,34 +1,63 @@
 <template>
-    <nav ref="navBar" id="nav-bar" class="nav-bar remove-default"
-        :class="{ 'fold': hideMode === 'alwaysFold', 'fixed-on-top': hideMode === 'fixedOnTop' }">
+    <div v-if="isFolded" class="nav-reveal-zone" @mouseenter="handleRevealZoneEnter"
+        @mouseleave="handleRevealZoneLeave"></div>
+
+    <nav ref="navBar" id="nav-bar" class="nav-bar remove-default" :class="{ fold: isFolded, revealed: isRevealActive }"
+        @mouseenter="handleNavMouseEnter" @mouseleave="handleNavMouseLeave" @transitionend="handleNavTransitionEnd">
 
         <div id="nav-container">
             <div class="left-container">
-                <UserButton class="nav-button nav-title-container" is-anchor href="/" no-border="all">
-                    <img :src="getResource('/assets/images/main/icon64.png')" alt="" class="nav-icon">
-                    <p class="nav-title">贴吧</p>
-                </UserButton>
+                <a class="nav-brand" href="/">百度贴吧</a>
             </div>
 
             <div class="right-container">
-                <div class="middle-container">
-                    <template v-for="(menu, key) in middleMenu" :key="key">
-                        <UserButton class="menu-trigger middle-menu-trigger" no-border="all">
-                            {{ key }}
-                            <DropdownMenu class="nav-menu" :menu-items="menu"></DropdownMenu>
-                        </UserButton>
-                    </template>
-                </div>
-
-                <UserButton class="nav-button menu-trigger avatar-button" no-border="all">
-                    <img ref="navAvatar" class="nav-avatar">
-                    <DropdownMenu class="nav-menu" :menu-items="userMenu!"></DropdownMenu>
+                <!-- 消息 -->
+                <UserButton class="nav-icon-button menu-trigger" data-menu-trigger="message" no-border="all"
+                    @mouseenter="handleMenuTriggerEnter($event, 'message')"
+                    @mouseleave="handleMenuTriggerLeave($event, 'message')">
+                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                    </svg>
+                    <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'message' }" data-menu-key="message"
+                        :menu-items="messageMenu" @mouseenter="handleMenuPanelEnter('message')"
+                        @mouseleave="handleMenuPanelLeave($event, 'message')" @request-close="closeMenus"></DropdownMenu>
                 </UserButton>
 
-                <UserButton class="nav-button menu-trigger menu-button" shadow-border no-border="all">
-                    <div class="icon">menu</div>
-                    <DropdownMenu class="nav-menu" :menu-items="extendMenu!">
-                    </DropdownMenu>
+                <!-- 更多 -->
+                <UserButton class="nav-icon-button menu-trigger" data-menu-trigger="more" no-border="all"
+                    @mouseenter="handleMenuTriggerEnter($event, 'more')"
+                    @mouseleave="handleMenuTriggerLeave($event, 'more')">
+                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="19" cy="12" r="1" />
+                        <circle cx="5" cy="12" r="1" />
+                    </svg>
+                    <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'more' }" data-menu-key="more"
+                        :menu-items="moreMenu" @mouseenter="handleMenuPanelEnter('more')"
+                        @mouseleave="handleMenuPanelLeave($event, 'more')" @request-close="closeMenus"></DropdownMenu>
+                </UserButton>
+
+                <!-- 设置 -->
+                <UserButton class="nav-icon-button" no-border="all" @click="renderDialog(Settings)">
+                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                </UserButton>
+
+                <!-- 头像 -->
+                <UserButton class="nav-icon-button menu-trigger avatar-button" data-menu-trigger="user" no-border="all"
+                    @mouseenter="handleMenuTriggerEnter($event, 'user')"
+                    @mouseleave="handleMenuTriggerLeave($event, 'user')">
+                    <img ref="navAvatar" class="nav-avatar">
+                    <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'user' }" data-menu-key="user"
+                        :menu-items="userMenu!" @mouseenter="handleMenuPanelEnter('user')"
+                        @mouseleave="handleMenuPanelLeave($event, 'user')" @request-close="closeMenus"></DropdownMenu>
                 </UserButton>
             </div>
         </div>
@@ -36,20 +65,19 @@
 </template>
 
 <script lang="ts" setup>
-import { checkUpdateAndNotify, getResource } from "@/lib/api/remixed";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
-import { getFloatCoord } from "@/lib/render/layout/float";
-import { GiteeRepo, GithubRepo, navBarHideMode } from "@/lib/user-values";
+import { navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { messageBox, toast, UserButton } from "user-view";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";
 import Settings from "./settings.vue";
 
-export type NavBarHideMode = "fold" | "alwaysFold" | "hideWhenScroll" | "fixedOnTop" | "never";
+export type NavBarHideMode = "fold" | "alwaysFold" | "never";
+type MenuKey = "message" | "more" | "user";
 
 interface Props {
     hideMode?: NavBarHideMode
@@ -59,14 +87,32 @@ const props = withDefaults(defineProps<Props>(), {
     hideMode: navBarHideMode.get(),
 });
 
-const navBar = ref<HTMLDivElement>();
+const navBar = ref<HTMLElement>();
 
 const navAvatar = ref<HTMLImageElement>();
 const userPortrait = ref<string>("");
+const activeMenu = ref<MenuKey | null>(null);
+const isAutoFolded = ref(false);
+const isRevealActive = ref(false);
+const isMenuReady = ref(props.hideMode === "never");
 
-const middleMenu = ref<{ [props: string]: DropdownMenu[] } | undefined>({});
+const messageMenu = ref<DropdownMenu[]>([]);
+const moreMenu = ref<DropdownMenu[]>([]);
 const userMenu = ref<DropdownMenu[]>([]);
-const extendMenu = ref<DropdownMenu[]>([]);
+
+const isFolded = computed(() => props.hideMode === "alwaysFold" || (props.hideMode === "fold" && isAutoFolded.value));
+
+watch(isFolded, (folded) => {
+    activeMenu.value = null;
+    if (folded) {
+        isRevealActive.value = false;
+        isMenuReady.value = false;
+        return;
+    }
+
+    isRevealActive.value = false;
+    isMenuReady.value = true;
+}, { immediate: true });
 
 init();
 onMounted(async function () {
@@ -78,50 +124,139 @@ onMounted(async function () {
     }
 });
 
+function positionMenu(trigger: HTMLElement) {
+    const menu = trigger.querySelector(".nav-menu") as HTMLElement;
+    if (!menu || !navBar.value) return;
+    const triggerRect = trigger.getBoundingClientRect();
+    const navRect = navBar.value.getBoundingClientRect();
+    menu.style.top = `${navRect.bottom}px`;
+    // nav-menu is positioned inside the nav bar context, so its horizontal offset
+    // needs to be relative to the nav bar instead of the viewport.
+    menu.style.left = `${triggerRect.left - navRect.left + triggerRect.width / 2 - menu.offsetWidth / 2}px`;
+}
+
+function revealNav() {
+    if (!isFolded.value || isRevealActive.value) return;
+    isRevealActive.value = true;
+    isMenuReady.value = false;
+}
+
+function closeMenus() {
+    activeMenu.value = null;
+}
+
+function hideNav() {
+    closeMenus();
+    if (!isFolded.value) return;
+    isRevealActive.value = false;
+    isMenuReady.value = false;
+}
+
+function handleRevealZoneEnter() {
+    revealNav();
+}
+
+function handleRevealZoneLeave(e: MouseEvent) {
+    if (shouldKeepNavVisible(e.relatedTarget)) return;
+    hideNav();
+}
+
+function handleNavMouseEnter() {
+    revealNav();
+}
+
+function handleNavMouseLeave(e: MouseEvent) {
+    if (shouldKeepNavVisible(e.relatedTarget)) return;
+    hideNav();
+}
+
+function handleNavTransitionEnd(e: TransitionEvent) {
+    if (e.target !== navBar.value || e.propertyName !== "transform") return;
+    if (!isFolded.value) {
+        isMenuReady.value = true;
+        syncHoveredMenu();
+        return;
+    }
+    if (isRevealActive.value) {
+        isMenuReady.value = true;
+        syncHoveredMenu();
+    }
+}
+
+function handleMenuTriggerEnter(e: MouseEvent, key: MenuKey) {
+    if (!isMenuReady.value) return;
+    positionMenu(e.currentTarget as HTMLElement);
+    activeMenu.value = key;
+}
+
+function handleMenuTriggerLeave(e: MouseEvent, key: MenuKey) {
+    const nextTarget = e.relatedTarget as Element | null;
+    const menu = getMenuElement(key);
+    if (menu && nextTarget && menu.contains(nextTarget)) return;
+
+    if (activeMenu.value === key) {
+        activeMenu.value = null;
+    }
+}
+
+function handleMenuPanelEnter(key: MenuKey) {
+    activeMenu.value = key;
+}
+
+function handleMenuPanelLeave(e: MouseEvent, key: MenuKey) {
+    const nextTarget = e.relatedTarget as Element | null;
+    const trigger = getTriggerElement(key);
+    if (trigger && nextTarget && trigger.contains(nextTarget)) return;
+
+    if (activeMenu.value === key) {
+        activeMenu.value = null;
+    }
+    if (shouldKeepNavVisible(nextTarget)) return;
+    hideNav();
+}
+
+function getMenuElement(key: MenuKey) {
+    return navBar.value?.querySelector<HTMLElement>(`.nav-menu[data-menu-key="${key}"]`) ?? null;
+}
+
+function getTriggerElement(key: MenuKey) {
+    return navBar.value?.querySelector<HTMLElement>(`.menu-trigger[data-menu-trigger="${key}"]`) ?? null;
+}
+
+function syncHoveredMenu() {
+    if (!isMenuReady.value || !navBar.value) return;
+    const hoveredTrigger = navBar.value.querySelector<HTMLElement>(".menu-trigger:hover");
+    const key = hoveredTrigger?.dataset.menuTrigger as MenuKey | undefined;
+    if (!hoveredTrigger || !key) return;
+
+    positionMenu(hoveredTrigger);
+    activeMenu.value = key;
+}
+
+function shouldKeepNavVisible(target: EventTarget | null) {
+    const element = target instanceof Element ? target : null;
+    if (!element) return false;
+    return !!element.closest("#nav-bar, .nav-reveal-zone, .nav-menu");
+}
+
 async function init() {
     await waitUntil(() => PageData !== undefined).then(() => {
         userPortrait.value = PageData.user.portrait;
         loadNavMenuContent();
     });
 
-    const navBarElement = dom("#nav-bar");
-    if (navBarElement) {
-        _.forEach(dom<"button">(".menu-trigger", navBarElement, []), el => {
-            el.addEventListener("mousemove", function (e) {
-                e.stopPropagation();
-                const menu = el.lastElementChild as HTMLElement;
-
-                const elRect = el.getBoundingClientRect();
-                const menuCoord = getFloatCoord(menu, { x: elRect.left + elRect.width / 2, y: 0 }, "middle");
-                menu.style.left = `${menuCoord.x}px`;
-                menu.style.top = "48px";
-            });
-        });
-    }
-
     switch (props.hideMode) {
         case "alwaysFold":
             break;
 
-        case "fold":
-        case "hideWhenScroll": {
-            const modeClass = props.hideMode === "fold" ? "fold" : "hide";
-            const threshold = 50, timeout = 1000;
+        case "fold": {
             let lastScrollY = window.scrollY;
-            let timer = -1;
             const handle = _.throttle(function () {
-                if (window.scrollY > lastScrollY + threshold) {
-                    navBar.value?.classList.add(modeClass);
-                    clearTimeout(timer);
-                } else if (window.scrollY < lastScrollY - threshold) {
-                    navBar.value?.classList.remove(modeClass);
-                    clearTimeout(timer);
-                } else {
-                    clearTimeout(timer);
-                    timer = setTimeout(handle, timeout);
+                if (window.scrollY > lastScrollY) {
+                    isAutoFolded.value = true;
                 }
                 lastScrollY = window.scrollY;
-            });
+            }, 100);
             window.addEventListener("scroll", handle);
             break;
         }
@@ -163,60 +298,58 @@ async function login() {
 }
 
 function loadNavMenuContent() {
-    middleMenu.value = {
-        "消息": [
-            {
-                title: "查看私信",
-                href: "/im/pcmsg",
-            },
-            {
-                title: "查看回复",
-                href: `/i/sys/jump?u=${userPortrait.value}&type=replyme`,
-            },
-            {
-                title: "查看 @",
-                href: `/i/sys/jump?u=${userPortrait.value}&type=atme`,
-            },
-            "separator",
-            {
-                title: "查看好友申请",
-                href: `/i/sys/jump?u=${userPortrait.value}&type=friendapply`,
-            },
-            {
-                title: "查看新粉丝",
-                href: `/i/sys/jump?u=${userPortrait.value}&type=fans`,
-            },
-            "separator",
-            {
-                title: "我的收藏",
-                href: `/i/sys/jump?u=${userPortrait.value}&type=storethread`,
-            },
-            {
-                title: "我的通知",
-                href: "/sysmsg/index?type=notity",
-            },
-        ],
+    messageMenu.value = [
+        {
+            title: "查看私信",
+            href: "/im/pcmsg",
+        },
+        {
+            title: "查看回复",
+            href: `/i/sys/jump?u=${userPortrait.value}&type=replyme`,
+        },
+        {
+            title: "查看 @",
+            href: `/i/sys/jump?u=${userPortrait.value}&type=atme`,
+        },
+        "separator",
+        {
+            title: "查看好友申请",
+            href: `/i/sys/jump?u=${userPortrait.value}&type=friendapply`,
+        },
+        {
+            title: "查看新粉丝",
+            href: `/i/sys/jump?u=${userPortrait.value}&type=fans`,
+        },
+        "separator",
+        {
+            title: "我的收藏",
+            href: `/i/sys/jump?u=${userPortrait.value}&type=storethread`,
+        },
+        {
+            title: "我的通知",
+            href: "/sysmsg/index?type=notity",
+        },
+    ];
 
-        "更多": [
-            {
-                title: "账号设置",
-                href: "//passport.baidu.com/?center&tpl=tb&aid=6&default_tab=3#3,0",
-            },
-            {
-                title: "贴吧设置",
-                href: `/home/profile?un=${PageData.user.name_url}`,
-            },
-            "separator",
-            {
-                title: "服务中心",
-                href: "//tieba.baidu.com/pmc",
-            },
-            {
-                title: "问题反馈",
-                href: "//tieba.baidu.com/hermes/feedback",
-            },
-        ],
-    };
+    moreMenu.value = [
+        {
+            title: "账号设置",
+            href: "//passport.baidu.com/?center&tpl=tb&aid=6&default_tab=3#3,0",
+        },
+        {
+            title: "贴吧设置",
+            href: `/home/profile?un=${PageData.user.name_url}`,
+        },
+        "separator",
+        {
+            title: "服务中心",
+            href: "//tieba.baidu.com/pmc",
+        },
+        {
+            title: "问题反馈",
+            href: "//tieba.baidu.com/hermes/feedback",
+        },
+    ];
     userMenu.value = [
         {
             title: "我的贴吧",
@@ -246,36 +379,6 @@ function loadNavMenuContent() {
                 login();
             },
         });
-
-    extendMenu.value = [
-        {
-            title: "脚本设置",
-            click() {
-                renderDialog(Settings);
-            },
-        },
-        {
-            title: "检查更新",
-            click() {
-                checkUpdateAndNotify(true);
-            },
-        },
-        "separator",
-        {
-            title: "源代码仓库",
-            innerText: "GitHub",
-            href: GithubRepo,
-        },
-        {
-            title: "源代码仓库",
-            innerText: "Gitee",
-            href: GiteeRepo,
-        },
-        {
-            title: "切换至 GreasyFork",
-            href: "https://greasyfork.org/zh-CN/scripts/486367",
-        },
-    ];
 }
 </script>
 
@@ -283,183 +386,131 @@ function loadNavMenuContent() {
 $nav-height: 48px;
 $hover-trigger-height: 16px;
 
+.nav-reveal-zone {
+    position: fixed;
+    z-index: 1199;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: $hover-trigger-height;
+}
+
 #nav-bar {
     position: fixed;
     z-index: 1200;
-    top: 0;
+    top: 8px;
+    right: 0;
     left: 0;
     display: flex;
-    width: 100%;
+    width: calc(100% - 24px);
+    max-width: 860px;
     height: $nav-height;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--page-background);
-    box-shadow: 0 0 10px rgb(0 0 0 / 10%);
-    transition: transform var(--default-duration);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin: 0 auto;
+    background-color: var(--trans-default-background);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+    transition: transform var(--default-duration), opacity var(--default-duration);
 
     html.dark-theme & {
-        box-shadow: 0 0 16px rgb(0 0 0 / 60%);
+        box-shadow: 0 2px 12px rgb(0 0 0 / 40%);
     }
 
-    // 全隐藏 + 顶部 8px 悬停触发区
+    body[no-scrollbar] & {
+        right: var(--scrollbar-width);
+    }
+
     &.fold {
-        transform: translateY(-100%);
-        box-shadow: none;
+        transform: translateY(calc(-100% - 16px));
+        opacity: 0;
 
-        // 在原导航栏正下方延伸出一条不可见的触发条，覆盖到视口顶部 0 ~ 8px
-        &::after {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            height: $hover-trigger-height;
-            content: "";
-        }
-
-        &:hover {
+        &.revealed {
             transform: translateY(0);
-            box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+            opacity: 1;
         }
-    }
-
-    &.hide {
-        box-shadow: none !important;
-        transform: translateY(-100%);
-    }
-
-    &.fixed-on-top {
-        position: absolute;
-    }
-
-    [no-scrollbar] & {
-        width: calc(100% - var(--scrollbar-width));
     }
 
     #nav-container {
         display: flex;
         width: 100%;
-        max-width: var(--content-max);
         height: 100%;
+        align-items: center;
         justify-content: space-between;
-
-        .shrink-view & {
-            justify-content: space-around;
-        }
+        padding: 0 16px;
 
         .left-container {
-            .nav-title-container {
-                display: flex;
-                height: 100%;
-                align-items: center;
-                padding: 0;
-                border: none;
-                background: none;
-                gap: 8px;
-                text-decoration: underline 3px var(--tieba-theme-color);
-
-                .nav-icon {
-                    width: 36px;
-                }
-
-                .nav-title {
-                    color: var(--default-fore);
-                    font-size: 20px;
-                    font-style: italic;
-                    font-weight: var(--font-weight-bold);
-                    transition: 0.2s;
-                }
-
-                &:hover .nav-title,
-                &:active .nav-title,
-                &:focus .nav-title {
-                    color: var(--highlight-fore);
-                }
-            }
-        }
-
-        .middle-container {
-            display: flex;
-            height: 100%;
-            justify-content: center;
-
-            .middle-menu-trigger {
-                height: 100%;
-                padding: 0 10px;
-                border: none;
+            .nav-brand {
                 color: var(--default-fore);
                 font-size: 15px;
                 font-weight: var(--font-weight-bold);
-                text-decoration: underline 2px rgba($color: #000, $alpha: 0%);
-
-                &:hover {
-                    text-decoration: underline 2px var(--tieba-theme-color);
-                }
+                opacity: 0.5;
+                text-decoration: none;
             }
         }
 
         .right-container {
             display: flex;
-            gap: 6px;
+            align-items: center;
+            gap: 4px;
 
             .avatar-button {
-                display: flex;
-                height: 100%;
-                align-items: center;
-                padding: 0;
-                padding: 0 2px;
-                border: 4px;
-
                 .nav-avatar {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 24px;
-                    box-shadow: 0 0 0 1px var(--border-color);
-                    transition: 0.4s;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 6px;
+                    object-fit: cover;
                 }
 
                 &:hover > .nav-avatar {
                     box-shadow: 0 0 0 2px var(--tieba-theme-color);
                 }
             }
-
-            .menu-button {
-                padding: 2px 8px;
-                border: none;
-                color: var(--highlight-fore);
-                font-size: 26px;
-
-                &:hover {
-                    color: var(--tieba-theme-color);
-                }
-            }
         }
     }
 }
 
-.menu-trigger {
-    border-radius: 0;
-    background-color: transparent;
+.nav-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--light-fore);
+
+    .nav-svg {
+        width: 18px;
+        height: 18px;
+    }
 
     &:hover {
         background-color: var(--default-hover);
-    }
-
-    &:hover > .nav-menu,
-    &:active > .nav-menu {
-        display: block;
+        color: var(--default-fore);
     }
 }
 
+.menu-trigger {
+    position: relative;
+    background-color: transparent;
+}
+
 .nav-menu {
-    position: absolute;
+    position: fixed;
     z-index: 1201;
-    display: none;
+    visibility: hidden;
     cursor: default;
     font-weight: var(--font-weight-normal);
+    opacity: 0;
+    pointer-events: none;
 
-    &:hover {
-        display: block;
+    &.visible {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
     }
 }
 </style>

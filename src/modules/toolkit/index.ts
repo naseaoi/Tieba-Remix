@@ -2,7 +2,7 @@ import { SettingContent } from "@/components/settings.vue";
 import { UserModuleEx } from "@/ex";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom, findParent } from "@/lib/elemental";
-import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { threadCommentsObserver } from "@/lib/observers";
 import { UserKey } from "@/lib/user-values";
 import _ from "lodash";
 
@@ -12,22 +12,10 @@ export default {
     author: "锯条",
     version: "1.1",
     brief: "优化原版贴吧体验的一组功能",
-    description: "这是一个轻量级的工具库，包含了诸如自动展开长图等实用功能。",
+    description: "这是一个轻量级的工具库，包含了诸如重新加载错误头像等实用功能。",
     scope: true,
     runAt: "immediately",
     settings: {
-        autoExpand: {
-            title: "自动展开长图",
-            widgets: [{
-                type: "toggle",
-                content: `该功能会自动将帖子中所有的长图片自动展开，无需手动操作`,
-                init: () => toolkitToggles.get().autoExpand,
-                event() {
-                    toolkitToggles.merge({ autoExpand: !toolkitToggles.get().autoExpand });
-                },
-            }],
-        },
-
         reloadAvatars: {
             title: "重新加载错误头像",
             widgets: [{
@@ -49,15 +37,6 @@ export default {
 } as UserModuleEx;
 
 const toolkitFeatures = {
-    /** 自动展开长图 */
-    autoExpand() {
-        threadFloorsObserver.addEvent(() => {
-            _.forEach(dom<"div">(".replace_tip", []), (el) => {
-                el.click();
-            });
-        });
-    },
-
     /** 重新加载错误头像 */
     reloadAvatars() {
         const observer = new IntersectionObserver(function (entries) {
@@ -90,6 +69,5 @@ const toolkitFeatures = {
 type ToolkitToggles = Record<keyof typeof toolkitFeatures, boolean>;
 
 const toolkitToggles = new UserKey<ToolkitToggles>("toolkitToggles", {
-    autoExpand: true,
     reloadAvatars: true,
 });

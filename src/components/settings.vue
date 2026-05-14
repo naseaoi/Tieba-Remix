@@ -187,7 +187,7 @@ const userSettings = getUserSettings();
 
 const dialogOpts: UserDialogOpts = {
     uniqueName: "settings",
-    animation: true,
+    animation: false,
     modal: true,
     lockScroll: true,
     modalStyle: {

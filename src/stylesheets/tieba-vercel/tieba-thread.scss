@@ -508,14 +508,22 @@ html.style-vercel {
     #title-wrapper {
         .thread-title {
             color: var(--default-fore) !important;
-            font-weight: var(--font-weight-bold) !important;
+            font-size: 24px !important;
+            font-weight: var(--font-weight-normal) !important;
+            line-height: 1.45 !important;
+            border-left-color: var(--tieba-theme-color) !important;
         }
 
         .forum-wrapper-button {
             border: 1px solid var(--border-color) !important;
-            border-radius: $vercel-radius-sm !important;
+            border-radius: 8px !important;
             background-color: var(--default-background) !important;
             backdrop-filter: none !important;
+            gap: 3px !important;
+
+            .forum-icon {
+                border-radius: 8px !important;
+            }
 
             .forum-button {
                 color: var(--default-fore) !important;

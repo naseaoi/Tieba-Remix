@@ -11,7 +11,7 @@ import { renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
-import { compactLayout, currentStorage, experimental, pageExtension, perfProfile, THREAD_IMAGES } from "@/lib/user-values";
+import { compactLayout, currentStorage, pageExtension, THREAD_IMAGES } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { floatMessage, UserButton } from "user-view";
@@ -84,11 +84,6 @@ export default async function () {
     const content = await asyncdom<"div">(".content");
     const pbContent = await asyncdom<"div">("#pb_content");
 
-    if (perfProfile.get() === "performance" && experimental.get().moreBlurEffect) {
-        pbContent.classList.add("blur-effect");
-        pbContent.style.backgroundColor = "var(--trans-default-background)";
-    }
-
     createContents();
     async function createContents() {
         const threadList = await asyncdom("#j_p_postlist");
@@ -107,11 +102,6 @@ export default async function () {
 
             <div class="forum-wrapper-button">
                 <img class="forum-icon" src={forumIconLink} alt="吧头像" />
-                <a class="forum-name anchor-noback"
-                    href={`/f?kw=${PageData.forum.name_url}`} target="_blank">
-                    {PageData.forum.forum_name} 吧
-                </a>
-
                 <div class="button-container">
                     <UserButton
                         class="icon forum-button add-forum-button"

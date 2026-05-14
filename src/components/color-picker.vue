@@ -1,8 +1,8 @@
 <template>
-    <label class="color-picker">
+    <div class="color-picker">
         <input class="color-input" type="color" v-model="model" />
         <p v-if="text">{{ text }}</p>
-    </label>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -37,16 +37,40 @@ watch(model, function () {
 </script>
 
 <style lang="scss" scoped>
-$picker-size: 24px;
+$picker-size: 32px;
 
 .color-picker {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 
     .color-input {
         width: $picker-size;
         height: $picker-size;
+        padding: 2px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 8px;
+        background: none;
+        cursor: pointer;
+
+        &::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        &::-webkit-color-swatch {
+            border: none;
+            border-radius: 5px;
+        }
+
+        &::-moz-color-swatch {
+            border: none;
+            border-radius: 5px;
+        }
+    }
+
+    p {
+        font-size: 13px;
+        color: var(--minimal-fore);
     }
 }
 </style>

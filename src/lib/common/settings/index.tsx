@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, experimental, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
+import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -44,7 +44,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     "style-theme": {
                         title: "样式风格",
                         description:
-                            `Remixed 为脚本默认风格；Vercel 风格采用极简中性骨架（黑/白 + 极细灰边框）+ 卡片网格列表 + 等宽元数据，切换后即时生效`,
+                            `提供两套视觉主题，切换后即时生效`,
                         widgets: [{
                             type: "select",
                             content: [
@@ -290,10 +290,8 @@ export const getUserSettings = _.once((): UserSettings => ({
                         widgets: [{
                             type: "select",
                             content: [
-                                { value: "fold", text: "滚动折叠", desc: "当页面以一定速度向下滚动时，会将导航栏完全隐藏，将鼠标移至屏幕最顶端可重新呼出" },
-                                { value: "alwaysFold", text: "始终折叠", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
-                                { value: "hideWhenScroll", text: "滚动隐藏", desc: "当页面以一定速度向下滚动时，会将导航栏完全隐藏，重新呼出则需要以一定速度向上滚动页面" },
-                                { value: "fixedOnTop", text: "顶部固定", desc: "导航栏不会在视图上跟随移动，仅在页面最顶部固定" },
+                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
+                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
                                 { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
                             ] as UserSelectItem<NavBarHideMode>[],
                             init() {
@@ -313,7 +311,7 @@ export const getUserSettings = _.once((): UserSettings => ({
         name: "模块",
         icon: "deployed_code",
         description: "用户模块管理及部署",
-        sub: AllModules().reduce((accu, curr, index) => {
+        sub: AllModules().filter(m => m.id !== "remixed-theme").reduce((accu, curr, index) => {
             function toSubSettingKey(module: UserModule): SubSettingKey {
                 return {
                     name: module.name,
@@ -359,10 +357,10 @@ export const getUserSettings = _.once((): UserSettings => ({
         }) as MainSettingKey["sub"],
     },
 
-    "performance": {
-        name: "性能",
-        icon: "speed",
-        description: "硬件性能与流量相关",
+    "enhanced": {
+        name: "高级",
+        icon: "labs",
+        description: "性能、更新与高级设置",
         sub: {
             "perfPresets": {
                 name: "性能预设",
@@ -386,76 +384,6 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
                 },
-            },
-            // "network": {
-            //     name: "网络",
-            //     content: {
-            //         "high-definition": {
-            //             title: "高清图像",
-            //             widgets: [{
-            //                 type: "toggle",
-            //                 content: `部分场景下展示最高品质的原始尺寸图像。需要较高的网络速度和设备性能，可能造成更多的流量消耗`,
-            //                 init() {
-            //                     return highQualityImage.get();
-            //                 },
-            //                 event() {
-            //                     highQualityImage.set(!highQualityImage.get());
-            //                 },
-            //             }],
-            //         },
-            //     },
-            // },
-        },
-    },
-
-    "enhanced": {
-        name: "高级",
-        icon: "labs",
-        description: "提前测试一些尚不稳定的新功能",
-        sub: {
-            "experimental": {
-                name: "实验性功能",
-                content: {
-                    "title": {
-                        title: "实验室",
-                        description:
-                            `本版块列举了一些实验性功能，这些功能正处于开发阶段，它们当中的大部分都是默认关闭的
-                            这些功能可能会产生已知、未知的错误或性能问题，如果这些问题能被更及时全面地反馈，将有助于整个项目的发展
-                            需要注意的是，这些特性并不保证会保留到后续版本中`,
-                        widgets: [{
-                            type: "icon",
-                            content: "lab_research",
-                        }],
-                    },
-
-                    "moreBlurEffect": {
-                        title: "更多模糊效果",
-                        widgets: [{
-                            type: "toggle",
-                            content: `优先考虑提供更多的模糊效果，仅当性能预设为“高性能”时才会生效`,
-                            init() {
-                                return experimental.get().moreBlurEffect;
-                            },
-                            event() {
-                                experimental.merge({ moreBlurEffect: !experimental.get().moreBlurEffect });
-                            },
-                        }],
-                    },
-
-                    "rasterEffect": {
-                        title: "栅格特效",
-                        widgets: [{
-                            type: "toggle",
-                            content: `将部分场景的模糊效果替换为栅格特效，可能会使文字可见度降低，存在性能问题`,
-                            init() {
-                                return experimental.get().rasterEffect;
-                            },
-                            event() {
-                                experimental.merge({ rasterEffect: !experimental.get().rasterEffect });
-                            },
-                        }],
-                    },
-                } as Record<keyof ReturnType<typeof experimental.get>, SettingContent>,
             },
 
             "backup-recover": {
@@ -535,14 +463,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
                 },
             },
-        },
-    },
 
-    "about": {
-        name: "关于",
-        icon: "person",
-        description: "开发信息与检查更新",
-        sub: {
             "update": {
                 name: "检查更新",
                 content: {

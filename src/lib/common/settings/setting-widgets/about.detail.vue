@@ -1,7 +1,6 @@
 <template>
     <div class="about-wrapper">
         <div class="main-title">
-            <img :src="iconUrl" alt="icon" class="main-icon">
             <div class="title">{{ MainTitle }}</div>
         </div>
 
@@ -26,12 +25,10 @@
 
 <script lang="ts" setup>
 import { GM_info } from "$";
-import { getResource } from "@/lib/api/remixed";
 import { GithubRepo, MainTitle, Owner } from "@/lib/user-values";
 import { UserButton } from "user-view";
 
 const scriptInfo = GM_info;
-const iconUrl = getResource("/assets/images/main/icon.png");
 </script>
 
 <style lang="scss" scoped>
@@ -51,13 +48,6 @@ const iconUrl = getResource("/assets/images/main/icon.png");
         justify-content: center;
         gap: 14px;
         line-height: 1;
-
-        .main-icon {
-            display: block;
-            width: 56px;
-            height: 56px;
-            flex-shrink: 0;
-        }
 
         .title {
             display: flex;
