@@ -185,18 +185,7 @@ export function installFromRelease(release: GiteeRelease) {
         });
     }
 
-    if (!release.assets || release.assets.length <= 0) {
-        notFound();
-        return;
-    }
-
-    const asset = (function () {
-        for (const asset of release.assets) {
-            if (asset.name && asset.name.endsWith(".user.js")) {
-                return asset.browser_download_url;
-            }
-        }
-    })();
+    const asset = resolveReleaseInstallUrl(release);
 
     if (asset) {
         GM_openInTab(asset, {
@@ -206,6 +195,20 @@ export function installFromRelease(release: GiteeRelease) {
         notFound();
         return;
     }
+}
+
+export function resolveReleaseInstallUrl(release: GiteeRelease) {
+    if (!release.tag_name) return undefined;
+
+    if (release.assets && release.assets.length > 0) {
+        for (const asset of release.assets) {
+            if (asset.name && asset.name.endsWith(".user.js")) {
+                return asset.browser_download_url;
+            }
+        }
+    }
+
+    return `https://raw.githubusercontent.com/${Owner}/${RepoName}/${release.tag_name}/build/tieba-remix.user.js`;
 }
 
 export function getResource(path: string) {

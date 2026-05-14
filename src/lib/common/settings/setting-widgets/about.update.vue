@@ -19,7 +19,7 @@
 
         <div class="update-controls">
             <UserButton class="up-button download-button" shadow-border theme-style is-anchor
-                :href="release?.assets[0].browser_download_url">安装更新
+                :href="installUrl">安装更新
             </UserButton>
         </div>
     </div>
@@ -38,7 +38,7 @@
 
 <script lang="ts" setup>
 import { GM_info } from "$";
-import { ReleaseFetchErrorKind, getLatestReleaseFromGitee } from "@/lib/api/remixed";
+import { ReleaseFetchErrorKind, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
 import { marked } from "marked";
 import { UserButton } from "user-view";
@@ -61,6 +61,8 @@ const errorIcon = computed(() => {
         default: return "warning";
     }
 });
+
+const installUrl = computed(() => release.value ? resolveReleaseInstallUrl(release.value) : undefined);
 
 const canRetry = computed(() => errorKind.value !== "disabled");
 
