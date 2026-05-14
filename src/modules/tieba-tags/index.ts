@@ -28,25 +28,27 @@ function main(): void {
 
     let louzhuPortrait = getLouzhuPortrait(document);
 
-    // 预处理
+    // 预处理：尝试拿到楼主头像作为辅助比对（首楼若没渲染 .j_louzhubiaoshi 则回源 fetch 重解析）
+    // 关键：fetch 抛错也必须保证 addEvent 被调用，否则楼中楼标签整体失效
     (async () => {
-        if (!louzhuPortrait) {
-            const response = await fetch(location.href.split("?")[0], {
-                mode: "cors",
-                credentials: "include",
-            });
+        try {
+            if (!louzhuPortrait) {
+                const response = await fetch(location.href.split("?")[0], {
+                    mode: "cors",
+                    credentials: "include",
+                });
 
-            if (response.ok) {
-                await response.text().then((value) => {
+                if (response.ok) {
+                    const value = await response.text();
                     const fpDOC = new DOMParser().parseFromString(value, "text/html");
                     louzhuPortrait = getLouzhuPortrait(fpDOC);
-                });
+                }
             }
+        } catch (err) {
+            console.warn("[tieba-tags] 楼主头像回源失败，将仅依赖用户名匹配", err);
         }
-    })().then(() => {
-        // 开启监控
         threadCommentsObserver.addEvent(createTagsAll);
-    });
+    })();
 
     function getLouzhuPortrait(doc: Document): string | undefined {
         const j_tags = doc.getElementsByClassName("j_louzhubiaoshi");

@@ -35,13 +35,13 @@
 }
 
 .tieba-tags-lz::after {
-    /* background-color: var(--tieba-theme-background);
-    color: var(--tieba-theme-fore); */
+    background-color: var(--tieba-theme-background);
+    color: var(--tieba-theme-fore);
     content: "楼主";
 }
 
 .tieba-tags-cz::after {
-    /* background-color: var(--cengzhu-theme-background);
-    color: var(--cengzhu-theme-fore); */
+    background-color: var(--cengzhu-theme-background);
+    color: var(--cengzhu-theme-fore);
     content: "层主";
 }

@@ -64,14 +64,18 @@ html.style-vercel {
     }
 
     .search_bright .search_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         height: 36px !important;
         box-sizing: border-box;
+        padding: 0 18px !important;
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-sm !important;
         background-color: var(--default-background) !important;
         color: var(--default-fore) !important;
         box-shadow: none !important;
-        line-height: 36px !important;
+        line-height: 1 !important; // 改用 flex 居中，避免贴吧原 CSS 的隐式 padding/baseline 让文字偏上
         transition: border-color $vercel-trans-normal $vercel-ease !important;
 
         &:hover {
@@ -93,30 +97,128 @@ html.style-vercel {
     }
 
     // ---------------------------
-    // 吧标题区（card_top）
+    // 吧标题区（card_top_wrap = .card_top_theme）
+    // 把外层 wrap 改造成 vercel 风格 flex 卡片：吧名信息（左）与签到按钮（右）
+    // 共置于同一张卡片内，解决签到按钮被遗留在视觉边界外的问题
     // ---------------------------
     .card_top_theme {
-        border: none !important;
+        position: relative;
+        display: flex !important;
+        // 子项与父级同高（让 .card_top 与 .card_top_right 自然填满父级高度）
+        align-items: stretch !important;
+        // 必须显式 height: auto + min-height 覆盖贴吧原 CSS 给 .card_top_wrap 的硬编码 height
+        // 否则父级被锁死在 ~86px，子项 min-height 撑不开 flex 容器，导致头像与签到按钮溢出
+        height: auto !important;
+        min-height: 132px !important;
+        gap: 24px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-lg !important;
+        background-color: var(--default-background) !important;
+        overflow: hidden;
+
+        // dotted 装饰背景：上移到外层卡片，覆盖整张卡片
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.4;
+            z-index: 0;
+            @include dotted-bg($size: 20px);
+            mask-image: linear-gradient(to bottom, rgb(0 0 0 / 100%), transparent);
+        }
+
+        // 清除 .clearfix::after —— 在 flex 容器中会作为子项扰乱布局
+        &::after {
+            content: none !important;
+        }
 
         .card_top {
+            order: 1 !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
             position: relative;
-            padding-left: 120px !important;
-            border: 1px solid var(--border-color);
-            border-radius: $vercel-radius-lg;
-            background-color: var(--default-background);
+            z-index: 1;
+            // Grid 布局：左列 100px 给头像（跨 3 行），右列堆叠标题/标语/目录
+            // 用 grid 代替原 absolute 方案 —— 贴吧原 .card_head 用了 top:-50px 让头像向上咬进 banner，
+            // banner 被隐藏后头像位置错位；用 grid 让头像作为正常布局参与，从根本上解决
+            display: grid !important;
+            grid-template-columns: 100px 1fr !important;
+            grid-template-areas:
+                "head title"
+                "head slogan"
+                "head info" !important;
+            align-items: center !important;
+            column-gap: 20px !important;
+            row-gap: 0 !important;
+            box-sizing: border-box !important;
+            min-height: 132px !important;
+            padding: 16px 0 16px 24px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: none !important;
 
-            // dotted 装饰背景（限制在标题区上方）
+            // 装饰背景已上移到父级卡片
             &::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                pointer-events: none;
-                opacity: 0.4;
-                @include dotted-bg($size: 20px);
-                mask-image: linear-gradient(to bottom, rgb(0 0 0 / 100%), transparent);
+                display: none !important;
+            }
+
+            // clearfix ::after 在 grid 中会作为额外 item 错位
+            &::after {
+                content: none !important;
+            }
+
+            // 吧头像：占据左列整 3 行，自身 100×100，align-self center 垂直居中
+            > .card_head {
+                grid-area: head !important;
+                align-self: center !important;
+                justify-self: start !important;
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                transform: none !important;
+                width: 100px !important;
+                height: 100px !important;
+                margin: 0 !important;
+
+                .card_head_img {
+                    display: block !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+            }
+
+            > .card_title {
+                grid-area: title !important;
+            }
+
+            > .card_slogan {
+                grid-area: slogan !important;
+            }
+
+            > .card_info {
+                grid-area: info !important;
+            }
+        }
+
+        .card_top_right {
+            order: 2 !important;
+            flex-shrink: 0 !important;
+            float: none !important;
+            // 撑到父级满高度，并内部 flex 居中，让签到按钮的视觉中心 = 吧名信息的视觉中心
+            align-self: stretch !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            position: relative;
+            z-index: 1;
+            padding: 16px 24px !important;
+
+            // 中间 wrapper 也改为 flex 居中，让签到按钮在嵌套层级中正确居中
+            > [id*="sign_mod"],
+            .sign_mod_bright {
+                display: flex !important;
+                align-items: center !important;
             }
         }
     }
@@ -182,40 +284,130 @@ html.style-vercel {
         background: var(--default-background) !important;
     }
 
-    // tab 导航
+    // ---------------------------
+    // tab 导航栏（.nav_wrap）：独立卡片样式，左侧 tab 列表 + 右侧吧内搜索
+    // 重构原贴吧的 tab 栏：边框 / 圆角 / 一致的下划线指示器
+    // ---------------------------
     .nav_wrap {
-        border-color: var(--border-color) !important;
+        display: flex !important;
+        align-items: stretch !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+        padding: 0 16px !important;
+        margin: 12px 0 !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        background-image: none !important;
+        overflow: visible !important;
     }
 
-    .nav_list li.focus {
+    .nav_wrap .nav_list {
+        display: flex !important;
+        align-items: stretch !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
         background: none !important;
-        border-bottom: 2px solid var(--default-fore);
+        border: none !important;
+        float: none !important;
     }
 
-    .nav_list a {
+    .nav_wrap .nav_list li {
+        display: flex !important;
+        align-items: stretch !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+        float: none !important;
+    }
+
+    .nav_wrap .nav_list li a {
+        display: inline-flex !important;
+        align-items: center !important;
+        height: auto !important;
+        padding: 10px 14px !important;
+        margin: 0 0 -1px 0 !important; // 让底部下划线压在容器底边上
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        background: none !important;
+        background-color: transparent !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1.4 !important;
+        text-decoration: none !important;
+        transition: color $vercel-trans-normal $vercel-ease,
+                    border-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .nav_wrap .nav_list li a:hover,
+    .nav_wrap .j_tabnav_tab:hover {
+        background-color: transparent !important;
         color: var(--default-fore) !important;
     }
 
-    .j_tabnav_tab:hover,
-    .nav_list a:hover {
-        background-color: var(--default-hover) !important;
+    .nav_wrap .nav_list li.focus {
+        background: none !important;
+        border: none !important;
+        border-bottom: none !important;
     }
 
-    // 吧内搜索
-    .search_internal_input {
+    .nav_wrap .nav_list li.focus a {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold) !important;
+        border-bottom-color: var(--default-fore) !important;
+    }
+
+    // 吧内搜索：放置在 nav bar 右侧，自身在 nav 中垂直居中（不被 stretch 拉伸）
+    .nav_wrap .search_internal_wrap {
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        float: none !important;
+        align-self: center !important;
+    }
+
+    .nav_wrap .search_internal_input {
         height: 28px !important;
-        border-color: var(--border-color) !important;
+        box-sizing: border-box !important;
+        padding: 0 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-right: none !important;
         border-radius: $vercel-radius-sm 0 0 $vercel-radius-sm !important;
         background-color: var(--default-background) !important;
         color: var(--default-fore) !important;
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+        }
     }
 
-    .search_internal_btn {
-        height: 30px !important;
+    .nav_wrap .search_internal_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 28px !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        border: 1px solid var(--default-fore) !important;
         border-radius: 0 $vercel-radius-sm $vercel-radius-sm 0 !important;
         background-color: var(--default-fore) !important;
         background-image: none !important;
         color: var(--default-background) !important;
+
+        // 内部 i 标签：让搜索图标在按钮内垂直居中
+        > i {
+            display: inline-block !important;
+            margin: 0 !important;
+            vertical-align: middle !important;
+            background-position: center center !important;
+        }
 
         &::after {
             color: var(--default-background) !important;

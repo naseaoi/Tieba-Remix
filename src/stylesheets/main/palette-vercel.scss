@@ -28,15 +28,15 @@ html.style-vercel.light-theme {
     --border-color: rgb(234 234 234);
     --light-border-color: rgb(244 244 245);
 
-    // 等级牌：保留语义颜色但脱饱和
-    --level-green-background: rgb(0 112 74 / 8%);
-    --level-green-fore: rgb(0 112 74);
-    --level-blue-background: rgb(0 112 243 / 8%);
-    --level-blue-fore: rgb(0 112 243);
-    --level-yellow-background: rgb(143 113 0 / 8%);
-    --level-yellow-fore: rgb(143 113 0);
-    --level-orange-background: rgb(202 88 0 / 8%);
-    --level-orange-fore: rgb(202 88 0);
+    // 等级牌：对齐贴吧官方语义色，整体偏淡（楼主蓝保持饱和度作为强调色，等级橙 / 层主绿 / 黄牌偏淡）
+    --level-green-background: rgb(95 191 87 / 8%);
+    --level-green-fore: rgb(80 145 75);
+    --level-blue-background: rgb(78 158 235 / 16%);
+    --level-blue-fore: rgb(20 91 167);
+    --level-yellow-background: rgb(247 178 26 / 11%);
+    --level-yellow-fore: rgb(160 125 50);
+    --level-orange-background: rgb(247 110 50 / 9%);
+    --level-orange-fore: rgb(195 110 65);
 
     --check-color: rgb(0 112 74);
     --error-color: rgb(204 0 0);
@@ -72,15 +72,15 @@ html.style-vercel.dark-theme {
     --border-color: rgb(31 31 31);
     --light-border-color: rgb(22 22 22);
 
-    // 等级牌：暗色版本
-    --level-green-background: rgb(0 168 107 / 10%);
-    --level-green-fore: rgb(0 200 130);
-    --level-blue-background: rgb(50 145 255 / 10%);
-    --level-blue-fore: rgb(80 165 255);
-    --level-yellow-background: rgb(247 178 26 / 10%);
-    --level-yellow-fore: rgb(247 178 26);
-    --level-orange-background: rgb(247 110 50 / 10%);
-    --level-orange-fore: rgb(247 110 50);
+    // 等级牌：暗色背景下减弱饱和度（楼主蓝保持，等级橙 / 层主绿 / 黄牌偏淡灰）
+    --level-green-background: rgb(89 191 75 / 9%);
+    --level-green-fore: rgb(155 195 145);
+    --level-blue-background: rgb(74 144 226 / 18%);
+    --level-blue-fore: rgb(110 175 250);
+    --level-yellow-background: rgb(247 178 26 / 9%);
+    --level-yellow-fore: rgb(220 195 140);
+    --level-orange-background: rgb(247 110 50 / 9%);
+    --level-orange-fore: rgb(225 175 145);
 
     --check-color: rgb(0 200 130);
     --error-color: rgb(255 80 80);

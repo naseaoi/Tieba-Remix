@@ -49,28 +49,46 @@ html.style-vercel {
 
     // ---------------------------
     // 侧边浮动按钮栏（贴吧原生）
+    // 仅保留：发帖 / 回顶 / 反馈 三个；其余（客服、下载、刷新、分享、收藏）一律隐藏。
+    // 当用户在设置面板关闭底部发帖模块（body[hide-bottom-editor]）时，"发帖"按钮也跟随隐藏，
+    // 避免点击后无目标可滚定位。
     // ---------------------------
-    .tbui_aside_float_bar li {
-        border-radius: $vercel-radius-sm;
-        background-color: transparent;
-        transition: background-color $vercel-trans-normal $vercel-ease;
-
-        &:hover {
-            background-color: var(--default-hover);
+    .tbui_aside_float_bar {
+        .tbui_fbar_auxiliaryCare,
+        .tbui_fbar_down,
+        .tbui_fbar_refresh,
+        .tbui_fbar_share,
+        .tbui_fbar_favor {
+            display: none !important;
         }
 
-        &:active {
-            background-color: var(--default-active);
+        li {
+            border-radius: $vercel-radius-sm;
+            background-color: transparent;
+            transition: background-color $vercel-trans-normal $vercel-ease;
+
+            &:hover {
+                background-color: var(--default-hover);
+            }
+
+            &:active {
+                background-color: var(--default-active);
+            }
+        }
+
+        a {
+            color: var(--minimal-fore);
+            transition: color $vercel-trans-normal $vercel-ease;
+
+            &:hover {
+                color: var(--default-fore);
+            }
         }
     }
 
-    .tbui_aside_float_bar a {
-        color: var(--minimal-fore);
-        transition: color $vercel-trans-normal $vercel-ease;
-
-        &:hover {
-            color: var(--default-fore);
-        }
+    // 底部发帖模块被关闭时，同步隐藏右下角悬浮"发帖"按钮
+    body[hide-bottom-editor] .tbui_aside_float_bar .tbui_fbar_post {
+        display: none !important;
     }
 
     // ---------------------------
@@ -88,37 +106,35 @@ html.style-vercel {
     }
 
     // ---------------------------
-    // 等级牌（保留语义但脱饱和）
+    // 等级牌
+    // 贴吧原网页本身并不按等级区分颜色，vercel 主题下统一显示为淡橙色作为视觉强调。
+    // 通用 .level-* / .tieba-lvl-* 语义色保留下方，供版本提示、楼主/层主标签等其它场景使用。
     // ---------------------------
+    .d_badge_bright .d_badge_lv,
+    .user_level .badge_index {
+        background-color: var(--level-orange-background) !important;
+        color: var(--level-orange-fore) !important;
+    }
+
     .level-green,
-    .d_badge_icon1 .d_badge_lv,
     .tieba-lvl-green {
         background-color: var(--level-green-background) !important;
         color: var(--level-green-fore) !important;
     }
 
     .level-blue,
-    .d_badge_icon2 .d_badge_lv,
-    .d_badge_icon2_1 .d_badge_lv,
-    .d_badge_icon2_2 .d_badge_lv,
     .tieba-lvl-blue {
         background-color: var(--level-blue-background) !important;
         color: var(--level-blue-fore) !important;
     }
 
     .level-yellow,
-    .d_badge_icon3 .d_badge_lv,
-    .d_badge_icon3_1 .d_badge_lv,
-    .d_badge_icon3_2 .d_badge_lv,
     .tieba-lvl-yellow {
         background-color: var(--level-yellow-background) !important;
         color: var(--level-yellow-fore) !important;
     }
 
     .level-orange,
-    .d_badge_icon4 .d_badge_lv,
-    .d_badge_icon4_1 .d_badge_lv,
-    .d_badge_icon4_2 .d_badge_lv,
     .tieba-lvl-orange {
         background-color: var(--level-orange-background) !important;
         color: var(--level-orange-fore) !important;
@@ -130,5 +146,67 @@ html.style-vercel {
     ::selection {
         background-color: var(--default-fore);
         color: var(--default-background);
+    }
+
+    // ---------------------------
+    // 顶部百度站点导航（网页/资讯/视频/图片/贴吧/...）
+    // 贴吧所有页面共享，统一改造为 vercel 风格扁平 nav
+    // ---------------------------
+    .search_top {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 8px 0 !important;
+        border: none !important;
+        background: none !important;
+    }
+
+    .search_nav {
+        display: inline-flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        // 覆盖贴吧给 .search_nav 的 inline style="margin-right: 635px"
+        // 这个 635 是给原版顶栏右上角让位用的，移除后才能真正居中且不被挤压换行
+        margin: 0 !important;
+        float: none !important;
+        background: none !important;
+    }
+
+    .search_nav a,
+    .search_nav a:link,
+    .search_nav a:visited {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 4px 10px !important;
+        border-radius: $vercel-radius-sm !important;
+        background: none !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1.4 !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        transition: color $vercel-trans-normal $vercel-ease,
+                    background-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .search_nav a:hover {
+        color: var(--default-fore) !important;
+        background-color: var(--default-hover) !important;
+    }
+
+    // 当前页签（<b>贴吧</b>）：粗体 + 深色背景胶囊
+    .search_nav b {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 4px 10px !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-fore) !important;
+        color: var(--default-background) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-bold) !important;
+        line-height: 1.4 !important;
+        white-space: nowrap !important;
     }
 }

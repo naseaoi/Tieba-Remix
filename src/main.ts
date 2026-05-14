@@ -13,6 +13,7 @@ import thread from "./lib/theme/page-extension/thread";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType, wideScreen } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
@@ -29,6 +30,9 @@ installForumAsideCollapse();
 
 // 吧首页：监听置顶帖折叠状态，给 .thread_top_list_folder 同步 .pinned-folded class
 installForumPinnedFoldWatcher();
+
+// 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
+installThreadFloorTag();
 
 Promise.all([
     loadDynamicCSS(),
