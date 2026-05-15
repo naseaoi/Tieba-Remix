@@ -1,0 +1,64 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+/// 分页器 + 底部编辑器 + 页脚
+@mixin forum-footer {
+    // ---------------------------
+    // 分页器
+    // ---------------------------
+    .pagination-default .pagination-item {
+        @include vercel-button($vercel-radius-sm);
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-sm;
+        min-width: 32px;
+        text-align: center;
+    }
+
+    .pagination-default .pagination-current {
+        background-color: var(--default-fore) !important;
+        border-color: var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    .pagination-default .pagination-item:not(.pagination-current):hover {
+        border-color: var(--minimal-fore) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    // ---------------------------
+    // 底部发帖编辑器
+    // ---------------------------
+    #tb_rich_poster_container {
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color);
+    }
+
+    .tb_rich_poster .poster_body .editor_textfield {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+            box-shadow: 0 0 0 1px var(--default-fore) !important;
+        }
+    }
+
+    .old_style_wrapper {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+    }
+
+    .edui-editor-body .edui-body-container {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-background) !important;
+    }
+
+    // 隐藏页脚
+    .footer {
+        display: none !important;
+    }
+}

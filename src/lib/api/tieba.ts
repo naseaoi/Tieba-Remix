@@ -639,7 +639,7 @@ export function levelToClass(level: number) {
     if (level < 0) return;
     if (level >= 1 && level <= 3) return "green";
     if (level >= 4 && level <= 9) return "blue";
-    if (level >= 9 && level <= 15) return "yellow";
+    if (level >= 10 && level <= 15) return "yellow";
     if (level >= 16) return "orange";
 }
 
@@ -681,8 +681,9 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
             ));
             const newList = picListConv(response.data.pic_list);
             pictureList.push(..._.slice(newList, _.findLastIndex(newList, { pictureId: lastPicId, postId: lastPostId }) + 1));
-            lastPicId = _(picListConv(response.data.pic_list)).last()?.pictureId ?? "";
-            lastPostId = _(picListConv(response.data.pic_list)).last()?.postId ?? 0;
+            const lastItem = _.last(newList);
+            lastPicId = lastItem?.pictureId ?? "";
+            lastPostId = lastItem?.postId ?? 0;
         }
     }
     return writeCurrent();

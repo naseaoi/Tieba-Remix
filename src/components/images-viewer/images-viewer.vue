@@ -143,9 +143,10 @@ const imageStyle = computed<CSSRule>(() => {
 
 const imageProps = computed(function () {
     const naturalHeight = currImage.value?.naturalHeight ?? 0;
+    const scaledHeight = naturalHeight * scale.value;
     return {
-        naturalHeight: naturalHeight ?? 0,
-        scaledHeight: naturalHeight ?? 0 * scale.value,
+        naturalHeight,
+        scaledHeight,
         vliMaxTop: -(naturalHeight * (1 - scale.value) / 2) + window.innerHeight / 2,
         vliMinTop: -(naturalHeight * scale.value) - (naturalHeight * (1 - scale.value) / 2) + window.innerHeight / 2,
     };

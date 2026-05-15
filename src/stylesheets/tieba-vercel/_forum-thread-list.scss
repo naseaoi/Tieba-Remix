@@ -1,0 +1,647 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+/// 帖子列表 - 单列卡片
+@mixin forum-thread-list {
+    .threadlist_bright {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 16px !important;
+        background: none !important;
+        list-style: none !important;
+        margin: 0 !important;
+
+        > li {
+            display: grid !important;
+            box-sizing: border-box !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            grid-template-rows: auto auto auto !important;
+            grid-template-areas:
+                "title rep author"
+                "abs   abs abs"
+                "media media media" !important;
+            grid-auto-flow: row !important;
+            // 关键：贴吧的 .clearfix::after 伪元素在 display:contents 透明化后仍被生成，
+            // 会成为 li 的隐式 grid 子项；强制隐式行高度为 0 以消除空白
+            grid-auto-rows: 0 !important;
+            align-items: center !important;
+            column-gap: 12px !important;
+            row-gap: 8px !important;
+            min-height: 80px !important;
+            padding: 16px !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-md !important;
+            background-color: var(--default-background) !important;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: hidden !important;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        box-shadow $vercel-trans-normal $vercel-ease !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+                background-color: var(--default-background) !important;
+                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
+            }
+
+            html.dark-theme & {
+                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
+
+                &:hover {
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
+                }
+            }
+        }
+
+        // 抑制 clearfix 类的 ::after 伪元素 —— 它们在 display:contents 后会作为 li 的 grid 子项扰乱布局
+        > li::after,
+        > li::before,
+        .t_con::after,
+        .t_con::before,
+        .threadlist_lz::after,
+        .threadlist_lz::before,
+        .threadlist_detail::after,
+        .threadlist_detail::before,
+        .threadlist_text::after,
+        .threadlist_text::before {
+            content: none !important;
+            display: none !important;
+        }
+
+        // 置顶帖：左边框强调
+        > li.thread_top_list_folder,
+        > li.thread_top_list_folder:hover {
+            background-color: var(--default-background) !important;
+            border-left: 2px solid var(--default-fore) !important;
+        }
+
+        // 置顶帖展开态（非 .pinned-folded）：外壳 + ul 透明化，让内层 li 直接参与父级 grid 流
+        > li.thread_top_list_folder:not(.pinned-folded) {
+            display: contents !important;
+
+            > ul.thread_top_list,
+            > .thread_top_list {
+                display: contents !important;
+                list-style: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        // 内层置顶帖卡片：单行布局（标题 | 回复数 | 用户名），更紧凑
+        // 注意：内层 li 不是 .threadlist_bright 的直系子项，所以 `> li { display: grid }` 不会作用到它，
+        // 这里独立给它复制一份卡片样式
+        .thread_top_list > li.j_thread_list.thread_top {
+            display: grid !important;
+            position: relative !important;
+            box-sizing: border-box !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            grid-template-rows: auto !important;
+            grid-template-areas: "title rep author" !important;
+            grid-auto-rows: 0 !important;
+            align-items: center !important;
+            column-gap: 12px !important;
+            row-gap: 0 !important;
+            min-height: 56px !important;
+            padding: 12px 16px !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-left: 2px solid var(--default-fore) !important;
+            border-radius: $vercel-radius-md !important;
+            background-color: var(--default-background) !important;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        box-shadow $vercel-trans-normal $vercel-ease !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+                background-color: var(--default-background) !important;
+                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
+            }
+
+            html.dark-theme & {
+                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
+
+                &:hover {
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
+                }
+            }
+        }
+
+        // 内层置顶帖被单条 X 关闭后，尊重 inline display:none（用属性选择器抬高特异性）
+        .thread_top_list > li.j_thread_list.thread_top[style*="display: none"],
+        .thread_top_list > li.j_thread_list.thread_top[style*="display:none"],
+        .thread_top_list > li.j_thread_list.thread_top[hidden] {
+            display: none !important;
+        }
+
+        // 置顶帖标题行：让 icon + 链接同行（避免 .threadlist_title 默认 block 把 icon 推到上一行）
+        .thread_top_list .threadlist_title {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
+        }
+
+        .thread_top_list a.j_th_tit {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+
+        // 置顶 / 精品 icon 改为文字 chip，保留贴吧原本红/橙色调
+        .thread_top_list .threadlist_title .icon-top,
+        .thread_top_list .threadlist_title .icon-good {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0 !important;
+            padding: 1px 6px !important;
+            margin-right: 6px !important;
+            border-radius: $vercel-radius-xs !important;
+            color: #fff !important;
+            font-size: $vercel-fs-xs !important;
+            font-style: normal !important;
+            font-weight: var(--font-weight-normal) !important;
+            line-height: 1.4 !important;
+            background-image: none !important;
+            width: auto !important;
+            height: auto !important;
+            text-indent: 0 !important;
+            vertical-align: middle !important;
+        }
+
+        // 置顶：红
+        .thread_top_list .threadlist_title .icon-top {
+            background-color: var(--error-color) !important;
+        }
+
+        // 精品：橙/黄
+        .thread_top_list .threadlist_title .icon-good {
+            background-color: var(--warning-color) !important;
+        }
+
+        .thread_top_list .threadlist_title .icon-top::before {
+            content: "置顶";
+        }
+
+        .thread_top_list .threadlist_title .icon-good::before {
+            content: "精";
+        }
+
+        // 隐藏置顶帖右侧时间标记（统一与常规卡片）
+        .thread_top_list .is_show_create_time {
+            display: none !important;
+        }
+
+        // 关闭按钮（×）：绝对定位到卡片右上角，hover 卡片时淡入
+        .thread_top_list .j_thread_hidden,
+        .thread_top_list .icon_thread_hidden {
+            position: absolute !important;
+            top: 4px;
+            right: 6px;
+            width: 16px;
+            height: 16px;
+            background: none !important;
+            background-image: none !important;
+            text-indent: 0 !important;
+            opacity: 0;
+            color: var(--minimal-fore);
+            cursor: pointer;
+            transition: opacity $vercel-trans-normal $vercel-ease,
+                        color $vercel-trans-normal $vercel-ease;
+
+            &::before {
+                content: "×";
+                display: block;
+                font-size: 16px;
+                line-height: 16px;
+                text-align: center;
+            }
+
+            &:hover {
+                color: var(--default-fore);
+            }
+        }
+
+        .thread_top_list > li.j_thread_list.thread_top:hover .j_thread_hidden,
+        .thread_top_list > li.j_thread_list.thread_top:hover .icon_thread_hidden {
+            opacity: 1;
+        }
+
+        // 修复：贴吧原生「关闭置顶帖」或 shield 模块通过 inline `style="display:none"` 隐藏 li 时
+        // 上方 `> li { display: grid !important }` 会覆盖掉 inline 样式，留下空白占位框
+        // 此规则用更高特异性的属性选择器把 inline display:none 恢复为隐藏
+        > li[style*="display: none"],
+        > li[style*="display:none"],
+        > li[hidden] {
+            display: none !important;
+        }
+
+        // 兜底：默认隐藏 #thread_top_folder。
+        // 贴吧原生在「关闭单条置顶」时会把它切到 display:block 显示原版"展开置顶"按钮，
+        // 我们只希望在「所有置顶都被关闭」（即外壳带 .pinned-folded 时）才显示自己的 SVG 箭头按钮；
+        // 因此先全局隐藏，再在 .pinned-folded 作用域里 override 回显示（见下方）
+        #thread_top_folder {
+            display: none !important;
+        }
+
+        // 置顶帖外壳：当所有内部置顶帖被关闭（折叠态）时，
+        // 由 forum-pinned-fold-watcher.ts 在 .thread_top_list_folder 上动态加 .pinned-folded class
+        // CSS 用 class 选择器直接匹配（替代 :has()，更稳定）
+        // 把外壳改造为一个紧贴 .forum_content 左外侧的小展开按钮：
+        // - 外壳脱离 grid 流（absolute），不占帖子列表空间
+        // - 内层 .thread_top_list（ul）隐藏，避免空白
+        // - #thread_top_folder 改为 28×28 圆角按钮，内部用 SVG mask 渲染向下箭头
+        // - 显式 left:-36px 把按钮完全推到容器外侧，并用 z-index 提高层级避免被 tab 栏遮挡
+        > li.thread_top_list_folder.pinned-folded {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: -36px !important;
+            right: auto !important;
+            width: 28px !important;
+            min-height: 0 !important;
+            height: 28px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            background: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            z-index: 100 !important;
+            grid-template-areas: none !important;
+            grid-template-columns: none !important;
+            grid-template-rows: none !important;
+            overflow: visible !important;
+
+            > ul,
+            > .thread_top_list {
+                display: none !important;
+            }
+
+            #thread_top_folder {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                margin: 0;
+                padding: 0;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-sm;
+                background: var(--default-background);
+                cursor: pointer;
+                transition: border-color $vercel-trans-normal $vercel-ease;
+
+                // SVG 向下箭头（mask 后用背景色着色，跟随主题 token）
+                &::before {
+                    content: "";
+                    display: block;
+                    width: 14px;
+                    height: 14px;
+                    background-color: var(--light-fore);
+                    transition: background-color $vercel-trans-normal $vercel-ease;
+                    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+                    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+                }
+
+                &:hover {
+                    border-color: var(--minimal-fore);
+
+                    &::before {
+                        background-color: var(--default-fore);
+                    }
+                }
+            }
+        }
+
+        // ---------------------------
+        // 中间嵌套 wrapper 透明化（让孙元素直接参与 li 的 grid 布局）
+        // 注意：.small_wrap 不在此列表 —— 它单独作为 grid item（含图片+张数标签），见下方
+        // ---------------------------
+        .t_con,
+        .t_con > .col2_left,
+        .t_con > .col2_right,
+        > li > .t_con,
+        .threadlist_lz,
+        .threadlist_detail,
+        .threadlist_text,
+        .small_list,
+        .j_small_list,
+        .small_list_gallery {
+            display: contents !important;
+        }
+
+        // 带图帖子的图片容器：作为 grid item 占 media 行
+        // 内部用 flex 把图片列表与"共X张"标签左右分开
+        // 配合中间层 .small_list/.small_list_gallery 的 display:contents
+        // .threadlist_media 与 .small_pic_num 直接成为 .small_wrap 的 flex 子项
+        .small_wrap,
+        .j_small_wrap {
+            grid-area: media !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 8px !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 0 !important;
+        }
+
+        // 隐藏带图列表的左右切换占位按钮（贴吧默认 inline display:none，保险起见）
+        .small_btn_pre,
+        .small_btn_next,
+        .j_small_pic_pre,
+        .j_small_pic_next {
+            display: none !important;
+        }
+
+        // "共 X 张" 数量标签：放在图片缩略图右侧
+        .small_pic_num {
+            flex-shrink: 0 !important;
+            align-self: center !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px 10px !important;
+            margin: 0 !important;
+            border-radius: $vercel-radius-xs !important;
+            background-color: var(--default-hover) !important;
+            color: var(--light-fore) !important;
+            font-family: $vercel-font-mono !important;
+            font-size: $vercel-fs-xs !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            float: none !important;
+            position: static !important;
+        }
+
+        // ---------------------------
+        // 标题：左侧主区
+        // ---------------------------
+        .threadlist_title,
+        .threadlist_lz > .threadlist_title {
+            grid-area: title !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            float: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .threadlist_title a,
+        a.j_th_tit {
+            display: -webkit-box !important;
+            color: var(--default-fore) !important;
+            font-size: $vercel-fs-lg !important;
+            font-weight: var(--font-weight-bold) !important;
+            line-height: 1.4 !important;
+            text-decoration: none !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+
+            &:hover,
+            &:focus,
+            &:active,
+            &:visited {
+                color: var(--default-fore) !important;
+                text-decoration: none !important;
+            }
+        }
+
+        // ---------------------------
+        // 回复数：第一行中间
+        // ---------------------------
+        .threadlist_rep_num {
+            @include mono-meta($vercel-fs-sm);
+            grid-area: rep !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            align-self: center !important;
+            justify-self: end !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            background: none !important;
+            color: var(--default-fore) !important;
+            font-weight: var(--font-weight-bold) !important;
+            float: none !important;
+            gap: 4px !important;
+            line-height: 1 !important;
+
+            &::before {
+                content: "";
+                width: 14px;
+                height: 14px;
+                flex: 0 0 14px;
+                background-color: var(--minimal-fore);
+                mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
+                -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
+            }
+        }
+
+        // ---------------------------
+        // 发帖人：第一行最右
+        // 仅保留 .threadlist_lz 内的作者（发帖人），隐藏 .threadlist_detail 内的回复者
+        // ---------------------------
+        .threadlist_author {
+            grid-area: author !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            align-self: center !important;
+            justify-self: end !important;
+            width: auto !important;
+            max-width: 420px !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            float: none !important;
+            border-top: none !important;
+            gap: 6px !important;
+            line-height: 1 !important;
+            text-align: right !important;
+
+            @include mono-meta($vercel-fs-xs);
+        }
+
+        // 解开作者名内部的宽度限制，让长 ID 完整显示
+        .threadlist_author .tb_icon_author,
+        .threadlist_author .frs-author-name-wrap,
+        .threadlist_author .frs-author-name {
+            display: inline-flex !important;
+            align-items: center !important;
+            max-width: none !important;
+            width: auto !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+        }
+
+        // 隐藏：发帖人后的印记/等级图标，及发帖时间
+        .threadlist_author .icon_author,
+        .threadlist_author .icon_replyer,
+        .threadlist_author i,
+        .threadlist_author .frs_pp_icon,
+        .threadlist_author .gold_member_icon,
+        .threadlist_author .like_forum_user_icon,
+        .threadlist_author .tb_icon_grade,
+        .threadlist_author img,
+        .threadlist_author .icon_wrap,
+        .threadlist_author .frs_bright_icons,
+        .threadlist_author .icon_wrap_theme1,
+        .threadlist_author .j_icon_slot,
+        .threadlist_author .is_show_create_time,
+        .threadlist_author .threadlist_reply_date,
+        // 印记在某些贴吧 DOM 中位于 .tb_icon_author 外侧
+        .icon_wrap.frs_bright_icons,
+        .icon_wrap_theme1,
+        .j_icon_slot {
+            display: none !important;
+        }
+
+        // 隐藏：最新回复者整块（.threadlist_detail 内的作者）
+        .threadlist_author_replyer,
+        .threadlist_author.threadlist_author_replyer,
+        .threadlist_detail > .threadlist_author {
+            display: none !important;
+        }
+
+        // 作者名样式
+        .frs-author-name-wrap,
+        .frs-author-name-wrap a,
+        .frs-author-name,
+        .tb_icon_author > a,
+        .tb_icon_author > .frs-author-name-wrap {
+            color: var(--light-fore) !important;
+            font-family: inherit !important;
+            margin: 0 !important;
+            float: none !important;
+        }
+
+        // ---------------------------
+        // 摘要：第二行
+        // ---------------------------
+        .threadlist_abs,
+        .threadlist_abs_onlyline {
+            grid-area: abs !important;
+            display: -webkit-box !important;
+            float: none !important;
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--light-fore) !important;
+            font-size: $vercel-fs-sm !important;
+            line-height: $vercel-lh-normal !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        // ---------------------------
+        // 缩略图：第三行
+        // 注意：贴吧通过 <img> inline style 控制 background-image + background-position
+        // 不可强制覆盖 img 的 width/height/object-fit，否则图片消失或位置错乱
+        // 两种 DOM 形态：
+        //   1) .small_wrap > .small_list > .small_list_gallery > .threadlist_media —— 作为 .small_wrap 的 flex 子项（左侧占满）
+        //   2) 直接位于 .threadlist_text 下的旧版 DOM —— 自身作为 grid item，落到 media 行
+        // ---------------------------
+        .threadlist_media {
+            grid-area: media !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            float: none !important;
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 4px !important;
+            line-height: 0 !important;
+            list-style: none !important;
+            // 多图时只显示一行，右侧渐隐提示有更多内容
+            overflow: hidden !important;
+            mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%) !important;
+            -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%) !important;
+
+            li {
+                margin: 0 !important;
+                width: auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                line-height: 0 !important;
+                flex: 0 0 auto !important;
+                border-radius: $vercel-radius-sm !important;
+                overflow: hidden !important;
+            }
+
+            // 内部链接/img：去除 inline-gap（baseline 间距）
+            a,
+            .thumbnail,
+            .vpic_wrap {
+                display: inline-block !important;
+                height: auto !important;
+                min-height: 0 !important;
+                line-height: 0 !important;
+                vertical-align: top !important;
+            }
+
+            img {
+                max-height: 120px !important;
+                vertical-align: top !important;
+            }
+        }
+
+        .vpic_wrap img:not([style]) {
+            opacity: 0;
+        }
+
+        .vpic_wrap img {
+            border-radius: $vercel-radius-sm !important;
+        }
+
+        .threadlist_pic_highlight {
+            display: none !important;
+        }
+
+        .threadlist_video {
+            border-radius: $vercel-radius-sm !important;
+        }
+
+        // ---------------------------
+        // 原生预览框：完全隐藏（已由 forum-image-takeover 接管点击）
+        // ---------------------------
+        .media_box,
+        .j_media_box {
+            display: none !important;
+        }
+
+        // 隐藏冗余标记
+        .threadlist_icon,
+        .threadlist_pin {
+            opacity: 0.6;
+        }
+    }
+}

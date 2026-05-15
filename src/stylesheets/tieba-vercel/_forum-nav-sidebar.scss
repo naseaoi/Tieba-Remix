@@ -1,0 +1,247 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+/// 主容器 + tab 导航栏 + 右侧栏
+@mixin forum-nav-sidebar {
+    .forum_content {
+        position: relative !important;
+        overflow: visible !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background: var(--default-background) !important;
+    }
+
+    .nav_wrap {
+        display: flex !important;
+        align-items: stretch !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+        padding: 0 16px !important;
+        margin: 12px 0 !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        background-image: none !important;
+        overflow: visible !important;
+    }
+
+    .nav_wrap .nav_list {
+        display: flex !important;
+        align-items: stretch !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        background: none !important;
+        border: none !important;
+        float: none !important;
+    }
+
+    .nav_wrap .nav_list li {
+        display: flex !important;
+        align-items: stretch !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+        float: none !important;
+    }
+
+    .nav_wrap .nav_list li a {
+        display: inline-flex !important;
+        align-items: center !important;
+        height: auto !important;
+        padding: 10px 14px !important;
+        margin: 0 0 -1px 0 !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        background: none !important;
+        background-color: transparent !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1.4 !important;
+        text-decoration: none !important;
+        transition: color $vercel-trans-normal $vercel-ease,
+                    border-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .nav_wrap .nav_list li a:hover,
+    .nav_wrap .j_tabnav_tab:hover {
+        background-color: transparent !important;
+        color: var(--default-fore) !important;
+    }
+
+    .nav_wrap .nav_list li.focus {
+        background: none !important;
+        border: none !important;
+        border-bottom: none !important;
+    }
+
+    .nav_wrap .nav_list li.focus a {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold) !important;
+        border-bottom-color: var(--default-fore) !important;
+    }
+
+    .nav_wrap .search_internal_wrap {
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        float: none !important;
+        align-self: center !important;
+    }
+
+    .nav_wrap .search_internal_input {
+        height: 28px !important;
+        box-sizing: border-box !important;
+        padding: 0 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-right: none !important;
+        border-radius: $vercel-radius-sm 0 0 $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+        }
+    }
+
+    .nav_wrap .search_internal_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 28px !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: 0 $vercel-radius-sm $vercel-radius-sm 0 !important;
+        background-color: var(--default-fore) !important;
+        background-image: none !important;
+        color: var(--default-background) !important;
+
+        > i {
+            display: inline-block !important;
+            margin: 0 !important;
+            vertical-align: middle !important;
+            background-position: center center !important;
+        }
+
+        &::after {
+            color: var(--default-background) !important;
+        }
+    }
+
+    // 右侧栏
+    .aside_region.celebrity {
+        display: none !important;
+    }
+
+    .aside_region {
+        border-bottom: none !important;
+    }
+
+    .aside_region.forum_info .region_header .pull_right a {
+        display: inline-block;
+        padding: 0;
+        font-size: 0;
+        line-height: 1;
+        color: transparent;
+        text-decoration: none;
+        vertical-align: middle;
+
+        &::after {
+            content: "查看详情";
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-sm;
+            color: var(--default-fore);
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 1.4;
+            transition: border-color $vercel-trans-normal $vercel-ease;
+        }
+
+        &:hover::after {
+            border-color: var(--minimal-fore);
+            background-color: var(--default-hover);
+        }
+    }
+
+    .aside_region.my_tieba .region_header .pull_right a.p_balv_btnmanager {
+        display: inline-block;
+        padding: 0;
+        font-size: 0;
+        line-height: 1;
+        color: transparent;
+        text-decoration: none;
+        vertical-align: middle;
+        opacity: 0;
+        transition: opacity $vercel-trans-normal $vercel-ease;
+
+        &::after {
+            content: "管理";
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: $vercel-radius-sm;
+            color: var(--default-fore);
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 1.4;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        background-color $vercel-trans-normal $vercel-ease;
+        }
+
+        &:hover::after {
+            border-color: var(--minimal-fore);
+            background-color: var(--default-hover);
+        }
+    }
+
+    .aside_region.my_tieba .region_header:hover .pull_right a.p_balv_btnmanager {
+        opacity: 1;
+    }
+
+    .aside_region .region_header {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold);
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 24px;
+    }
+
+    .aside_region .region_header::after {
+        content: "▸";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        color: var(--minimal-fore);
+        font-size: 12px;
+        line-height: 1;
+        transform: translateY(-50%) rotate(0);
+        transform-origin: center;
+        transition: transform $vercel-trans-normal $vercel-ease;
+    }
+
+    .aside_region:not([data-collapsed="true"]) .region_header::after {
+        transform: translateY(-50%) rotate(90deg);
+    }
+
+    .aside_region[data-collapsed="true"] .region_cnt,
+    .aside_region[data-collapsed="true"] .region_footer {
+        display: none !important;
+    }
+
+    .my_current_forum .badge {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-xs !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+    }
+}

@@ -574,11 +574,22 @@ html.style-vercel {
                 font-family: $vercel-font-mono;
             }
 
-            // 等级牌 —— 带 .level-{green/blue/yellow/orange} 修饰 → 统一显示淡橙色
-            // 贴吧原版网页本身不区分等级颜色，这里以 orange 作为统一视觉强调
-            .badge-container .floor-badge.level-green,
-            .badge-container .floor-badge.level-blue,
-            .badge-container .floor-badge.level-yellow,
+            // 等级牌 —— 带 .level-{green/blue/yellow/orange} 修饰，按等级区分颜色
+            .badge-container .floor-badge.level-green {
+                background-color: var(--level-green-background) !important;
+                color: var(--level-green-fore) !important;
+            }
+
+            .badge-container .floor-badge.level-blue {
+                background-color: var(--level-blue-background) !important;
+                color: var(--level-blue-fore) !important;
+            }
+
+            .badge-container .floor-badge.level-yellow {
+                background-color: var(--level-yellow-background) !important;
+                color: var(--level-yellow-fore) !important;
+            }
+
             .badge-container .floor-badge.level-orange {
                 background-color: var(--level-orange-background) !important;
                 color: var(--level-orange-fore) !important;
@@ -594,16 +605,28 @@ html.style-vercel {
                 }
             }
 
-            // 与 .author-container 同套规则：默认蓝，等级橙
+            // 与 .author-container 同套规则：默认蓝，等级按颜色区分
             .floor-badge {
                 border-radius: $vercel-radius-xs !important;
                 background-color: var(--level-blue-background) !important;
                 color: var(--level-blue-fore) !important;
             }
 
-            .floor-badge.level-green,
-            .floor-badge.level-blue,
-            .floor-badge.level-yellow,
+            .floor-badge.level-green {
+                background-color: var(--level-green-background) !important;
+                color: var(--level-green-fore) !important;
+            }
+
+            .floor-badge.level-blue {
+                background-color: var(--level-blue-background) !important;
+                color: var(--level-blue-fore) !important;
+            }
+
+            .floor-badge.level-yellow {
+                background-color: var(--level-yellow-background) !important;
+                color: var(--level-yellow-fore) !important;
+            }
+
             .floor-badge.level-orange {
                 background-color: var(--level-orange-background) !important;
                 color: var(--level-orange-fore) !important;

@@ -1,0 +1,83 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+/// 容器 + 搜索区
+@mixin forum-header {
+    #content {
+        width: min(var(--content-max), 982px);
+        max-width: 100%;
+        background-color: transparent !important;
+    }
+
+    #head {
+        background: none !important;
+        background-color: var(--page-background) !important;
+
+        .head_inner {
+            background-color: var(--default-background) !important;
+        }
+    }
+
+    .card_banner,
+    .plat_recom_carousel {
+        display: none !important;
+    }
+
+    .search_main {
+        padding-bottom: 24px;
+    }
+
+    .search_bright .search_inp_border,
+    .search_bright .search_ipt {
+        height: 36px !important;
+        box-sizing: border-box;
+        padding: 0 12px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        box-shadow: none !important;
+        transition: border-color $vercel-trans-normal $vercel-ease !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+
+        &:focus {
+            border-color: var(--default-fore) !important;
+            box-shadow: 0 0 0 1px var(--default-fore) !important;
+        }
+    }
+
+    .search_bright .search_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 36px !important;
+        box-sizing: border-box;
+        padding: 0 18px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        box-shadow: none !important;
+        line-height: 1 !important;
+        transition: border-color $vercel-trans-normal $vercel-ease !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+            background-color: var(--default-background) !important;
+            filter: none;
+        }
+    }
+
+    .search_bright .search_btn_enter_ba {
+        background-color: var(--default-fore) !important;
+        border: 1px solid var(--default-fore) !important;
+        color: var(--default-background) !important;
+    }
+
+    .search_main_fixed {
+        display: none !important;
+    }
+}

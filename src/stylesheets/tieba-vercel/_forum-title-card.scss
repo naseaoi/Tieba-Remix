@@ -1,0 +1,160 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+/// 吧标题区（card_top_theme）+ 关注/签到按钮
+@mixin forum-title-card {
+    .card_top_theme {
+        position: relative;
+        display: flex !important;
+        align-items: stretch !important;
+        height: auto !important;
+        min-height: 132px !important;
+        gap: 24px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-lg !important;
+        background-color: var(--default-background) !important;
+        overflow: hidden;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.4;
+            z-index: 0;
+            @include dotted-bg($size: 20px);
+            mask-image: linear-gradient(to bottom, rgb(0 0 0 / 100%), transparent);
+        }
+
+        &::after {
+            content: none !important;
+        }
+
+        .card_top {
+            order: 1 !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            position: relative;
+            z-index: 1;
+            display: grid !important;
+            grid-template-columns: 100px 1fr !important;
+            grid-template-areas:
+                "head title"
+                "head slogan"
+                "head info" !important;
+            align-items: center !important;
+            column-gap: 20px !important;
+            row-gap: 0 !important;
+            box-sizing: border-box !important;
+            min-height: 132px !important;
+            padding: 16px 0 16px 24px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: none !important;
+
+            &::before {
+                display: none !important;
+            }
+
+            &::after {
+                content: none !important;
+            }
+
+            > .card_head {
+                grid-area: head !important;
+                align-self: center !important;
+                justify-self: start !important;
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                transform: none !important;
+                width: 100px !important;
+                height: 100px !important;
+                margin: 0 !important;
+
+                .card_head_img {
+                    display: block !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+            }
+
+            > .card_title {
+                grid-area: title !important;
+            }
+
+            > .card_slogan {
+                grid-area: slogan !important;
+            }
+
+            > .card_info {
+                grid-area: info !important;
+            }
+        }
+
+        .card_top_right {
+            order: 2 !important;
+            flex-shrink: 0 !important;
+            float: none !important;
+            align-self: stretch !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            position: relative;
+            z-index: 1;
+            padding: 16px 24px !important;
+
+            > [id*="sign_mod"],
+            .sign_mod_bright {
+                display: flex !important;
+                align-items: center !important;
+            }
+        }
+    }
+
+    .card_title_fname {
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold);
+    }
+
+    .card_slogan {
+        color: var(--light-fore) !important;
+    }
+
+    .islike_focus {
+        background-color: var(--default-fore) !important;
+        background-image: none !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-background) !important;
+    }
+
+    .cancel_focus {
+        background: none !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-fore) !important;
+
+        &:hover {
+            border-color: var(--minimal-fore) !important;
+        }
+    }
+
+    .sign_box_bright,
+    .sign_box_bright_hover {
+        background: none !important;
+        background-color: var(--default-fore) !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        color: var(--default-background) !important;
+    }
+
+    .sign_box_bright_signed,
+    .sign_box_bright_noclass_hover {
+        background: none !important;
+        background-color: var(--default-background) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--default-fore) !important;
+    }
+}

@@ -139,8 +139,6 @@
 
 <script setup lang="ts">
 import {
-    FollowedForumsResponse,
-    SuggestionResponse,
     TopicList,
     TopicListResponse,
     UserInfoResponse,
@@ -151,32 +149,23 @@ import {
 import _ from "lodash";
 import { onMounted, ref } from "vue";
 
-import { findParent } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
 import { errorMessage, requestInstance } from "@/lib/utils";
-import { messageBox, toast } from "user-view";
+import { toast } from "user-view";
 
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
 import Settings from "@/components/settings.vue";
-import { OneKeySignResponse } from "@/lib/api/tieba";
 import { BaiduPassport, GiteeRepo, GithubRepo, unreadFeeds } from "@/lib/user-values";
 import { UserButton, UserTextbox } from "user-view";
+import { useSearchSuggestions } from "./use-search-suggestions";
+import { useSignIn } from "./use-sign-in";
 
 const initFeeds = ref<TiebaPost[]>([]);
 const userInfo = ref<UserInfoResponse["data"]>();
-const followed = ref<FollowedForumsResponse["data"]>();
 
 const masonryContainer = ref<HTMLDivElement>();
 const feedsContainer = ref<HTMLAnchorElement>();
-const searchText = ref<string>("");
-const suggToggle = ref(false);
-const suggestions = ref<{
-    image: string
-    title: string
-    desc: string
-    href: string
-}[]>([]);
 const configToggle = ref(false);
 const configMenu = ref<DropdownMenu[]>();
 const profileToggle = ref(false);
@@ -185,8 +174,8 @@ const topicList = ref<TopicList[]>([]);
 const feedsIntersecting = ref(false);
 const feedsMasonry = ref<InstanceType<typeof FeedsMasonry>>({} as any);
 
-// 状态
-let signedForums = 0;
+const { searchText, suggToggle, suggestions, searchBoxFocus, searchMatch } = useSearchSuggestions();
+const { followed, signedForums, getFollowedInstance, oneKeySignInstance } = useSignIn();
 
 initFeeds.value = unreadFeeds.get();
 
@@ -207,25 +196,29 @@ onMounted(async () => {
     });
 });
 
-window.addEventListener("focusin", (ev) => toggleSuggControls(ev));
-window.addEventListener("mousedown", (ev) => toggleSuggControls(ev));
-
 async function init() {
-    // 用户信息
-    userInfo.value = await (async () => {
-        try {
-            const userInfoResp = (await (await tiebaAPI.userInfo()).json() as UserInfoResponse);
-            if (userInfoResp) {
-                return userInfoResp.data;
+    // 用户信息 & 贴吧热议 并行请求
+    const [userInfoData, topicListResp] = await Promise.all([
+        (async () => {
+            try {
+                const userInfoResp = (await (await tiebaAPI.userInfo()).json() as UserInfoResponse);
+                if (userInfoResp) return userInfoResp.data;
+            } catch (error) {
+                toast({
+                    message: errorMessage(error as Error),
+                    type: "error",
+                    duration: 6000,
+                });
             }
-        } catch (error) {
-            toast({
-                message: errorMessage(error as Error),
-                type: "error",
-                duration: 6000,
-            });
-        }
-    })();
+        })(),
+        requestInstance(tiebaAPI.topicList()) as Promise<TopicListResponse>,
+    ]);
+
+    userInfo.value = userInfoData;
+
+    if (topicListResp) {
+        topicList.value.push(...topicListResp.data.bang_topic.topic_list);
+    }
 
     // 配置菜单
     configMenu.value = [
@@ -284,112 +277,8 @@ async function init() {
         getFollowedInstance();
     }
 
-    // 贴吧热议
-    requestInstance(tiebaAPI.topicList()).then((response: TopicListResponse) => {
-        if (response) {
-            topicList.value.push(...response.data.bang_topic.topic_list);
-        }
-    });
-
     // 页面
     if (!feedsContainer.value) return;
-}
-
-function toggleSuggControls(e: Event) {
-    const el = e.target as HTMLElement;
-    const pt = findParent(el, "search-controls");
-    if (pt) {
-        suggToggle.value = true;
-    } else {
-        suggToggle.value = false;
-    }
-}
-
-/**
- * 加载搜索建议
- * @param query 搜索关键字
- */
-async function loadSuggestions(query?: string) {
-    const response = await tiebaAPI.suggestions(query);
-    if (response.ok) {
-        response.json().then((value: SuggestionResponse) => {
-            // 没有输入搜索内容则获取热门搜索
-            if (!query || query === "") {
-                const topicList = value.hottopic_list.search_data;
-                if (topicList)
-                    suggestions.value = _.map(topicList, (topic) => ({
-                        image: topic.topic_pic,
-                        title: topic.topic_name,
-                        desc: topic.topic_desc,
-                        href: topic.topic_url,
-                    }));
-            } else {
-                const matchList = value.query_match.search_data;
-                if (matchList)
-                    suggestions.value = _.map(matchList, (match) => ({
-                        image: match.fpic,
-                        title: match.fname,
-                        desc: match.forum_desc,
-                        href: tiebaAPI.URL_forum(match.fname),
-                    }));
-            }
-        });
-    }
-}
-
-// 事件处理
-function searchBoxFocus() {
-    if (suggestions.value.length <= 0) {
-        loadSuggestions().then(() => {
-            suggToggle.value = true;
-        });
-    } else {
-        suggToggle.value = true;
-    }
-}
-
-function searchTextChange() {
-    loadSuggestions(searchText.value);
-}
-
-const searchMatch = _.debounce(searchTextChange, 500);
-
-function getFollowedInstance() {
-    requestInstance(tiebaAPI.followedForums()).then((response: FollowedForumsResponse) => {
-        if (response) {
-            signedForums = 0;
-            followed.value = response.data;
-
-            // 已签到计数
-            _.forEach(followed.value.like_forum, forum => {
-                if (forum.is_sign === 1) signedForums++;
-            });
-            // 排序关注吧
-            followed.value.like_forum.sort((a, b) =>
-                parseInt(b.user_exp) - parseInt(a.user_exp));
-        }
-    });
-}
-
-async function oneKeySignInstance() {
-    messageBox({
-        title: "一键签到",
-        content: "需要注意，Web端签到获取到的经验远少于移动端，建议使用其他设备进行签到。",
-        type: "okCancel",
-    }).then((tag) => {
-        if (tag === "positive") {
-            requestInstance(tiebaAPI.oneKeySign()).then((response: OneKeySignResponse) => {
-                toast({
-                    message: `本次共签到成功 ${response.data.signedForumAmount} 个吧，未签到 ${response.data.unsignedForumAmount} 个吧，签到失败 ${response.data.signedForumAmountFail} 个吧，共获得 ${response.data.gradeNoVip} 经验。`,
-                    type: "check",
-                    blurEffect: true,
-                });
-
-                // 刷新关注的吧
-                getFollowedInstance();
-            });
-        }
-    });
 }
 </script>
 

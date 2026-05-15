@@ -99,12 +99,11 @@ export function spawnOffsetTS(
  * @returns 适用于 `GET` 请求的请求体
  */
 export function requestBody(body: LiteralObject) {
-    let reqBody = "";
+    const params = new URLSearchParams();
     _.forOwn(body, (value, key) => {
-        if (value === null || value === undefined) value = "";
-        reqBody += `${key}=${value}&`;
+        params.set(key, value ?? "");
     });
-    return reqBody.slice(0, -1);
+    return params.toString();
 }
 
 /**
