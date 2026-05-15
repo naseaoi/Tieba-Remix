@@ -507,11 +507,8 @@ export default async function () {
             </div>, pbContent);
 
         function showEditor() {
-            const ueditor = (function () {
-                if (dom(".edui-container", []).length > 0)
-                    return dom(".edui-container");
-                return dom("#ueditor_replace");
-            })();
+            const editorBody = dom("#ueditor_replace");
+            const ueditor = editorBody?.closest(".edui-container") ?? editorBody;
             if (ueditor) {
                 renderDialog(<ThreadEditor ueditor={ueditor} type={"reply"} />);
             }

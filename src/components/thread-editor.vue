@@ -1,5 +1,5 @@
 <template>
-    <UserDialog ref="dialog" v-bind="dialogOpts">
+    <UserDialog ref="dialog" v-bind="dialogOpts" @unload="returnEditor">
         <div id="thread-editor">
             <UserButton aria-label="关闭" id="thread-editor-exit" class="icon" shadow-border @click="unload">close
             </UserButton>
@@ -34,10 +34,14 @@ const props = withDefaults(defineProps<ThreadEditorOpts>(), {
 
 const dialogOpts: UserDialogOpts = {
     modal: true,
-    force: true,
+    force: false,
     blurEffect: false,
     animation: true,
     lockScroll: true,
+    clickModalToUnload: true,
+    modalStyle: {
+        background: "none",
+    },
     containerStyle: {
         position: "fixed",
         width: "100%",
@@ -46,9 +50,10 @@ const dialogOpts: UserDialogOpts = {
         marginBottom: "0",
         borderBottomLeftRadius: "0",
         borderBottomRightRadius: "0",
+        boxShadow: "0 0 24px var(--tieba-theme-color)",
     },
-    renderAnimation: "kf-slide-in var(--default-duration)",
-    unloadAnimation: "kf-slide-out var(--default-duration)",
+    renderAnimation: "kf-editor-in var(--default-duration)",
+    unloadAnimation: "kf-editor-out var(--default-duration)",
 };
 
 const dialog = ref<InstanceType<typeof UserDialog>>();
@@ -90,13 +95,13 @@ onMounted(async function () {
     originParent.value = props.ueditor.parentElement as HTMLDivElement;
     editorSlot.value.appendChild(props.ueditor);
 
-    const toolbar = await asyncdom(".edui-toolbar");
-    const editorBody = await asyncdom(".edui-editor-body");
+    const toolbar = await asyncdom(".edui-toolbar", editorSlot.value);
+    const editorBody = await asyncdom(".edui-editor-body", editorSlot.value);
     if (toolbar.compareDocumentPosition(editorBody) & Node.DOCUMENT_POSITION_FOLLOWING) {
         toolbar.parentNode?.insertBefore(editorBody, toolbar);
     }
 
-    const container = await asyncdom<"div">(".edui-body-container");
+    const container = await asyncdom<"div">(".edui-body-container", editorSlot.value);
     const observer = new MutationObserver(() => {
         container.scrollTop = container.scrollHeight;
     });
@@ -105,7 +110,7 @@ onMounted(async function () {
         container.scrollTop = container.scrollHeight;
     });
 
-    (await asyncdom<"div">("#ueditor_replace")).focus();
+    (await asyncdom<"div">("#ueditor_replace", editorSlot.value)).focus();
 });
 
 async function submit() {
@@ -114,11 +119,14 @@ async function submit() {
 }
 
 async function unload() {
+    dialog.value?.unload();
+}
+
+async function returnEditor() {
     if (!originParent.value) return;
     if (!editorSlot.value) return;
-    // 传入的可能是未加载完毕的，归还时一定要完整的
-    originParent.value.appendChild(await asyncdom(".edui-container"));
-    dialog.value?.unload();
+    const container = editorSlot.value.querySelector(".edui-container");
+    if (container) originParent.value.appendChild(container);
 }
 </script>
 
@@ -181,6 +189,16 @@ async function unload() {
 </style>
 
 <style lang="scss">
+@keyframes kf-editor-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes kf-editor-out {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+}
+
 body {
     overflow: hidden scroll;
 }

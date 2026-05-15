@@ -779,7 +779,7 @@ html.style-vercel {
         border: 1px solid var(--border-color) !important;
         border-bottom: none !important;
         border-radius: $vercel-radius-lg $vercel-radius-lg 0 0 !important;
-        box-shadow: $vercel-shadow-lg !important;
+        box-shadow: 0 0 24px var(--tieba-theme-color) !important;
 
         .dialog-content {
             scrollbar-width: thin;
@@ -801,7 +801,7 @@ html.style-vercel {
     }
 
     &.dark-theme .user-dialog-modal .user-dialog.default:has(#thread-editor) {
-        box-shadow: 0 -4px 24px rgb(0 0 0 / 32%) !important;
+        box-shadow: 0 0 24px var(--tieba-theme-color) !important;
     }
 
     // ---------------------------

@@ -191,8 +191,8 @@ export const styleTheme = new UserKey<"remixed" | "vercel">(
 export const compactLayout = new UserKey("compactLayout", false);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
-    light: "#556987",
-    dark: "#a0afc3",
+    light: "#589AFE",
+    dark: "#589AFE",
 });
 /** 用户自定义背景图 */
 export const customBackground = new UserKey<Maybe<string>>(
