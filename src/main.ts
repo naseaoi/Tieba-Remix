@@ -5,7 +5,6 @@ import Settings from "./components/settings.vue";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { parseUserModules } from "./lib/common/packer";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
-import { loadPerf } from "./lib/perf";
 import { renderDialog } from "./lib/render";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
 import index from "./lib/theme/page-extension/index";
@@ -92,9 +91,6 @@ waitUntil(() => !_.isNil(document.body)).then(function () {
         }
     }, true);
 });
-
-// 性能配置
-loadPerf();
 
 GM_registerMenuCommand("设置", () => renderDialog(Settings));
 

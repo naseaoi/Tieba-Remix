@@ -79,14 +79,6 @@ import Settings from "./settings.vue";
 export type NavBarHideMode = "fold" | "alwaysFold" | "never";
 type MenuKey = "message" | "more" | "user";
 
-interface Props {
-    hideMode?: NavBarHideMode
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    hideMode: navBarHideMode.get(),
-});
-
 const navBar = ref<HTMLElement>();
 
 const navAvatar = ref<HTMLImageElement>();
@@ -94,13 +86,16 @@ const userPortrait = ref<string>("");
 const activeMenu = ref<MenuKey | null>(null);
 const isAutoFolded = ref(false);
 const isRevealActive = ref(false);
-const isMenuReady = ref(props.hideMode === "never");
+const hideMode = ref<NavBarHideMode>(navBarHideMode.get());
+const isMenuReady = ref(hideMode.value === "never");
+
+navBarHideMode.on("setter", (value) => { hideMode.value = value; });
 
 const messageMenu = ref<DropdownMenu[]>([]);
 const moreMenu = ref<DropdownMenu[]>([]);
 const userMenu = ref<DropdownMenu[]>([]);
 
-const isFolded = computed(() => props.hideMode === "alwaysFold" || (props.hideMode === "fold" && isAutoFolded.value));
+const isFolded = computed(() => hideMode.value === "alwaysFold" || (hideMode.value === "fold" && isAutoFolded.value));
 
 watch(isFolded, (folded) => {
     activeMenu.value = null;
@@ -146,6 +141,7 @@ function closeMenus() {
 }
 
 function hideNav() {
+    if (activeMenu.value) return;
     closeMenus();
     if (!isFolded.value) return;
     isRevealActive.value = false;
@@ -193,6 +189,7 @@ function handleMenuTriggerLeave(e: MouseEvent, key: MenuKey) {
     const nextTarget = e.relatedTarget as Element | null;
     const menu = getMenuElement(key);
     if (menu && nextTarget && menu.contains(nextTarget)) return;
+    if (nextTarget && navBar.value?.contains(nextTarget)) return;
 
     if (activeMenu.value === key) {
         activeMenu.value = null;
@@ -245,11 +242,13 @@ async function init() {
         loadNavMenuContent();
     });
 
-    switch (props.hideMode) {
-        case "alwaysFold":
-            break;
+    let scrollCleanup: (() => void) | undefined;
 
-        case "fold": {
+    watch(hideMode, (mode) => {
+        if (scrollCleanup) { scrollCleanup(); scrollCleanup = undefined; }
+        isAutoFolded.value = false;
+
+        if (mode === "fold") {
             let lastScrollY = window.scrollY;
             const handle = _.throttle(function () {
                 if (window.scrollY > lastScrollY) {
@@ -258,12 +257,9 @@ async function init() {
                 lastScrollY = window.scrollY;
             }, 100);
             window.addEventListener("scroll", handle);
-            break;
+            scrollCleanup = () => window.removeEventListener("scroll", handle);
         }
-
-        case "never":
-            break;
-    }
+    }, { immediate: true });
 }
 
 async function login() {

@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
+import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -305,30 +305,6 @@ export const getUserSettings = _.once((): UserSettings => ({
         icon: "labs",
         description: "性能、更新与高级设置",
         sub: {
-            "perfPresets": {
-                name: "性能预设",
-                content: {
-                    "persets": {
-                        title: "性能预设",
-                        description: "从以下预设性能等级选择其一，将会自动对相关场景进行行为调整",
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "default", text: "默认" },
-                                { value: "saver", text: "节能" },
-                                { value: "performance", text: "高性能" },
-                            ] as UserSelectItem<PerfType>[],
-                            init() {
-                                return perfProfile.get();
-                            },
-                            event(perf: PerfType) {
-                                perfProfile.set(perf);
-                            },
-                        }],
-                    },
-                },
-            },
-
             "backup-recover": {
                 name: "备份与恢复",
                 content: {

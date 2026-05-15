@@ -66,9 +66,14 @@ export function applyThemeColor() {
     themeColorStyleEl.textContent = css;
 }
 
-/** 动态样式 */
-export async function loadDynamicCSS() {
-    const dynCSS = parseMultiCSS({
+/** 动态字体/字重样式专用 style 元素 */
+let dynFontStyleEl: HTMLStyleElement | undefined;
+/** 自定义样式专用 style 元素 */
+let customStyleEl: HTMLStyleElement | undefined;
+
+/** 实时应用字体与字重 CSS 变量 */
+export function applyDynamicFonts() {
+    const css = parseMultiCSS({
         ":root": {
             "--content-max": "982px",
             "--code-zh": `${_.join(userFonts.get(), ",")}`,
@@ -78,7 +83,28 @@ export async function loadDynamicCSS() {
         },
     });
 
-    GM_addStyle(dynCSS);
+    if (!dynFontStyleEl) {
+        dynFontStyleEl = document.createElement("style");
+        dynFontStyleEl.id = "remixed-dynamic-fonts";
+        document.head.appendChild(dynFontStyleEl);
+    }
+    dynFontStyleEl.textContent = css;
+}
+
+/** 实时应用自定义样式 */
+export function applyCustomStyle() {
+    const customCSS = customStyle.get();
+    if (!customStyleEl) {
+        customStyleEl = document.createElement("style");
+        customStyleEl.id = "remixed-custom-style";
+        document.head.appendChild(customStyleEl);
+    }
+    customStyleEl.textContent = customCSS;
+}
+
+/** 动态样式 */
+export async function loadDynamicCSS() {
+    applyDynamicFonts();
 
     // 主题色通过独立 <style> 标签注入，支持实时替换
     applyThemeColor();
@@ -93,8 +119,7 @@ export async function loadDynamicCSS() {
         );
     }, { once: true });
 
-    const customCSS = customStyle.get();
-    if (customCSS !== "") GM_addStyle(customCSS);
+    applyCustomStyle();
 }
 
 export async function loadMainCSS() {

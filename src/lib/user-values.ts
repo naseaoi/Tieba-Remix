@@ -2,8 +2,7 @@ import { GM_deleteValue, GM_getValue, GM_setValue } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import _ from "lodash";
 import { setTheme } from "./api/remixed";
-import { setPerfAttr } from "./perf";
-import { setCustomBackground, setStyleTheme } from "./theme";
+import { applyCustomStyle, applyDynamicFonts, setCustomBackground, setStyleTheme } from "./theme";
 import { isLiteralObject, spawnOffsetTS } from "./utils";
 
 export const MainTitle = "Tieba Remix";
@@ -49,6 +48,10 @@ export class UserKey<T, LegacyType = unknown> {
 
     protected dispatchEvent(event: UserKeyEvent, value: T) {
         _.forEach(this.listeners[event], listener => listener(value));
+    }
+
+    public on(event: UserKeyEvent, listener: (value: T) => unknown) {
+        this.listeners[event].push(listener);
     }
 
     public get() {
@@ -148,14 +151,6 @@ export interface UpdateConfig {
     notify: boolean;
 }
 
-export type PerfType = "default" | "saver" | "performance";
-
-/** 性能配置 */
-export const perfProfile = new UserKey<PerfType>("perfProfile", "default", {
-    setter() {
-        setPerfAttr();
-    },
-});
 /** 用户禁用的所有模块的 id */
 export const disabledModules = new UserKey<string[]>("disabledModules", []);
 /** 未读推送 */
@@ -214,18 +209,26 @@ export const pageExtension = new UserKey("pageExtension", {
 /** 是否显示吧首页底部贴吧原生发帖模块 */
 export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */
-export const userFonts = new UserKey<string[]>("userFonts", ["Microsoft YaHei"]);
+export const userFonts = new UserKey<string[]>("userFonts", ["Microsoft YaHei"], {
+    setter() { applyDynamicFonts(); },
+});
 /** 自定义等宽字体组合 */
 export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
     "Consolas", "JetBrains Mono", "Fira Code", "Menlo", "monospace",
-]);
+], {
+    setter() { applyDynamicFonts(); },
+});
 /** 导航栏模式 */
 export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "never");
 /** 自定义样式 */
-export const customStyle = new UserKey<string>("customStyle", "");
+export const customStyle = new UserKey<string>("customStyle", "", {
+    setter() { applyCustomStyle(); },
+});
 export const fontWeights = new UserKey("fontWeights", {
     "normal": 400,
     "bold": 600,
+}, {
+    setter() { applyDynamicFonts(); },
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
 
