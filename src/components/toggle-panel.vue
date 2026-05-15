@@ -43,7 +43,7 @@ const dialogOpts: UserDialogOpts = {
         margin: "0",
     } : {},
     contentStyle: {
-        maxWidth: "60vh",
+        maxWidth: "none",
         maxHeight: "60vh",
     },
 };
@@ -52,9 +52,8 @@ const dialogOpts: UserDialogOpts = {
 <style lang="scss" scoped>
 .toggle-panel {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
 
     .toggle-container {
         display: flex;
@@ -63,10 +62,17 @@ const dialogOpts: UserDialogOpts = {
         gap: 4px;
 
         .panel-button {
-            width: 58px;
-            height: 58px;
-            border-radius: 12px;
-            font-size: 24px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:focus {
+                box-shadow: 0 0 0 2px var(--tieba-theme-color) !important;
+            }
 
             &.toggle-off {
                 @extend %icon;
@@ -75,6 +81,12 @@ const dialogOpts: UserDialogOpts = {
 
             &.toggle-on {
                 @extend %filled-icon;
+                background-color: var(--tieba-theme-color);
+                color: var(--default-background);
+
+                &:hover {
+                    background-color: var(--tieba-theme-hover);
+                }
 
                 &:focus {
                     box-shadow: 0 0 0 1px var(--tieba-theme-color);
