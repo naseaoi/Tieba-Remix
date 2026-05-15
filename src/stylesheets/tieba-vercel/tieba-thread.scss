@@ -628,4 +628,336 @@ html.style-vercel {
             border-color: var(--default-fore) !important;
         }
     }
+
+    // ---------------------------
+    // 回复模块（thread-editor 弹窗）
+    // ---------------------------
+    #thread-editor {
+        gap: 10px;
+        padding: 16px;
+        font-size: $vercel-fs-sm;
+        transition: none;
+        scrollbar-width: thin;
+        scrollbar-color: var(--minimal-fore) transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--minimal-fore);
+        }
+
+        #thread-editor-exit {
+            @include vercel-button;
+            padding: 4px 8px;
+            font-size: 16px;
+            line-height: 1;
+
+            &:not(:hover, :active, :focus) {
+                box-shadow: none;
+                border-color: transparent;
+            }
+        }
+
+        .title-editor {
+            @include vercel-input;
+            padding: 8px 12px;
+            border-width: 1px !important;
+            font-size: $vercel-fs-xl;
+        }
+
+        #thread-editor-slot {
+            min-height: 0;
+
+            .edui-container {
+                .edui-editor-body {
+                    border: 1px solid var(--border-color) !important;
+                    border-radius: $vercel-radius-sm !important;
+                    height: auto !important;
+                    overflow: hidden !important;
+                    transition: border-color $vercel-trans-normal $vercel-ease;
+
+                    &:hover {
+                        border-color: var(--minimal-fore) !important;
+                    }
+
+                    &:focus-within {
+                        border-color: var(--default-fore) !important;
+                        box-shadow: 0 0 0 1px var(--default-fore) !important;
+                    }
+                }
+
+                .edui-body-container {
+                    overflow-y: auto !important;
+                    min-height: calc(1em * $vercel-lh-normal + 16px) !important;
+                    padding: 8px 12px !important;
+                    font-size: $vercel-fs-md;
+                    line-height: $vercel-lh-normal;
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--minimal-fore) transparent;
+
+                    &::-webkit-scrollbar {
+                        width: 6px;
+                    }
+
+                    &::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+
+                    &::-webkit-scrollbar-thumb {
+                        border-radius: 3px;
+                        background-color: var(--minimal-fore);
+                    }
+                }
+
+                .edui-toolbar .edui-btn-toolbar .edui-btn {
+                    @include vercel-button;
+                    padding: 2px 8px;
+                    font-size: $vercel-fs-sm;
+
+                    .edui-icon {
+                        font-size: $vercel-fs-sm;
+
+                        &::before {
+                            font-size: 14px;
+                        }
+                    }
+                }
+            }
+        }
+
+        #thread-editor-toolbar {
+            #thread-editor-submit {
+                @include vercel-button;
+                padding: 6px 16px;
+                border-color: var(--default-fore);
+                background-color: var(--default-fore);
+                color: var(--default-background);
+                font-size: $vercel-fs-sm;
+                font-weight: 500;
+
+                &:hover:not([disabled]) {
+                    border-color: var(--default-fore);
+                    background-color: var(--default-fore);
+                    opacity: 0.85;
+                }
+            }
+        }
+    }
+
+    // 回复弹窗外壳
+    .user-dialog-modal .user-dialog.default:has(#thread-editor) {
+        border: 1px solid var(--border-color) !important;
+        border-bottom: none !important;
+        border-radius: $vercel-radius-lg $vercel-radius-lg 0 0 !important;
+        box-shadow: $vercel-shadow-lg !important;
+
+        .dialog-content {
+            scrollbar-width: thin;
+            scrollbar-color: var(--minimal-fore) transparent;
+
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                border-radius: 3px;
+                background-color: var(--minimal-fore);
+            }
+        }
+    }
+
+    &.dark-theme .user-dialog-modal .user-dialog.default:has(#thread-editor) {
+        box-shadow: 0 -4px 24px rgb(0 0 0 / 32%) !important;
+    }
+
+    // ---------------------------
+    // 原版弹窗（网络图片等 .dialogJ）
+    // ---------------------------
+    .dialogJ {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        box-shadow: $vercel-shadow-lg !important;
+        overflow: hidden;
+        background: var(--default-background) !important;
+
+        &.dialogJshadow {
+            background: var(--default-background) !important;
+        }
+
+        .uiDialogWrapper {
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: none !important;
+            background-image: none !important;
+        }
+
+        .dialogJtitle {
+            padding: 12px 16px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 0 !important;
+            background: var(--default-background) !important;
+            background-image: none !important;
+
+            .dialogJtxt {
+                font-size: $vercel-fs-md !important;
+                font-weight: 500 !important;
+                color: var(--default-fore) !important;
+            }
+
+            .dialogJclose {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 24px !important;
+                height: 24px !important;
+                padding: 0 !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: $vercel-radius-sm !important;
+                background: var(--default-background) !important;
+                background-image: none !important;
+                color: var(--default-fore) !important;
+                font-size: 0 !important;
+                text-indent: 0 !important;
+                cursor: pointer;
+                transition: border-color $vercel-trans-normal $vercel-ease;
+
+                &::after {
+                    content: "\00d7";
+                    font-size: 16px;
+                    line-height: 1;
+                    color: var(--default-fore);
+                }
+
+                &:hover {
+                    border-color: var(--minimal-fore) !important;
+                }
+            }
+        }
+
+        .dialogJcontent {
+            border: none !important;
+            border-radius: 0 !important;
+            background: var(--default-background) !important;
+
+            .dialogJbody {
+                border: none !important;
+                border-radius: 0 !important;
+                background: var(--default-background) !important;
+            }
+        }
+
+        // 输入框
+        .l_netpic_input,
+        .ui_textfield {
+            @include vercel-input;
+        }
+
+        // 按钮
+        .ui_btn {
+            @include vercel-button;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            float: none !important;
+            border-radius: $vercel-radius-sm !important;
+            background: none !important;
+
+            span {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                float: none !important;
+                padding: 0 !important;
+                background: none !important;
+
+                em {
+                    float: none !important;
+                    background: none !important;
+                    color: var(--default-fore) !important;
+                    font-style: normal !important;
+                    font-size: $vercel-fs-sm !important;
+                }
+            }
+        }
+
+        .ui_btn_m {
+            border-color: var(--default-fore) !important;
+            background-color: var(--default-fore) !important;
+
+            span em {
+                color: var(--default-background) !important;
+            }
+
+            &:hover {
+                opacity: 0.85;
+            }
+        }
+
+        .ui_btn_sub_m {
+            border-color: var(--border-color) !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+            }
+        }
+
+        // 禁用态按钮（发帖气泡取消等）
+        .ui_btn_disable,
+        .ui_btn_m_disable {
+            @include vercel-button;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            float: none !important;
+            border-radius: $vercel-radius-sm !important;
+            border-color: var(--border-color) !important;
+            background: none !important;
+
+            span {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                float: none !important;
+                padding: 0 !important;
+                background: none !important;
+
+                em {
+                    float: none !important;
+                    background: none !important;
+                    color: var(--default-fore) !important;
+                    font-style: normal !important;
+                    font-size: $vercel-fs-sm !important;
+                }
+            }
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+            }
+        }
+
+        // 底部操作栏
+        .i_layer_bottom {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 12px 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: var(--default-background) !important;
+        }
+    }
+
+    &.dark-theme .dialogJ {
+        box-shadow: 0 8px 24px rgb(0 0 0 / 32%) !important;
+    }
 }

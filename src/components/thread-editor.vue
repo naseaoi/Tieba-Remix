@@ -95,6 +95,16 @@ onMounted(async function () {
     if (toolbar.compareDocumentPosition(editorBody) & Node.DOCUMENT_POSITION_FOLLOWING) {
         toolbar.parentNode?.insertBefore(editorBody, toolbar);
     }
+
+    const container = await asyncdom<"div">(".edui-body-container");
+    const observer = new MutationObserver(() => {
+        container.scrollTop = container.scrollHeight;
+    });
+    observer.observe(container, { childList: true, subtree: true, characterData: true });
+    container.addEventListener("input", () => {
+        container.scrollTop = container.scrollHeight;
+    });
+
     (await asyncdom<"div">("#ueditor_replace")).focus();
 });
 
