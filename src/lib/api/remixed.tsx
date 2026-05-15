@@ -129,7 +129,7 @@ export function checkUpdateAndNotify(showLatest = false) {
     if (GM_info.script.version === "developer-only") return;
 
     getLatestReleaseFromGitee().then(({ release: latestRelease }) => {
-        if (latestRelease && latestRelease.tag_name.slice(1) !== GM_info.script.version) {
+        if (latestRelease && latestRelease.tag_name > `v${GM_info.script.version}`) {
             // 忽略当前版本
             if (ignoredTag.get() === latestRelease.tag_name) return;
 
