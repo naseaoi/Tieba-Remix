@@ -22,7 +22,7 @@ import { getResource } from "../api/remixed";
 import { domrd } from "../elemental";
 import { injectCSSRule, overwriteCSS, parseMultiCSS } from "../elemental/styles";
 import { scrollbarWidth } from "../render";
-import { customBackground, customStyle, fontWeights, monospaceFonts, themeColor, userFonts, wideScreen } from "../user-values";
+import { customBackground, customStyle, fontWeights, monospaceFonts, themeColor, userFonts } from "../user-values";
 import { waitUntil } from "../utils";
 import { hexToRGBA, rgbaToHSLA } from "../utils/color";
 
@@ -70,9 +70,7 @@ export function applyThemeColor() {
 export async function loadDynamicCSS() {
     const dynCSS = parseMultiCSS({
         ":root": {
-            "--content-max": wideScreen.get().noLimit
-                ? "100vw"
-                : `${wideScreen.get().maxWidth}px`,
+            "--content-max": "982px",
             "--code-zh": `${_.join(userFonts.get(), ",")}`,
             "--code-monospace": `${_.join(monospaceFonts.get(), ",")}`,
             "--font-weight-normal": `${fontWeights.get().normal}`,

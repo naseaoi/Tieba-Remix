@@ -23,11 +23,25 @@ interface Toggle {
 
 export interface TogglePanelProps {
     toggles: Toggle[];
+    anchorRect?: { bottom: number; left: number; width: number };
 }
 
 const props = defineProps<TogglePanelProps>();
 
 const dialogOpts: UserDialogOpts = {
+    animation: false,
+    modal: true,
+    modalStyle: {
+        alignItems: "flex-end",
+        justifyContent: "flex-start",
+        background: "none",
+    },
+    containerStyle: props.anchorRect ? {
+        position: "fixed",
+        bottom: `${window.innerHeight - props.anchorRect.bottom + props.anchorRect.width - 12}px`,
+        left: `${props.anchorRect.left}px`,
+        margin: "0",
+    } : {},
     contentStyle: {
         maxWidth: "60vh",
         maxHeight: "60vh",

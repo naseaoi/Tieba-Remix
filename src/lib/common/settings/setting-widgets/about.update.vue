@@ -5,23 +5,20 @@
             <div class="content">{{ isLatest ? '当前是最新版本' : '检测到新版本' }}</div>
         </div>
 
-        <div class="title-container">
-            <h2 class="title">{{ release?.name }}</h2>
-            <div v-if="release?.prerelease" class="is-pre-release">预览版</div>
-        </div>
+        <template v-if="!isLatest">
+            <div class="title-container">
+                <h2 class="title">{{ release?.name }}</h2>
+                <div v-if="release?.prerelease" class="is-pre-release">预览版</div>
+            </div>
 
-        <div class="main-info">
-            <img v-if="release?.author.avatar_url" :src="release?.author.avatar_url" alt="" class="avatar">
-            <div class="owner">{{ release?.author.name }}</div>
-        </div>
+            <div class="release-body markdown" v-html="release?.body ? marked(release?.body) : ''"></div>
 
-        <div class="release-body markdown" v-html="release?.body ? marked(release?.body) : ''"></div>
-
-        <div class="update-controls">
-            <UserButton class="up-button download-button" shadow-border theme-style is-anchor
-                :href="installUrl">安装更新
-            </UserButton>
-        </div>
+            <div class="update-controls">
+                <UserButton class="up-button download-button" shadow-border theme-style is-anchor
+                    :href="installUrl">安装更新
+                </UserButton>
+            </div>
+        </template>
     </div>
 
     <div v-else-if="loading" class="status-wrapper">
@@ -117,6 +114,7 @@ onMounted(loadRelease);
     .title-container {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 10px;
 
         .title {
@@ -135,25 +133,10 @@ onMounted(loadRelease);
         }
     }
 
-    .main-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 32px;
-        }
-
-        .release-time {
-            margin-left: auto;
-        }
-    }
-
     .update-controls {
         display: flex;
         align-items: center;
+        justify-content: center;
         margin-top: 8px;
         gap: 8px;
 

@@ -152,6 +152,10 @@ html.style-vercel {
         border-radius: $vercel-radius-sm !important;
     }
 
+    .p_author_face {
+        margin-bottom: 4px !important;
+    }
+
     .icon_relative img {
         border-radius: $vercel-radius-sm !important;
     }
@@ -165,6 +169,7 @@ html.style-vercel {
     .user_level .badge {
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-xs !important;
+        margin-top: -2px !important;
         background-color: var(--default-background) !important;
     }
 
@@ -313,9 +318,11 @@ html.style-vercel {
     // 取消默认的整圈外框 / 背景，保持与楼层正文视觉连续
     // ---------------------------
     .core_reply_wrapper {
+        overflow: hidden !important;
         border: none !important;
-        border-radius: 0 !important;
-        background: transparent !important;
+        border-radius: 10px !important;
+        padding: 8px !important;
+        background: var(--very-light-background) !important;
         color: var(--default-fore) !important;
         box-shadow: none !important;
     }

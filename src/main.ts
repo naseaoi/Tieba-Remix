@@ -15,7 +15,7 @@ import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-co
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
-import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType, wideScreen } from "./lib/user-values";
+import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
 // 尽早完成主题设置，降低闪屏概率
@@ -82,20 +82,15 @@ waitUntil(() => !_.isNil(document.body)).then(function () {
         document.body.toggleAttribute("hide-bottom-editor", true);
     }
 
-    if (wideScreen.get().noLimit) {
-        document.body.classList.add("shrink-view");
-    } else {
-        const shrinkListener = _.throttle(function () {
-            if (window.innerWidth <= wideScreen.get().maxWidth) {
-                document.body.classList.add("shrink-view");
-            } else {
-                document.body.classList.remove("shrink-view");
-            }
-        }, 200);
-
-        shrinkListener();
-        window.addEventListener("resize", shrinkListener);
-    }
+    // 回顶按钮平滑滚动
+    document.addEventListener("click", (e) => {
+        const target = (e.target as HTMLElement).closest(".tbui_fbar_top");
+        if (target) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, true);
 });
 
 // 性能配置

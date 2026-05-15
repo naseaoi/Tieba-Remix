@@ -329,6 +329,7 @@ span.tP {
     overflow: hidden;
     border: none !important;
     border-radius: 4px !important;
+    margin-bottom: 4px !important;
     background: none !important;
 }
 
@@ -357,6 +358,7 @@ span.tP {
     /* 等级头衔 */
     border: 1px solid var(--border-color);
     border-radius: 8px;
+    margin-top: -2px;
     background-color: var(--light-background);
 }
 
@@ -602,6 +604,7 @@ span.tP {
 
 .core_reply_wrapper {
     /* 回复 */
+    overflow: hidden !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 6px !important;
     margin-bottom: 16px !important;

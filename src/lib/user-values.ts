@@ -191,30 +191,6 @@ export const styleTheme = new UserKey<"remixed" | "vercel">(
     });
 /** 紧凑布局 */
 export const compactLayout = new UserKey("compactLayout", false);
-/** 宽屏设置 */
-export const wideScreen = new UserKey(
-    "wideScreen",
-    {
-        maxWidth: 982,
-        noLimit: false,
-    },
-    undefined,
-    // 兜底：maxWidth 缺失/非数字/过小（含历史误清空导致的 0）时回落到 982
-    (value) => {
-        if (!value || typeof value !== "object") {
-            return { maxWidth: 982, noLimit: false };
-        }
-        const v = value as { maxWidth?: unknown, noLimit?: unknown };
-        const mw = Number(v.maxWidth);
-        if (!Number.isFinite(mw) || mw < 320) {
-            v.maxWidth = 982;
-        } else {
-            v.maxWidth = mw;
-        }
-        v.noLimit = Boolean(v.noLimit);
-        return v as { maxWidth: number, noLimit: boolean };
-    },
-);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#556987",

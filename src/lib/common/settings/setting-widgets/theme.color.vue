@@ -27,9 +27,9 @@ function changeThemeColor() {
 .theme-color-component {
     display: flex;
     width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
 }
 </style>
 

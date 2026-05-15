@@ -323,7 +323,6 @@ $dur: 0.18s;
     width: $sidebar-width;
     min-width: $sidebar-width;
     flex-direction: column;
-    background-color: var(--deep-background);
     border-right: 1px solid var(--border-color);
 
     .sidebar-header {
@@ -355,27 +354,10 @@ $dur: 0.18s;
         flex-direction: column;
         padding: 4px 8px 16px;
         gap: 4px;
-
-        // 细滚动条（无 track 背景）
-        scrollbar-width: thin;
-        scrollbar-color: var(--border-color) transparent;
+        scrollbar-width: none;
 
         &::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            border-radius: 3px;
-            background-color: var(--border-color);
-            transition: background-color 0.2s ease;
-        }
-
-        &::-webkit-scrollbar-thumb:hover {
-            background-color: var(--minimal-fore);
+            display: none;
         }
 
         .nav-group {
@@ -719,14 +701,9 @@ $dur: 0.18s;
     object-fit: contain;
 }
 
-.widget-component {
-    display: block;
-}
-
-// 纯组件页容器（不包卡片）：撑满 main-body 让内部组件自行控制居中
+// 纯组件页容器（不包卡片）：让内部组件自行控制布局
 .setting-component-wrap {
     display: flex;
-    flex: 1;
     flex-direction: column;
     align-items: stretch;
     justify-content: center;

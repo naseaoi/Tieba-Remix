@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts, wideScreen } from "@/lib/user-values";
+import { PerfType, UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, perfProfile, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -22,7 +22,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                 name: "主题",
                 content: {
                     "switch-theme": {
-                        title: "主题偏好设置",
+                        title: "主题偏好",
                         description:
                             `在自动模式下，将根据当前系统设置自动选择合适的主题`,
                         widgets: [{
@@ -79,7 +79,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "紧凑布局",
                         widgets: [{
                             type: "toggle",
-                            content: `在尽量保证视觉观感的情况下，针对部分页面应用更紧凑的布局以提高信息密度。当前会受到影响的页面有：新版看贴页面`,
+                            content: `对部分页面应用更紧凑的布局以提高信息密度。当前会受到影响的页面有：新版看贴页面`,
                             init() {
                                 return compactLayout.get();
                             },
@@ -115,56 +115,24 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
-                    "wide-screen-title": {
-                        title: "宽屏设置",
+                    "nav-bar-mode": {
+                        title: "导航栏隐藏模式",
                         description:
-                            `针对宽屏设备进行配置`,
-                        widgets: [
-                            {
-                                type: "subTitle",
-                                content: "强制拉伸画幅",
+                            `设置导航栏的隐藏模式`,
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
+                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
+                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
+                            ] as UserSelectItem<NavBarHideMode>[],
+                            init() {
+                                return navBarHideMode.get();
                             },
-                            {
-                                type: "toggle",
-                                content: `对于宽屏设备，不一定需要页面内容宽度始终等于屏幕宽度。如果你想应用强制宽屏，可以开启此项。`,
-                                init() {
-                                    return wideScreen.get().noLimit;
-                                },
-                                event() {
-                                    const value = wideScreen.get().noLimit;
-                                    wideScreen.merge({
-                                        noLimit: !value,
-                                    });
-                                    return !value;
-                                },
+                            event(hideMode: NavBarHideMode) {
+                                navBarHideMode.set(hideMode);
                             },
-                            {
-                                type: "subTitle",
-                                content: "最大宽度",
-                            },
-                            {
-                                type: "desc",
-                                content:
-                                    `配置页面元素跟随屏幕拉伸的最大宽度，若开启了 “强制拉伸画幅” 则此项失效`,
-                            },
-                            {
-                                type: "textbox",
-                                placeHolder: "输入最大宽度像素值",
-                                init() {
-                                    return String(wideScreen.get().maxWidth);
-                                },
-                                event(e) {
-                                    const newValue = (e.target as HTMLInputElement).value.trim();
-                                    const parsed = parseInt(newValue, 10);
-                                    // 防御：空值、非数字、过小值不写入（避免布局崩坏）
-                                    if (newValue !== "" && Number.isFinite(parsed) && parsed >= 320) {
-                                        wideScreen.merge({
-                                            maxWidth: parsed,
-                                        });
-                                    }
-                                },
-                            },
-                        ],
+                        }],
                     },
                 },
             },
@@ -276,31 +244,6 @@ export const getUserSettings = _.once((): UserSettings => ({
                                 },
                             },
                         ],
-                    },
-                },
-            },
-
-            "nav-bar": {
-                name: "导航栏",
-                content: {
-                    "nav-bar-mode": {
-                        title: "导航栏隐藏模式",
-                        description:
-                            `设置导航栏的隐藏模式`,
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
-                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
-                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
-                            ] as UserSelectItem<NavBarHideMode>[],
-                            init() {
-                                return navBarHideMode.get();
-                            },
-                            event(hideMode: NavBarHideMode) {
-                                navBarHideMode.set(hideMode);
-                            },
-                        }],
                     },
                 },
             },
@@ -492,7 +435,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "弹窗更新",
                         widgets: [{
                             type: "toggle",
-                            content: `启用一个对话框提示用户更新，该对话框可以立即安装更新，也可以推迟更新操作`,
+                            content: `当检测到新版本时会在网页里弹窗提醒`,
                             init() {
                                 return updateConfig.get().notify;
                             },
