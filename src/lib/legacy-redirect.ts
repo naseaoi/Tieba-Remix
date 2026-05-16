@@ -8,7 +8,7 @@
  *    用户始终是一片空白，不再看到中间状态闪烁。
  * 2. body 出现 → 仅识别「百度安全验证」拦截页 → 自动 reload（受 sessionStorage 限流）。
  * 3. DOMContentLoaded → 做最终版本判定：
- *    - `body.cos-tieba` 或缺失 `window.PageData` → 视为新版 → 后台请求切换接口 → reload，保持遮罩。
+ *    - `body.cos-tieba` → 视为新版 → 后台请求切换接口 → reload，保持遮罩。
  *    - 否则 → 旧版 → 调 bootstrap()。bootstrap 在 CSS 注入完成后调用 `onReady` 撤掉遮罩。
  * 4. 兜底：从首次注入遮罩起 8 秒未撤，强制撤掉，避免脚本异常时永久空白。
  */
@@ -54,9 +54,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         if (bootstrapped || redirectTriggered) return;
         if (handleSecurityPage()) return;
 
-        const isNewVersion =
-            document.body?.classList.contains("cos-tieba") === true
-            || typeof (window as { PageData?: unknown }).PageData === "undefined";
+        const isNewVersion = document.body?.classList.contains("cos-tieba") === true;
 
         if (isNewVersion) {
             clearSecurityRetry();
