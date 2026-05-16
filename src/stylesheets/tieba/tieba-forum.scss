@@ -299,6 +299,20 @@ body[hide-bottom-editor] .editor_wrap_bright {
     background-color: var(--trans-light-background) !important;
 }
 
+// 广告帖（优联汇 SDK）原生宽度大于卡片，会撑大整列；强制贴合容器
+.threadlist_bright .ylh-ad-container {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+
+    > *, .ylh-ad-content, .ylh-ad-content img, .ylh-ad-content video,
+    .ylh-video-container, .ylh-video-container > div {
+        max-width: 100% !important;
+    }
+}
+
 .j_th_tit {
     /* 帖子标题 */
     color: var(--tieba-theme-fore);

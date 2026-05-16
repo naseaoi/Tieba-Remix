@@ -4,6 +4,7 @@ import "user-view/build/index.css";
 import Settings from "./components/settings.vue";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { parseUserModules } from "./lib/common/packer";
+import { setupLegacyRedirect, BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
 import { renderDialog } from "./lib/render";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
@@ -16,109 +17,121 @@ import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinn
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
-import { REMIXED, glassEffect, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
+import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
-// 尽早完成主题设置，降低闪屏概率
-setTheme(themeType.get());
-setStyleTheme(styleTheme.get());
-darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
+// 新版贴吧（SPA）会让旧版选择器全部失效；先判定版本，旧版才执行主流程。
+// 新版页面下完全不注入任何 CSS / 属性，避免破坏 SPA 渲染，由 setupLegacyRedirect 自身负责切换 cookie + reload。
+setupLegacyRedirect(bootstrap);
 
-// 同步磨砂玻璃质感开关到 <html glass-effect>
-document.documentElement.toggleAttribute("glass-effect", glassEffect.get());
+function bootstrap({ onReady }: BootstrapSignal) {
+    // 尽早完成主题设置，降低闪屏概率
+    setTheme(themeType.get());
+    setStyleTheme(styleTheme.get());
+    darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
 
-// 将页面类型标记到 <html data-page-type="..."> 上，供 CSS 按页面类型限定作用域。
-// 这样 vercel/tieba-thread.scss 等"虽然按文件名属于某页"但实际全局注入的样式，
-// 可以通过 html[data-page-type="..."] 真正约束在对应页面，避免误伤其它页面。
-document.documentElement.dataset.pageType = currentPageType();
+    // 同步磨砂玻璃质感开关到 <html glass-effect>
+    document.documentElement.toggleAttribute("glass-effect", glassEffect.get());
 
-// 吧首页：Vercel 主题下接管缩略图点击 → 复用项目内大图查看器
-installForumImageTakeover();
+    // 同步导航栏隐藏模式到 <html data-nav-bar-mode="...">，供 CSS 按模式收紧顶部空白
+    document.documentElement.dataset.navBarMode = navBarHideMode.get();
 
-// 吧首页：右侧栏 region 默认折叠 + 点击展开
-installForumAsideCollapse();
+    // 将页面类型标记到 <html data-page-type="..."> 上，供 CSS 按页面类型限定作用域。
+    // 这样 vercel/tieba-thread.scss 等"虽然按文件名属于某页"但实际全局注入的样式，
+    // 可以通过 html[data-page-type="..."] 真正约束在对应页面，避免误伤其它页面。
+    document.documentElement.dataset.pageType = currentPageType();
 
-// 吧首页：监听置顶帖折叠状态，给 .thread_top_list_folder 同步 .pinned-folded class
-installForumPinnedFoldWatcher();
+    // 吧首页：Vercel 主题下接管缩略图点击 → 复用项目内大图查看器
+    installForumImageTakeover();
 
-// 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
-installForumAuthorFullId();
+    // 吧首页：右侧栏 region 默认折叠 + 点击展开
+    installForumAsideCollapse();
 
-// 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
-installThreadFloorTag();
+    // 吧首页：监听置顶帖折叠状态，给 .thread_top_list_folder 同步 .pinned-folded class
+    installForumPinnedFoldWatcher();
 
-// 帖子页：一行多图智能排列（包成 grid，删除组内 <br>）
-installThreadImageGrid();
+    // 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
+    installForumAuthorFullId();
 
-Promise.all([
-    loadDynamicCSS(),
-    loadMainCSS(),
-    index(),
-    thread(),
-    parseUserModules(
-        import.meta.glob("./modules/**/index.ts"),
-        module => {
-            AllModules().push(module);
-        }
-    ),
-    document.addEventListener("DOMContentLoaded", function () {
-        if (currentPageType() === "thread") {
-            threadFloorsObserver.observe();
-            threadCommentsObserver.observe();
-        }
+    // 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
+    installThreadFloorTag();
 
-        if (currentPageType() === "index") {
-            if (!pageExtension.get().index)
-                legacyIndexFeedsObserver.observe();
-        }
+    // 帖子页：一行多图智能排列（包成 grid，删除组内 <br>）
+    installThreadImageGrid();
 
-        if (currentPageType() === "forum") {
-            forumThreadsObserver.observe();
-        }
-    }),
-]);
+    const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
+    // CSS 注入完成即撤掉遮罩；reject 也撤，避免脚本异常时永久空白
+    cssReady.then(onReady, onReady);
 
-window.addEventListener("load", function () {
-    checkUpdateAndNotify();
-});
+    Promise.all([
+        cssReady,
+        index(),
+        thread(),
+        parseUserModules(
+            import.meta.glob("./modules/**/index.ts"),
+            module => {
+                AllModules().push(module);
+            }
+        ),
+        document.addEventListener("DOMContentLoaded", function () {
+            if (currentPageType() === "thread") {
+                threadFloorsObserver.observe();
+                threadCommentsObserver.observe();
+            }
 
-// 收缩视图检测
-waitUntil(() => !_.isNil(document.body)).then(function () {
-    // 吧首页底部发帖模块隐藏
-    if (!showBottomEditor.get()) {
-        document.body.toggleAttribute("hide-bottom-editor", true);
-    }
+            if (currentPageType() === "index") {
+                if (!pageExtension.get().index)
+                    legacyIndexFeedsObserver.observe();
+            }
 
-    // 滚动锁定时同步禁用 html 滚动，并兜底 :has() 不支持的浏览器
-    // 同时抑制 user-view inline 写入的 padding-right，避免与 html 上的 scrollbar-gutter 双补偿
-    const syncHtmlScrollLock = () => {
-        if (document.body.hasAttribute("no-scrollbar")) {
-            document.documentElement.style.overflow = "hidden";
-        } else {
-            document.documentElement.style.overflow = "";
-        }
-    };
-    new MutationObserver(syncHtmlScrollLock).observe(document.body, {
-        attributes: true,
-        attributeFilter: ["no-scrollbar"],
+            if (currentPageType() === "forum") {
+                forumThreadsObserver.observe();
+            }
+        }),
+    ]);
+
+    window.addEventListener("load", function () {
+        checkUpdateAndNotify();
     });
-    syncHtmlScrollLock();
 
-    // 回顶按钮平滑滚动
-    document.addEventListener("click", (e) => {
-        const target = (e.target as HTMLElement).closest(".tbui_fbar_top");
-        if (target) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+    // 收缩视图检测
+    waitUntil(() => !_.isNil(document.body)).then(function () {
+        // 吧首页底部发帖模块隐藏
+        if (!showBottomEditor.get()) {
+            document.body.toggleAttribute("hide-bottom-editor", true);
         }
-    }, true);
 
-    waitUntil(() => !_.isNil(floatBar.get())).then(() => {
-        decorateFloatBarTooltips();
+        // 滚动锁定时同步禁用 html 滚动，并兜底 :has() 不支持的浏览器
+        // 同时抑制 user-view inline 写入的 padding-right，避免与 html 上的 scrollbar-gutter 双补偿
+        const syncHtmlScrollLock = () => {
+            if (document.body.hasAttribute("no-scrollbar")) {
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                document.documentElement.style.overflow = "";
+            }
+        };
+        new MutationObserver(syncHtmlScrollLock).observe(document.body, {
+            attributes: true,
+            attributeFilter: ["no-scrollbar"],
+        });
+        syncHtmlScrollLock();
+
+        // 回顶按钮平滑滚动
+        document.addEventListener("click", (e) => {
+            const target = (e.target as HTMLElement).closest(".tbui_fbar_top");
+            if (target) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        }, true);
+
+        waitUntil(() => !_.isNil(floatBar.get())).then(() => {
+            decorateFloatBarTooltips();
+        });
     });
-});
 
-GM_registerMenuCommand("设置", () => renderDialog(Settings));
+    GM_registerMenuCommand("设置", () => renderDialog(Settings));
 
-console.info(REMIXED);
+    console.info(REMIXED);
+}

@@ -8,9 +8,6 @@
             </div>
 
             <div class="control-panel head-controls" :class="{ 'hide': !showControls.top }">
-                <UserToggle class="vli-mode head-btn icon" title="长图模式" v-model="vliMode">chrome_reader_mode
-                </UserToggle>
-                <span>|</span>
                 <UserButton class="zoom-in head-btn icon" title="缩小" @click="zoomImage(0.5)">
                     zoom_in
                 </UserButton>
@@ -18,14 +15,14 @@
                     zoom_out
                 </UserButton>
                 <span class="zoom-size">{{ _.round(scale * 100) + "%" }}</span>
-                <span>|</span>
+                <span class="head-sep">|</span>
                 <UserButton class="turn-left head-btn icon" title="逆时针旋转" @click="rotateImage(-90)">
                     undo
                 </UserButton>
                 <UserButton class=" turn-right head-btn icon" title="顺时针旋转" @click="rotateImage(90)">
                     redo
                 </UserButton>
-                <span>|</span>
+                <span class="head-sep">|</span>
                 <UserButton class="close head-btn icon" title="关闭" @click="unload">
                     close
                 </UserButton>
@@ -43,7 +40,7 @@
             <div ref="bottomPanel"
                 class="control-panel bottom-controls-wrapper"
                 :class="{ 'hide': !showControls.bottom }">
-                <div class="bottom-controls-container">
+                <div ref="bottomContainerRef" class="bottom-controls-container">
                     <div ref="thumbContainer" class="thumb-container">
                         <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
                             :class="{ 'selected': index === curr }" no-border="all">
@@ -51,7 +48,9 @@
                         </UserButton>
                     </div>
                 </div>
-                <div class="bottom-panel-scroll-bar"></div>
+                <div ref="scrollBar" class="bottom-panel-scroll-bar"
+                    :class="{ 'dragging': isScrollDragging }"
+                    @mousedown="onScrollBarMouseDown"></div>
             </div>
         </div>
     </UserDialog>
@@ -63,7 +62,7 @@ import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import { styleTheme } from "@/lib/user-values";
 import _ from "lodash";
-import { UserButton, UserDialog, UserDialogOpts, UserToggle } from "user-view";
+import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 export interface ImagesViewerOpts {
@@ -114,7 +113,9 @@ const imagesViewer = ref<HTMLDivElement>();
 const imageContainer = ref<HTMLDivElement>();
 const currImage = ref<HTMLImageElement>();
 const bottomPanel = ref<HTMLDivElement>();
+const bottomContainerRef = ref<HTMLDivElement>();
 const thumbContainer = ref<HTMLDivElement>();
+const scrollBar = ref<HTMLDivElement>();
 const curr = ref(props.defaultIndex);
 const scale = ref(1.0);
 const deg = ref(0);
@@ -134,9 +135,9 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
     top: false,
     bottom: false,
 });
-const vliMode = ref(false);
 const loading = ref(true);
 const disableImageTransition = ref(false);
+const isScrollDragging = ref(false);
 
 const imageStyle = computed<CSSRule>(() => {
     const w = naturalSize.value.width * scale.value;
@@ -149,20 +150,7 @@ const imageStyle = computed<CSSRule>(() => {
         top: imageTop.value === undefined ? undefined : `${imageTop.value}px`,
         transition: disableImageTransition.value
             ? "none"
-            : vliMode.value
-            ? "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0.1s ease-out"
             : "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0s",
-    };
-});
-
-const imageProps = computed(function () {
-    const naturalHeight = naturalSize.value.height;
-    const scaledHeight = naturalHeight * scale.value;
-    return {
-        naturalHeight,
-        scaledHeight,
-        vliMaxTop: window.innerHeight / 2,
-        vliMinTop: -scaledHeight + window.innerHeight / 2,
     };
 });
 
@@ -198,14 +186,11 @@ const dialogOpts: UserDialogOpts = {
 // 状态
 const MIN_SIZE = 0.1 as const;
 const MAX_SIZE = 8.0 as const;
-// VLI = very long image
-const VLI_THRESHOLD = 5 as const;
-const VLI_WIDTH_SCALE = 2 as const;
 const DEFAULT_HIDE_CONTROLS_DELAY = 3000 as const;
 const SHOW_CONTROLS_THRESHOLD_X = 180 as const;
 const SHOW_CONTROLS_THRESHOLD_Y = 140 as const;
 // 看图 UI 占用空间预留（顶部控件 + 底部缩略图 / 两侧翻页）
-const UI_RESERVED_HEIGHT = 220 as const;
+const UI_RESERVED_HEIGHT = 160 as const;
 const UI_RESERVED_WIDTH = 200 as const;
 
 const evproxy = new EventProxy();
@@ -222,7 +207,7 @@ onMounted(async () => {
     await nextTick();
 
     const currentBottom = dom(".bottom-btn", thumbContainer.value!, [])[props.defaultIndex];
-    currentBottom.scrollIntoView({
+    currentBottom?.scrollIntoView({
         inline: "center",
     });
 
@@ -241,7 +226,6 @@ onMounted(async () => {
     evproxy.on(currImage.value, "mousedown", (e: MouseEvent) => {
         if (!currImage.value) return;
         e.preventDefault();
-        if (vliMode.value) return;
 
         offsetX = e.clientX - currImage.value.offsetLeft;
         offsetY = e.clientY - currImage.value.offsetTop;
@@ -255,7 +239,6 @@ onMounted(async () => {
 
     evproxy.on(currImage.value, "load", function () {
         if (!currImage.value) return;
-        vliMode.value = false;
 
         naturalSize.value = {
             width: currImage.value.naturalWidth,
@@ -272,13 +255,6 @@ onMounted(async () => {
                 return;
             }
 
-            if (currImage.value.naturalHeight / currImage.value.naturalWidth >= VLI_THRESHOLD) {
-                vliMode.value = true;
-                scale.value = window.innerWidth / VLI_WIDTH_SCALE / currImage.value.naturalWidth;
-                return;
-            }
-
-            vliMode.value = false;
             scale.value = Math.min(
                 availableW / currImage.value.naturalWidth,
                 availableH / currImage.value.naturalHeight,
@@ -312,37 +288,28 @@ onMounted(async () => {
         });
     });
 
-    const bottomPanelScrollBar = dom<"div">(".bottom-panel-scroll-bar", bottomPanel.value);
-    const bottomContainer = dom<"div">(".bottom-controls-container", bottomPanel.value);
     if (bottomPanel.value) {
         dom("img", bottomPanel.value, []).forEach((img) => {
             thumbLazyloadObserver.observe(img);
         });
-
-        if (bottomPanelScrollBar && bottomContainer) {
-            const scrollBarScale = bottomContainer.clientWidth / bottomContainer.scrollWidth;
-            if (scrollBarScale >= 1) {
-                bottomPanelScrollBar.style.display = "none";
-            }
-            bottomPanelScrollBar.style.width = `${scrollBarScale * 100}%`;
-        }
     }
+
+    syncScrollBar();
+
+    evproxy.on(bottomContainerRef.value, "scroll", syncScrollBar, { passive: true });
 
     evproxy.on(bottomPanel.value, "wheel", (e: WheelEvent) => {
         e.stopPropagation();
-        if (!bottomContainer) return;
+        if (!bottomContainerRef.value) return;
 
         if (e.deltaX === 0 && e.deltaY !== 0) {
-            bottomContainer.scrollBy({
+            bottomContainerRef.value.scrollBy({
                 left: e.deltaY,
             });
         } else if (e.deltaX !== 0 && e.deltaY === 0) {
-            bottomContainer.scrollBy({
+            bottomContainerRef.value.scrollBy({
                 left: e.deltaX,
             });
-        }
-        if (bottomPanelScrollBar) {
-            bottomPanelScrollBar.style.left = `${bottomContainer.scrollLeft / bottomContainer.scrollWidth * 100}%`;
         }
     }, { passive: false });
 
@@ -374,26 +341,6 @@ watch(curr, function () {
     imageLeft.value = undefined;
     imageTop.value = undefined;
     naturalSize.value = { width: 0, height: 0 };
-});
-
-watch(imageTop, function (newTop) {
-    if (vliMode.value) {
-        if (!currImage.value || !imageTop.value || !newTop) return;
-
-        if (newTop > imageProps.value.vliMaxTop) {
-            imageTop.value = imageProps.value.vliMaxTop;
-        }
-        if (newTop < imageProps.value.vliMinTop) {
-            imageTop.value = imageProps.value.vliMinTop;
-        }
-    }
-});
-
-watch(vliMode, function (newMode) {
-    lockControlsTemporarily("top", DEFAULT_HIDE_CONTROLS_DELAY);
-    if (newMode && currImage.value && !imageTop.value) {
-        imageTop.value = Math.max(imageProps.value.vliMinTop, 0);
-    }
 });
 
 /** 卸载组件 */
@@ -457,13 +404,7 @@ function rotateImage(delta: number) {
 /** 鼠标滚轮事件 */
 function imageWheel(e: WheelEvent) {
     if (!currImage.value) return;
-
-    if (!vliMode.value) {
-        zoomImage(-e.deltaY / 1000, { x: e.clientX, y: e.clientY });
-    } else {
-        if (!imageTop.value) imageTop.value = 0;
-        imageTop.value += -e.deltaY / 1000 * window.innerHeight;
-    }
+    zoomImage(-e.deltaY / 1000, { x: e.clientX, y: e.clientY });
 }
 
 function getDefaultZoomAnchor(): Maybe<ZoomAnchor> {
@@ -498,7 +439,7 @@ function syncImagePosition() {
 
     const metrics = getImageMetrics();
     imageLeft.value = metrics.left;
-    imageTop.value = vliMode.value ? Math.max(imageProps.value.vliMinTop, 0) : metrics.top;
+    imageTop.value = metrics.top;
 }
 
 let imageTransitionTimer = 0;
@@ -516,6 +457,67 @@ function clickModal(e: MouseEvent) {
     if (e.target === imageContainer.value) {
         unload();
     }
+}
+
+/** 同步底部缩略图区域滚动条的宽度与位置（按比例） */
+function syncScrollBar() {
+    const container = bottomContainerRef.value;
+    const bar = scrollBar.value;
+    if (!container || !bar) return;
+
+    const ratio = container.clientWidth / container.scrollWidth;
+    if (ratio >= 1) {
+        bar.style.display = "none";
+        return;
+    }
+
+    bar.style.display = "";
+    bar.style.width = `${ratio * 100}%`;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const progress = maxScroll === 0 ? 0 : container.scrollLeft / maxScroll;
+    bar.style.left = `${progress * (100 - ratio * 100)}%`;
+}
+
+function onScrollBarMouseDown(e: MouseEvent) {
+    const container = bottomContainerRef.value;
+    const bar = scrollBar.value;
+    const wrapper = bottomPanel.value;
+    if (!container || !bar || !wrapper) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    isScrollDragging.value = true;
+    lockControls.value.bottom = true;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    // 抓取点相对于滚动条左侧的偏移；点击空白处时居中跳到点击位置
+    const grabOffset = (e.clientX >= barRect.left && e.clientX <= barRect.right)
+        ? e.clientX - barRect.left
+        : barRect.width / 2;
+
+    function setScrollFromClientX(clientX: number) {
+        if (!container || !bar) return;
+        const trackWidth = wrapperRect.width - bar.offsetWidth;
+        if (trackWidth <= 0) return;
+        const x = _.clamp(clientX - wrapperRect.left - grabOffset, 0, trackWidth);
+        const progress = x / trackWidth;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        container.scrollLeft = progress * maxScroll;
+    }
+
+    setScrollFromClientX(e.clientX);
+
+    const onMove = (ev: MouseEvent) => setScrollFromClientX(ev.clientX);
+    const onUp = () => {
+        isScrollDragging.value = false;
+        lockControls.value.bottom = false;
+        showControls.value = verifyPos();
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
 }
 
 /**
@@ -590,9 +592,12 @@ function verifyPos(pos = lastMousePos) {
 </style>
 
 <style scoped lang="scss">
-$panel-margin: 16px;
-$panel-radius: 12px;
-$panel-padding: 10px;
+$panel-margin: 12px;
+$panel-radius: 10px;
+$panel-padding: 6px;
+$thumb-width: 64px;
+$thumb-height: 48px;
+$scroll-bar-height: 6px;
 
 .images-viewer {
     position: fixed;
@@ -616,9 +621,9 @@ $panel-padding: 10px;
         align-items: center;
         padding: $panel-padding;
         border: 1px solid var(--light-border-color);
-        border-radius: $panel-radius + 6;
+        border-radius: $panel-radius + 4;
         background-color: var(--trans-default-background);
-        box-shadow: 0 0 32px rgb(0 0 0 / 40%);
+        box-shadow: 0 0 24px rgb(0 0 0 / 35%);
     }
 
     .head-controls {
@@ -632,27 +637,17 @@ $panel-padding: 10px;
         }
 
         .head-btn {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             padding: 0;
-            border-radius: $panel-radius;
+            border-radius: $panel-radius - 2;
             background-color: unset;
             box-shadow: none;
-            font-size: 16px;
+            font-size: 15px;
 
             &:hover {
                 background-color: var(--default-background);
                 color: var(--tieba-theme-color);
-            }
-
-            &.toggle-on {
-                @extend %filled-icon;
-                background-color: var(--tieba-theme-color);
-                color: var(--default-background);
-
-                &:hover {
-                    filter: brightness(1.2);
-                }
             }
         }
 
@@ -660,20 +655,24 @@ $panel-padding: 10px;
             color: var(--error-color);
         }
 
-        span {
+        .head-sep {
             color: var(--minimal-fore);
             font-family: var(--code-monospace);
+            margin: 0 2px;
         }
 
         .zoom-size {
-            padding: 10px;
+            padding: 0 8px;
+            color: var(--light-fore);
+            font-family: var(--code-monospace);
+            font-size: 13px;
         }
     }
 
     .back,
     .forward {
         width: min-content;
-        height: 60px;
+        height: 56px;
         box-shadow: 0 0 20px rgb(0 0 0 / 10%);
         font-size: large;
     }
@@ -757,16 +756,17 @@ $panel-padding: 10px;
             transform: translateY(calc(100% + $panel-margin)) scale(0.85);
         }
 
-        &:hover {
+        &:hover,
+        &:focus-within {
             .bottom-panel-scroll-bar {
-                opacity: 1;
+                opacity: 0.9;
             }
         }
 
         .bottom-controls-container {
             display: flex;
             overflow: hidden;
-            padding: $panel-padding;
+            padding: $panel-padding $panel-padding ($panel-padding + $scroll-bar-height + 2);
 
             img[src=""],
             img:not([src]) {
@@ -779,11 +779,11 @@ $panel-padding: 10px;
 
                 .bottom-btn {
                     overflow: hidden;
-                    width: 100px;
-                    height: 75px;
+                    width: $thumb-width;
+                    height: $thumb-height;
                     padding: 0;
                     border: none;
-                    border-radius: $panel-radius - 2;
+                    border-radius: $panel-radius - 4;
                     background-color: var(--trans-default-background);
                     transition: linear var(--xfast-duration);
 
@@ -795,21 +795,32 @@ $panel-padding: 10px;
                 }
 
                 .bottom-btn.selected {
-                    border: 3px solid var(--tieba-theme-color);
+                    outline: 2px solid var(--tieba-theme-color);
+                    outline-offset: -2px;
                 }
             }
         }
 
         .bottom-panel-scroll-bar {
             position: absolute;
-            bottom: 0;
+            bottom: 3px;
             left: 0;
             width: 100%;
-            height: 4px;
-            border-radius: 2px;
-            background-color: var(--minimal-fore);
-            opacity: 0;
+            height: $scroll-bar-height;
+            border-radius: $scroll-bar-height * 0.5;
+            background-color: var(--light-fore);
+            opacity: 0.35;
+            cursor: grab;
             transition: opacity var(--default-duration);
+
+            &:hover {
+                opacity: 0.9;
+            }
+
+            &.dragging {
+                cursor: grabbing;
+                opacity: 1;
+            }
         }
     }
 }
@@ -841,7 +852,8 @@ html.style-vercel .images-viewer {
             box-shadow: none;
         }
 
-        span {
+        .head-sep,
+        .zoom-size {
             color: var(--viewer-light-fore);
         }
 
@@ -852,17 +864,6 @@ html.style-vercel .images-viewer {
             &:hover {
                 background-color: var(--viewer-bg-hover);
                 color: var(--viewer-fore);
-            }
-
-            &.toggle-on {
-                background-color: var(--viewer-accent);
-                color: var(--viewer-bg);
-
-                &:hover {
-                    background-color: var(--viewer-accent);
-                    color: var(--viewer-bg);
-                    filter: none;
-                }
             }
         }
 
@@ -896,7 +897,11 @@ html.style-vercel .images-viewer {
         }
 
         .bottom-controls-container .thumb-container .bottom-btn.selected {
-            border: 2px solid var(--viewer-accent);
+            outline: 2px solid var(--viewer-accent);
+        }
+
+        .bottom-panel-scroll-bar {
+            background-color: var(--viewer-light-fore);
         }
     }
 }

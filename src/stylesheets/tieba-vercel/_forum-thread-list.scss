@@ -647,5 +647,210 @@
         .threadlist_pin {
             opacity: 0.6;
         }
+
+        // ---------------------------
+        // 广告帖（优联汇 SDK：.ylh-ad-container）
+        // 没装去广告插件时会出现，原生宽度比卡片宽，撑大整列。
+        // 这里把它压回与普通卡片同宽，并套上一致的卡片外观。
+        // ---------------------------
+
+        // 若外层 <li> 包裹了广告，让 li 透明化、广告自身充当卡片
+        > li:has(> .ylh-ad-container) {
+            display: contents !important;
+        }
+
+        // 广告卡片：单行标题 + 单行媒体
+        .ylh-ad-container {
+            display: grid !important;
+            position: relative !important;
+            box-sizing: border-box !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-areas:
+                "title rep"
+                "media media" !important;
+            column-gap: 12px !important;
+            row-gap: 8px !important;
+            align-items: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 80px !important;
+            padding: 16px !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-md !important;
+            background-color: var(--default-background) !important;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            overflow: hidden !important;
+            transition: border-color $vercel-trans-normal $vercel-ease,
+                        box-shadow $vercel-trans-normal $vercel-ease !important;
+
+            &:hover {
+                border-color: var(--minimal-fore) !important;
+                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
+            }
+
+            html.dark-theme & {
+                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
+
+                &:hover {
+                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
+                }
+            }
+
+            // 回复数 → rep
+            > .ylh-ad-reply-num-wrap {
+                grid-area: rep !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                align-self: center !important;
+                justify-self: end !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: none !important;
+
+                .ylh-ad-reply-num {
+                    @include mono-meta($vercel-fs-sm);
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    color: var(--default-fore) !important;
+                    font-weight: var(--font-weight-bold) !important;
+                    line-height: 1 !important;
+                }
+            }
+
+            // 中层包装透明化，让子节点直接落到 ad-container 的 grid 上
+            > .ylh-custom-ad-container {
+                display: contents !important;
+            }
+
+            // 顶部条 → title
+            .ylh-top-wrap {
+                grid-area: title !important;
+                display: flex !important;
+                align-items: center !important;
+                min-width: 0 !important;
+                gap: 8px !important;
+            }
+
+            .ylh-ad-title-wrap {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+            }
+
+            .ylh-ad-title {
+                display: -webkit-box !important;
+                color: var(--default-fore) !important;
+                font-size: $vercel-fs-lg !important;
+                font-weight: var(--font-weight-bold) !important;
+                line-height: 1.4 !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            // 广告投放方信息不显示，留给「广告」标签足够呼吸空间
+            .ylh-ad-author {
+                display: none !important;
+            }
+
+            // 「广告」chip
+            .ylh-ad-tag {
+                flex-shrink: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 1px 6px !important;
+                border-radius: $vercel-radius-xs !important;
+                background-color: var(--warning-color) !important;
+                color: #fff !important;
+                font-size: $vercel-fs-xs !important;
+                line-height: 1.4 !important;
+
+                .ylh-ad-icon { display: none !important; }
+                .ylh-ad-text {
+                    color: inherit !important;
+                    font-size: inherit !important;
+                    line-height: inherit !important;
+                }
+            }
+
+            // 媒体区 → media
+            .ylh-ad-content-wrap {
+                grid-area: media !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+
+            .ylh-ad-content {
+                position: relative !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 120px !important;
+                border-radius: $vercel-radius-sm !important;
+                overflow: hidden !important;
+                background-size: cover !important;
+                background-position: center !important;
+
+                .ylh-ad-img,
+                video {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 120px !important;
+                    height: auto !important;
+                    object-fit: cover !important;
+                }
+
+                .ylh-video-container,
+                .ylh-video-container > div {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 120px !important;
+                }
+            }
+
+            // 假回复条与原标题二楼信息无关，隐藏避免混淆
+            .ylh-ad-reply {
+                display: none !important;
+            }
+
+            // 右上角关闭与悬浮的「不感兴趣 / 开通 SVIP」操作菜单
+            > .ylh-ad-close {
+                position: absolute !important;
+                top: 4px !important;
+                right: 6px !important;
+                width: 16px !important;
+                height: 16px !important;
+                background: none !important;
+                color: var(--minimal-fore) !important;
+                opacity: 0 !important;
+                cursor: pointer !important;
+                transition: opacity $vercel-trans-normal $vercel-ease !important;
+
+                &::before {
+                    content: "×";
+                    display: block;
+                    font-size: 16px;
+                    line-height: 16px;
+                    text-align: center;
+                }
+
+                &:hover {
+                    color: var(--default-fore) !important;
+                }
+            }
+
+            &:hover > .ylh-ad-close {
+                opacity: 1 !important;
+            }
+
+            > .handle-btn-box {
+                display: none !important;
+            }
+        }
     }
 }

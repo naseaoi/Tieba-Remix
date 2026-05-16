@@ -3,7 +3,7 @@ import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
 import { currentPageType } from "@/lib/api/remixed";
-import { getAllThreadImages, levelToClass } from "@/lib/api/tieba";
+import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
@@ -11,10 +11,10 @@ import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
-import { compactLayout, currentStorage, pageExtension, THREAD_IMAGES } from "@/lib/user-values";
+import { compactLayout, currentStorage, navBarHideMode, pageExtension, THREAD_IMAGES, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
-import { floatMessage, UserButton } from "user-view";
+import { UserButton } from "user-view";
 import { VNode } from "vue";
 import commentsStyle from "./comments.scss?inline";
 import compactStyle from "./compact.scss?inline";
@@ -156,6 +156,30 @@ export default async function () {
         }
     });
 
+    // 滚动隐藏模式：与 nav-bar 协同，首次向下滚动后永久收紧顶部空白（不再恢复）
+    (function setupScrollCollapse() {
+        let collapsed = false;
+        let lastScrollY = window.scrollY;
+        const handle = _.throttle(function () {
+            if (collapsed) return;
+            if (navBarHideMode.get() !== "fold") return;
+            if (window.scrollY > lastScrollY && window.scrollY > 8) {
+                document.documentElement.toggleAttribute("thread-top-collapsed", true);
+                collapsed = true;
+            }
+            lastScrollY = window.scrollY;
+        }, 100);
+        window.addEventListener("scroll", handle, { passive: true });
+
+        navBarHideMode.on("setter", (mode) => {
+            if (mode !== "fold") {
+                document.documentElement.removeAttribute("thread-top-collapsed");
+                collapsed = false;
+                lastScrollY = window.scrollY;
+            }
+        });
+    })();
+
     waitUntil(() => !_.isNil(floatBar.get())).then(function () {
         let settingsPanel: RenderedComponent | undefined;
         const settingsButton = floatBar.add("other", function () {
@@ -245,7 +269,9 @@ export default async function () {
             }</h3>
 
             <div class="forum-wrapper-button">
-                <img class="forum-icon" src={forumIconLink} alt="吧头像" />
+                <a class="forum-icon-link" href={tiebaAPI.URL_forum(PageData.forum.forum_name)} title={`进入${PageData.forum.forum_name}吧`}>
+                    <img class="forum-icon" src={forumIconLink} alt="吧头像" />
+                </a>
                 <div class="button-container">
                     <UserButton
                         class="icon forum-button add-forum-button"
@@ -258,10 +284,6 @@ export default async function () {
         </div>, content, pbContent);
 
         // 绑定事件
-        floatMessage({
-            target: await asyncdom<"button">(".forum-wrapper-button"),
-            content: `关注 ${PageData.forum.member_count}, 帖子 ${PageData.forum.post_num}`,
-        });
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
             dom<"button">(".j_signbtn")?.click();
         });
@@ -380,6 +402,21 @@ export default async function () {
                 newEl.addEventListener("click", async function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
+
+                    // 仅当前楼层模式：直接以本楼图片构造队列，不发请求
+                    if (threadImageQueueScope.get() === "floor") {
+                        const floorImages = dom<"img">(".BDE_Image", postContent!, []);
+                        const pictureList: ThreadPicture[] = _.map(floorImages, img => ({
+                            original: img.src,
+                            thumbnail: img.src,
+                        }));
+                        const localIndex = _.findIndex(floorImages, img => img === newEl);
+                        imagesViewer({
+                            content: pictureList,
+                            defaultIndex: Math.max(0, localIndex),
+                        });
+                        return;
+                    }
 
                     // 缓存命中：直接打开
                     if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {

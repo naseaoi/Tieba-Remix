@@ -244,7 +244,11 @@ export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
     setter() { applyDynamicFonts(); },
 });
 /** 导航栏模式 */
-export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "never");
+export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "never", {
+    setter(value) {
+        document.documentElement.dataset.navBarMode = value;
+    },
+});
 /** 自定义样式 */
 export const customStyle = new UserKey<string>("customStyle", "", {
     setter() { applyCustomStyle(); },
@@ -256,6 +260,8 @@ export const fontWeights = new UserKey("fontWeights", {
     setter() { applyDynamicFonts(); },
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
+/** 看图模式队列范围：full = 全帖所有图片；floor = 仅当前楼层 */
+export const threadImageQueueScope = new UserKey<"full" | "floor">("threadImageQueueScope", "full");
 
 export const SymbolFont = "Material Symbols";
 

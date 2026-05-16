@@ -36,6 +36,14 @@ body.special_conf_skin {
     max-width: var(--content-max);
     box-sizing: border-box;
     margin-top: 86px;
+    transition: margin-top var(--default-duration);
+
+    // 导航栏始终隐藏时，去除原本为 nav-bar 让出的顶部空白
+    html[data-nav-bar-mode="alwaysFold"] &,
+    // 滚动隐藏模式下，首次向下滚动后顶部空白随 nav-bar 一同隐藏
+    html[thread-top-collapsed] & {
+        margin-top: 16px;
+    }
 
     .content {
         width: 100%;
@@ -322,6 +330,19 @@ body.special_conf_skin {
         gap: 4px;
 
         @include blur-if-custom-background;
+
+        .forum-icon-link {
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            line-height: 0;
+            text-decoration: none;
+            transition: opacity var(--default-duration);
+
+            &:hover {
+                opacity: 0.8;
+            }
+        }
 
         .forum-icon {
             width: 32px;

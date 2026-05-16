@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
+import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -186,7 +186,25 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                         }],
                     },
-                } as Record<keyof ReturnType<typeof pageExtension.get>, SettingContent>,
+
+                    "thread-image-queue": {
+                        title: "看图模式加载全帖图片",
+                        description:
+                            `控制看图模式打开时的图片队列范围`,
+                        widgets: [{
+                            type: "toggle",
+                            content: `开启时加载整个帖子的所有图片到队列；关闭时仅加载当前楼层中的图片`,
+                            init() {
+                                return threadImageQueueScope.get() === "full";
+                            },
+                            event() {
+                                const next = threadImageQueueScope.get() === "full" ? "floor" : "full";
+                                threadImageQueueScope.set(next);
+                                return next === "full";
+                            },
+                        }],
+                    },
+                } as Record<string, SettingContent>,
             },
 
             "fonts": {
