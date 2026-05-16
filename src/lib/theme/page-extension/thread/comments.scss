@@ -18,6 +18,10 @@ $lzl-content-margin: 12px;
         border-top-right-radius: 10px !important;
         background-color: var(--very-light-background) !important;
 
+        html.dark-theme & {
+            --very-light-background: #292929;
+        }
+
         // 楼中楼容器
         .core_reply_content {
             padding-right: 20px;
@@ -101,14 +105,6 @@ $lzl-content-margin: 12px;
                 padding: 0;
                 border-top: none !important;
                 margin-top: -$lzl-content-margin;
-
-                &::before {
-                    content: "";
-                    display: block;
-                    height: 1px;
-                    margin-bottom: $lzl-content-margin;
-                    background: linear-gradient(to right, transparent, var(--border-color), transparent);
-                }
 
                 // 点击查看（更多）
                 .lzl_more {

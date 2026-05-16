@@ -13,6 +13,7 @@ import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-co
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
@@ -94,6 +95,10 @@ waitUntil(() => !_.isNil(document.body)).then(function () {
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     }, true);
+
+    waitUntil(() => !_.isNil(floatBar.get())).then(() => {
+        decorateFloatBarTooltips();
+    });
 });
 
 GM_registerMenuCommand("设置", () => renderDialog(Settings));

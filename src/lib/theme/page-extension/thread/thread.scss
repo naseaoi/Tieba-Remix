@@ -390,9 +390,9 @@ body.special_conf_skin {
     .author-container {
         display: grid;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: -4px;
         column-gap: 8px;
-        row-gap: 1px;
+        row-gap: 0;
         grid-template:
             "avatar name" auto
             "avatar tags" auto
@@ -422,6 +422,7 @@ body.special_conf_skin {
             font-size: 14px;
             font-weight: var(--font-weight-bold);
             line-height: 18px;
+            transform: translateY(-5px);
             grid-area: name;
 
             @extend %anchor;
@@ -430,7 +431,9 @@ body.special_conf_skin {
         .badge-container {
             display: flex;
             align-items: center;
+            margin-top: -4px;
             gap: 4px;
+            transform: translateY(-5px);
             grid-area: tags;
 
             .floor-badge {
@@ -570,6 +573,10 @@ body.special_conf_skin {
 }
 
 .pb_footer {
+    display: none;
+}
+
+.post-foot-send-gift-container {
     display: none;
 }
 

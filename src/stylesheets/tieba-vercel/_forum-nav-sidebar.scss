@@ -136,12 +136,23 @@
     }
 
     // 右侧栏
+    .aside {
+        box-sizing: border-box !important;
+        padding: 15px 12px 0 0 !important;
+    }
+
     .aside_region.celebrity {
         display: none !important;
     }
 
     .aside_region {
-        border-bottom: none !important;
+        box-sizing: border-box !important;
+        margin: 0 0 12px -8px !important;
+        padding: 10px 14px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        overflow: hidden;
     }
 
     .aside_region.forum_info .region_header .pull_right a {

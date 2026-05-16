@@ -7,9 +7,9 @@ import { getAllThreadImages, levelToClass } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
-import { renderDialog } from "@/lib/render";
+import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
-import { floatBar } from "@/lib/tieba-components/float-bar";
+import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
 import { compactLayout, currentStorage, pageExtension, THREAD_IMAGES } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
@@ -157,9 +157,16 @@ export default async function () {
     });
 
     waitUntil(() => !_.isNil(floatBar.get())).then(function () {
+        let settingsPanel: RenderedComponent | undefined;
         const settingsButton = floatBar.add("other", function () {
+            if (settingsPanel) {
+                (settingsPanel.instance as { unload?: () => void }).unload?.();
+                return;
+            }
+
             const rect = settingsButton.el.getBoundingClientRect();
-            renderDialog<TogglePanelProps>(TogglePanel, {
+            settingsButton.el.classList.add("is-open");
+            settingsPanel = renderDialog<TogglePanelProps>(TogglePanel, {
                 toggles: [
                     {
                         icon: "favorite",
@@ -191,9 +198,26 @@ export default async function () {
                         },
                     },
                 ],
-                anchorRect: { bottom: rect.top, left: rect.left, width: rect.width },
+                anchorRect: {
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    left: rect.left,
+                    right: rect.right,
+                    width: rect.width,
+                    height: rect.height,
+                },
+            }, {
+                unloaded() {
+                    settingsPanel = undefined;
+                    settingsButton.el.classList.remove("is-open");
+                },
+                abnormalUnload() {
+                    settingsPanel = undefined;
+                    settingsButton.el.classList.remove("is-open");
+                },
             });
         }, "module-settings", "menu");
+        setFloatButtonTooltip(settingsButton.el, "更多");
 
         document.body.insertBefore(domrd("div", {
             class: "vue-module-control",

@@ -256,16 +256,12 @@
         // 置顶帖外壳：当所有内部置顶帖被关闭（折叠态）时，
         // 由 forum-pinned-fold-watcher.ts 在 .thread_top_list_folder 上动态加 .pinned-folded class
         // CSS 用 class 选择器直接匹配（替代 :has()，更稳定）
-        // 把外壳改造为一个紧贴 .forum_content 左外侧的小展开按钮：
-        // - 外壳脱离 grid 流（absolute），不占帖子列表空间
-        // - 内层 .thread_top_list（ul）隐藏，避免空白
-        // - #thread_top_folder 改为 28×28 圆角按钮，内部用 SVG mask 渲染向下箭头
-        // - 显式 left:-36px 把按钮完全推到容器外侧，并用 z-index 提高层级避免被 tab 栏遮挡
+        // 置顶折叠态：外壳改造为紧贴 .forum_content 左外侧的小展开按钮
         > li.thread_top_list_folder.pinned-folded {
             display: block !important;
             position: absolute !important;
             top: 0 !important;
-            left: -36px !important;
+            left: -24px !important;
             right: auto !important;
             width: 28px !important;
             min-height: 0 !important;

@@ -15,6 +15,18 @@ export const floatButtonMap = {
     "other": "*",
 };
 
+export const floatButtonTitleMap: Partial<Record<FloatButtonKey, string>> = {
+    auxiliary: "无障碍模式",
+    down: "返回底部",
+    post: "回复帖子",
+    props: "道具",
+    tsukkomi: "吐槽",
+    share: "分享",
+    favor: "收藏",
+    feedback: "反馈",
+    top: "顶部",
+};
+
 export class FloatBar extends TiebaComponent<"ul"> {
     /**
      * 获取当前页面的 float buttons
@@ -65,6 +77,7 @@ export class FloatBar extends TiebaComponent<"ul"> {
             el.classList.add(className);
         floatBar.get().insertBefore(el, floatBar.get().children[index]);
         setFloatButtonIcon(anchor, icon);
+        setFloatButtonTooltip(el, floatButtonTitleMap[type]);
 
         return { el: el, type: type } as FloatButton;
 
@@ -96,6 +109,37 @@ export class FloatBar extends TiebaComponent<"ul"> {
                 break;
         }
     }
+}
+
+export function setFloatButtonTooltip(target: HTMLElement, title?: string) {
+    if (!title) return;
+
+    target.setAttribute("title", title);
+    target.setAttribute("aria-label", title);
+    const anchor = target.querySelector<HTMLElement>("a");
+    anchor?.setAttribute("title", title);
+    anchor?.setAttribute("aria-label", title);
+}
+
+export function decorateFloatBarTooltips(root = floatBar.get()) {
+    if (!root) return;
+
+    Array.from(dom<"li">(".tbui_aside_fbar_button", root, [])).forEach(el => {
+        const type = (() => {
+            for (let i = 0; i < el.classList.length; i++) {
+                const cls = el.classList[i];
+                if (!cls.includes("tbui_fbar_")) continue;
+
+                const key = _.findKey(floatButtonMap, value => value === cls);
+                if (key) {
+                    return key as FloatButtonKey;
+                }
+            }
+            return undefined;
+        })();
+
+        setFloatButtonTooltip(el, type ? floatButtonTitleMap[type] : undefined);
+    });
 }
 
 export type FloatButtonKey = keyof typeof floatButtonMap;

@@ -6,15 +6,13 @@ $float-bar-default-left: calc(50% + var(--content-max) / 2 + $float-bar-layout-m
     bottom: $float-bar-layout-margin;
     left: $float-bar-default-left;
     display: flex;
-    overflow: hidden;
+    overflow: visible;
     width: max-content;
     flex-direction: column;
-    border-radius: 8px;
+    border-radius: 0;
     margin-left: 0;
-    background-color: var(--very-light-background) !important;
-    gap: 4px;
-
-    @include main-box-shadow;
+    background-color: transparent !important;
+    gap: 8px;
 
     [no-scrollbar] & {
         left: calc($float-bar-default-left - var(--scrollbar-width) / 2);
@@ -29,14 +27,34 @@ $float-bar-default-left: calc(50% + var(--content-max) / 2 + $float-bar-layout-m
         left: calc(100% - $float-bar-width - var(--scrollbar-width));
     }
 
-    .tbui_aside_fbar_button {
-        border-radius: 0;
+    li.tbui_aside_fbar_button {
+        overflow: hidden;
+        border: 1px solid rgb(0 0 0 / 10%);
+        border-radius: 12px;
         margin: 0 !important;
-        background-color: var(--default-background);
-        transition: var(--default-duration);
+        background-color: var(--default-background) !important;
+        transition:
+            border-color 0.18s ease,
+            background-color 0.18s ease,
+            box-shadow 0.18s ease,
+            transform 0.18s ease;
+
+        &:hover {
+            border-color: rgb(0 0 0 / 16%);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
 
         a {
-            border-radius: 0;
+            border: none !important;
+            border-radius: 12px;
+            box-shadow: none !important;
+            outline: none;
+            background: none !important;
+            transition: color 0.18s ease, background-color 0.18s ease;
 
             &:hover {
                 color: var(--tieba-theme-color);
@@ -45,11 +63,16 @@ $float-bar-default-left: calc(50% + var(--content-max) / 2 + $float-bar-layout-m
             &:active {
                 color: var(--tieba-theme-fore);
             }
+
+            &:focus {
+                outline: none;
+                box-shadow: none !important;
+            }
         }
 
         &[style*="visibility: hidden"] {
             height: 0;
-            margin-top: -4px !important;
+            margin-top: -8px !important;
         }
     }
 }

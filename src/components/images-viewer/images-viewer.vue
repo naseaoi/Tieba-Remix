@@ -78,6 +78,11 @@ interface ControlDirectionMap<T> {
     bottom: T;
 }
 
+interface ZoomAnchor {
+    x: number;
+    y: number;
+}
+
 const props = withDefaults(defineProps<ImagesViewerOpts>(), {
     defaultIndex: 0,
 });
@@ -131,6 +136,7 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
 });
 const vliMode = ref(false);
 const loading = ref(true);
+const disableImageTransition = ref(false);
 
 const imageStyle = computed<CSSRule>(() => {
     const w = naturalSize.value.width * scale.value;
@@ -139,9 +145,11 @@ const imageStyle = computed<CSSRule>(() => {
         width: w ? `${w}px` : undefined,
         height: h ? `${h}px` : undefined,
         transform: `rotate(${deg.value}deg)`,
-        left: `${imageLeft.value}px`,
-        top: `${imageTop.value}px`,
-        transition: vliMode.value
+        left: imageLeft.value === undefined ? undefined : `${imageLeft.value}px`,
+        top: imageTop.value === undefined ? undefined : `${imageTop.value}px`,
+        transition: disableImageTransition.value
+            ? "none"
+            : vliMode.value
             ? "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0.1s ease-out"
             : "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0s",
     };
@@ -267,7 +275,6 @@ onMounted(async () => {
             if (currImage.value.naturalHeight / currImage.value.naturalWidth >= VLI_THRESHOLD) {
                 vliMode.value = true;
                 scale.value = window.innerWidth / VLI_WIDTH_SCALE / currImage.value.naturalWidth;
-                imageLeft.value = undefined;
                 return;
             }
 
@@ -277,6 +284,8 @@ onMounted(async () => {
                 availableH / currImage.value.naturalHeight,
             );
         })();
+
+        syncImagePosition();
 
         loading.value = false;
         // 下一帧再启用过渡，避免首次加载时 width/height 从 0 动画放大
@@ -352,12 +361,16 @@ onMounted(async () => {
 onUnmounted(function () {
     evproxy.release();
     thumbLazyloadObserver.disconnect();
+    if (imageTransitionTimer) {
+        clearTimeout(imageTransitionTimer);
+    }
 });
 
 watch(curr, function () {
     loading.value = true;
     currImage.value?.classList.add("changing");
     deg.value = 0;
+    disableImageTransition.value = false;
     imageLeft.value = undefined;
     imageTop.value = undefined;
     naturalSize.value = { width: 0, height: 0 };
@@ -399,14 +412,41 @@ function listForward() {
 }
 
 /** 缩放图片 */
-function zoomImage(delta: number) {
-    scale.value += delta;
-    if (scale.value < MIN_SIZE) {
-        scale.value = MIN_SIZE;
+function zoomImage(delta: number, anchor = getDefaultZoomAnchor()) {
+    if (!currImage.value || !imageContainer.value) return;
+
+    suspendImageTransition();
+
+    const nextScale = _.clamp(scale.value + delta, MIN_SIZE, MAX_SIZE);
+    if (nextScale === scale.value) return;
+
+    const currentMetrics = getImageMetrics();
+    if (!anchor) {
+        scale.value = nextScale;
+        const centeredMetrics = getImageMetrics(nextScale);
+        imageLeft.value = centeredMetrics.left;
+        imageTop.value = centeredMetrics.top;
+        return;
     }
-    if (scale.value > MAX_SIZE) {
-        scale.value = MAX_SIZE;
+
+    const containerRect = imageContainer.value.getBoundingClientRect();
+    if (!currentMetrics.width || !currentMetrics.height) {
+        scale.value = nextScale;
+        return;
     }
+
+    const imageLeftPx = containerRect.left + currentMetrics.left;
+    const imageTopPx = containerRect.top + currentMetrics.top;
+    const anchorX = _.clamp(anchor.x, imageLeftPx, imageLeftPx + currentMetrics.width);
+    const anchorY = _.clamp(anchor.y, imageTopPx, imageTopPx + currentMetrics.height);
+    const zoomRatioX = _.clamp((anchorX - imageLeftPx) / currentMetrics.width, 0, 1);
+    const zoomRatioY = _.clamp((anchorY - imageTopPx) / currentMetrics.height, 0, 1);
+    const nextWidth = naturalSize.value.width * nextScale;
+    const nextHeight = naturalSize.value.height * nextScale;
+
+    scale.value = nextScale;
+    imageLeft.value = currentMetrics.left - (nextWidth - currentMetrics.width) * zoomRatioX;
+    imageTop.value = currentMetrics.top - (nextHeight - currentMetrics.height) * zoomRatioY;
 }
 
 /** 旋转图片 */
@@ -419,11 +459,57 @@ function imageWheel(e: WheelEvent) {
     if (!currImage.value) return;
 
     if (!vliMode.value) {
-        zoomImage(-e.deltaY / 1000);
+        zoomImage(-e.deltaY / 1000, { x: e.clientX, y: e.clientY });
     } else {
         if (!imageTop.value) imageTop.value = 0;
         imageTop.value += -e.deltaY / 1000 * window.innerHeight;
     }
+}
+
+function getDefaultZoomAnchor(): Maybe<ZoomAnchor> {
+    const containerRect = imageContainer.value?.getBoundingClientRect();
+    if (!containerRect) return undefined;
+
+    const metrics = getImageMetrics();
+
+    return {
+        x: containerRect.left + metrics.left + metrics.width / 2,
+        y: containerRect.top + metrics.top + metrics.height / 2,
+    };
+}
+
+function getImageMetrics(scaleOverride = scale.value) {
+    const containerRect = imageContainer.value?.getBoundingClientRect();
+    const width = naturalSize.value.width * scaleOverride;
+    const height = naturalSize.value.height * scaleOverride;
+    const centeredLeft = containerRect ? (containerRect.width - width) / 2 : 0;
+    const centeredTop = containerRect ? (containerRect.height - height) / 2 : 0;
+
+    return {
+        width,
+        height,
+        left: imageLeft.value ?? centeredLeft,
+        top: imageTop.value ?? centeredTop,
+    };
+}
+
+function syncImagePosition() {
+    if (!imageContainer.value) return;
+
+    const metrics = getImageMetrics();
+    imageLeft.value = metrics.left;
+    imageTop.value = vliMode.value ? Math.max(imageProps.value.vliMinTop, 0) : metrics.top;
+}
+
+let imageTransitionTimer = 0;
+function suspendImageTransition(timeout = 80) {
+    disableImageTransition.value = true;
+    if (imageTransitionTimer) {
+        clearTimeout(imageTransitionTimer);
+    }
+    imageTransitionTimer = window.setTimeout(() => {
+        disableImageTransition.value = false;
+    }, timeout);
 }
 
 function clickModal(e: MouseEvent) {
