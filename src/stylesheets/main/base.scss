@@ -22,6 +22,8 @@ body {
     margin: 0;
     font-family: var(--code-zh);
     font-weight: var(--font-weight-normal);
+    // 贴吧原生 body 自带 overflow-y，加载过程中会冒出第二条滚动条造成左右抖动
+    overflow: visible !important;
 
     &[no-scrollbar] {
         // 抑制 user-view inline 写入的 paddingRight：html 上的 scrollbar-gutter 已占位

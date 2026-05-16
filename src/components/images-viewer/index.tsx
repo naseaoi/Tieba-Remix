@@ -3,7 +3,7 @@ import ImagesViewer, { ImagesViewerOpts } from "./images-viewer.vue";
 
 export default ImagesViewer;
 export * from "./images-viewer.vue";
-export { openThreadImages } from "./open-thread-images";
+export { openThreadImages, fetchThreadImages } from "./open-thread-images";
 
 export function imagesViewer(opts: ImagesViewerOpts) {
     // 进入看图模式时把 body 钉成 fixed，并整体上移 scrollY，

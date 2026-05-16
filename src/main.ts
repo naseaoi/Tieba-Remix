@@ -60,35 +60,40 @@ function bootstrap({ onReady }: BootstrapSignal) {
     installThreadImageGrid();
 
     const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
-    // CSS 注入完成即撤掉遮罩；reject 也撤，避免脚本异常时永久空白
-    cssReady.then(onReady, onReady);
 
-    Promise.all([
-        cssReady,
-        index(),
-        thread(),
-        parseUserModules(
-            import.meta.glob("./modules/**/index.ts"),
-            module => {
-                AllModules().push(module);
-            }
-        ),
-        document.addEventListener("DOMContentLoaded", function () {
-            if (currentPageType() === "thread") {
-                threadFloorsObserver.observe();
-                threadCommentsObserver.observe();
-            }
+    const indexReady = index();
+    const threadReady = thread();
+    const modulesReady = parseUserModules(
+        import.meta.glob("./modules/**/index.ts"),
+        module => {
+            AllModules().push(module);
+        }
+    );
 
-            if (currentPageType() === "index") {
-                if (!pageExtension.get().index)
-                    legacyIndexFeedsObserver.observe();
-            }
+    const startObservers = () => {
+        if (currentPageType() === "thread") {
+            threadFloorsObserver.observe();
+            threadCommentsObserver.observe();
+        }
+        if (currentPageType() === "index") {
+            if (!pageExtension.get().index)
+                legacyIndexFeedsObserver.observe();
+        }
+        if (currentPageType() === "forum") {
+            forumThreadsObserver.observe();
+        }
+    };
+    if (document.readyState !== "loading") {
+        startObservers();
+    } else {
+        document.addEventListener("DOMContentLoaded", startObservers, { once: true });
+    }
 
-            if (currentPageType() === "forum") {
-                forumThreadsObserver.observe();
-            }
-        }),
-    ]);
+    const firstPaintReady = Promise.all([cssReady, indexReady, threadReady, modulesReady]);
+    firstPaintReady.then(
+        () => requestAnimationFrame(() => requestAnimationFrame(onReady)),
+        onReady,
+    );
 
     window.addEventListener("load", function () {
         checkUpdateAndNotify();
@@ -101,14 +106,9 @@ function bootstrap({ onReady }: BootstrapSignal) {
             document.body.toggleAttribute("hide-bottom-editor", true);
         }
 
-        // 滚动锁定时同步禁用 html 滚动，并兜底 :has() 不支持的浏览器
-        // 同时抑制 user-view inline 写入的 padding-right，避免与 html 上的 scrollbar-gutter 双补偿
         const syncHtmlScrollLock = () => {
-            if (document.body.hasAttribute("no-scrollbar")) {
-                document.documentElement.style.overflow = "hidden";
-            } else {
-                document.documentElement.style.overflow = "";
-            }
+            const next = document.body.hasAttribute("no-scrollbar") ? "hidden" : "scroll";
+            document.documentElement.style.setProperty("overflow-y", next, "important");
         };
         new MutationObserver(syncHtmlScrollLock).observe(document.body, {
             attributes: true,

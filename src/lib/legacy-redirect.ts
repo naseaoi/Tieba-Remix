@@ -1,24 +1,11 @@
-/**
- * 新版贴吧（SPA, `<body class="cos-tieba">`）会让脚本依赖的旧版 DOM 选择器全部失效。
- * 无痕/首次会话进入 tieba.baidu.com 可能先返回「百度安全验证」拦截页，刷新一次即放行。
- *
- * 处理顺序：
- * 1. document-start 立即注入 `<html visibility:hidden>` 遮罩，覆盖整个版本切换过程。
- *    每次 reload 后脚本会再次注入遮罩，因此整条「安全验证 → 新版 → 切换 → 旧版」链路
- *    用户始终是一片空白，不再看到中间状态闪烁。
- * 2. body 出现 → 仅识别「百度安全验证」拦截页 → 自动 reload（受 sessionStorage 限流）。
- * 3. DOMContentLoaded → 做最终版本判定：
- *    - `body.cos-tieba` → 视为新版 → 后台请求切换接口 → reload，保持遮罩。
- *    - 否则 → 旧版 → 调 bootstrap()。bootstrap 在 CSS 注入完成后调用 `onReady` 撤掉遮罩。
- * 4. 兜底：从首次注入遮罩起 8 秒未撤，强制撤掉，避免脚本异常时永久空白。
- */
+// document-start 给 <html> 上 inline !important 样式锁定遮罩与滚动条占位；
+// 旧版/新版判定与百度安全验证拦截页都在此模块统一处理。
 
 const SECURITY_RETRY_KEY = "tiebaRemix:securityRetry";
 const SECURITY_MAX_RETRIES = 5;
 const SECURITY_RELOAD_DELAY_MS = 600;
 const SWITCH_SAFETY_RELOAD_MS = 5000;
 const SECURITY_PAGE_TITLE = "百度安全验证";
-const CLOAK_STYLE_ID = "__tr_legacy_cloak";
 const CLOAK_SAFETY_MS = 8000;
 
 let bootstrapped = false;
@@ -71,17 +58,18 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
 
 function applyCloak(): void {
     if (!document.documentElement) return;
-    if (document.getElementById(CLOAK_STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = CLOAK_STYLE_ID;
-    style.textContent = "html { visibility: hidden !important; }";
-    document.documentElement.appendChild(style);
+    document.documentElement.style.setProperty("overflow-y", "scroll", "important");
+    document.documentElement.style.setProperty("scrollbar-gutter", "stable", "important");
+    document.documentElement.style.setProperty("visibility", "hidden", "important");
+    waitForBody(() => {
+        document.body.style.setProperty("overflow", "visible", "important");
+    });
 }
 
 function removeCloak(): void {
     if (cloakRemoved) return;
     cloakRemoved = true;
-    document.getElementById(CLOAK_STYLE_ID)?.remove();
+    document.documentElement?.style.removeProperty("visibility");
 }
 
 function waitForBody(cb: () => void): void {

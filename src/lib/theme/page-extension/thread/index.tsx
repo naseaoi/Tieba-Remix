@@ -11,7 +11,7 @@ import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
-import { compactLayout, currentStorage, navBarHideMode, pageExtension, THREAD_IMAGES, threadImageQueueScope } from "@/lib/user-values";
+import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { UserButton } from "user-view";
@@ -252,7 +252,7 @@ export default async function () {
     const content = await asyncdom<"div">(".content");
     const pbContent = await asyncdom<"div">("#pb_content");
 
-    createContents();
+    await createContents();
     async function createContents() {
         const threadList = await asyncdom("#j_p_postlist");
         threadList.classList.add("content-wrapper");
@@ -373,14 +373,12 @@ export default async function () {
             avatarObserver.observe(content.profile.avatar);
         });
 
-        // 替换图片查看方式
         threadFloorsObserver.addEvent(async () => {
             await waitUntil(() => !!PageData.thread.thread_id);
             _.forEach(dom<"img">(".BDE_Image", threadList, []), el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 const postContent = findParent(el, "d_post_content");
 
-                // 拆除所有祖先 <a> 包裹（贴吧用 a 标签包图片跳转原图，且可能存在多层包裹）
                 let ancestor: HTMLElement | null = el.parentElement;
                 while (ancestor && ancestor !== postContent) {
                     if (ancestor instanceof HTMLAnchorElement) {
@@ -392,7 +390,6 @@ export default async function () {
                 }
 
                 newEl.dataset.pid = _(postContent?.id).split("_").last();
-                // 捕获阶段拦截点击 / 中键 / 鼠标按下，避免事件冒泡到贴吧自有处理逻辑
                 const stop = (e: Event) => {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -403,51 +400,37 @@ export default async function () {
                     e.preventDefault();
                     e.stopImmediatePropagation();
 
-                    // 仅当前楼层模式：直接以本楼图片构造队列，不发请求
-                    if (threadImageQueueScope.get() === "floor") {
-                        const floorImages = dom<"img">(".BDE_Image", postContent!, []);
-                        const pictureList: ThreadPicture[] = _.map(floorImages, img => ({
-                            original: img.src,
-                            thumbnail: img.src,
-                        }));
-                        const localIndex = _.findIndex(floorImages, img => img === newEl);
-                        imagesViewer({
-                            content: pictureList,
-                            defaultIndex: Math.max(0, localIndex),
-                        });
-                        return;
-                    }
-
-                    // 缓存命中：直接打开
-                    if (!_.isNil(currentStorage.get(THREAD_IMAGES))) {
-                        showImage();
-                        return;
-                    }
-
-                    // 未命中：静默拉取，回来后直接打开
-                    // 不再使用 AwaitDialog，避免与 imagesViewer 自身的加载圈叠加产生「2 层加载圈」
-                    // 与 openThreadImages 的修复方式保持一致
+                    let allImages: ThreadPicture[];
                     try {
-                        await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
-                        showImage();
+                        allImages = await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
                     } catch (err) {
                         console.warn("[Tieba-Remix] 拉取帖子图片失败:", err);
+                        return;
                     }
 
-                    async function showImage() {
-                        if (_.isNil(newEl.dataset.index)) {
-                            newEl.dataset.index = `${_.findIndex(
-                                await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
-                                { postId: +(newEl.dataset.pid ?? 0) }
-                            ) + _.findIndex(
-                                dom<"img">(".BDE_Image", postContent!, []), img => img === newEl
-                            )}`;
+                    if (threadImageQueueScope.get() === "floor") {
+                        const pid = +(newEl.dataset.pid ?? 0);
+                        const floorPics = allImages.filter(p => p.postId === pid);
+                        const floorImages = dom<"img">(".BDE_Image", postContent!, []);
+                        const localIndex = Math.max(0, _.findIndex(floorImages, img => img === newEl));
+                        if (floorPics.length > 0) {
+                            imagesViewer({
+                                content: floorPics,
+                                defaultIndex: Math.min(localIndex, floorPics.length - 1),
+                            });
                         }
-                        imagesViewer({
-                            content: await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false }),
-                            defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
-                        });
+                        return;
                     }
+
+                    if (_.isNil(newEl.dataset.index)) {
+                        newEl.dataset.index = `${_.findIndex(allImages, { postId: +(newEl.dataset.pid ?? 0) }) + _.findIndex(
+                            dom<"img">(".BDE_Image", postContent!, []), img => img === newEl
+                        )}`;
+                    }
+                    imagesViewer({
+                        content: allImages,
+                        defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
+                    });
                 });
                 el.replaceWith(newEl);
             });
