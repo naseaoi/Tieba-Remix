@@ -75,7 +75,6 @@ a {
     display: flex;
     overflow: hidden;
     width: max-content;
-    min-width: 120px;
     flex-direction: column;
     padding: $menu-padding;
     border: 1px solid var(--border-color);

@@ -400,16 +400,19 @@ $hover-trigger-height: 16px;
     right: 0;
     left: 0;
     display: flex;
-    width: calc(100% - 24px);
-    max-width: 860px;
+    width: calc(100% - 44px);
+    max-width: 840px;
     height: $nav-height;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
     border-radius: 12px;
     margin: 0 auto;
-    background-color: var(--trans-default-background);
-    backdrop-filter: blur(12px);
+    background-color: var(--surface-glass);
+    @include blur-effect(12px);
+    // 维持 containing block：positionMenu 用 nav-local 坐标定位 fixed 子菜单，
+    // 关闭磨砂后 backdrop-filter 不再创建 containing block，由 will-change 兜底
+    will-change: transform;
     box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
     transition: transform var(--default-duration), opacity var(--default-duration);
 
@@ -417,8 +420,11 @@ $hover-trigger-height: 16px;
         box-shadow: 0 2px 12px rgb(0 0 0 / 40%);
     }
 
-    body[no-scrollbar] & {
-        right: var(--scrollbar-width);
+    // 旧浏览器无 scrollbar-gutter 时，lockScroll 会让 body 收缩；fixed 导航栏需手动右移补偿
+    @supports not (scrollbar-gutter: stable) {
+        body[no-scrollbar] & {
+            right: var(--scrollbar-width);
+        }
     }
 
     &.fold {

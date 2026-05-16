@@ -17,7 +17,7 @@ html.style-vercel {
     // ---------------------------
     #nav-bar {
         border: 1px solid var(--border-color);
-        background-color: var(--trans-default-background);
+        background-color: var(--surface-glass);
         box-shadow: none !important;
 
         html.dark-theme & {

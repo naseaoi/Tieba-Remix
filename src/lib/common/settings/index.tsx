@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
+import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "lodash";
 import { UserSelectItem, messageBox } from "user-view";
@@ -56,6 +56,23 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                             event(value: ReturnType<typeof styleTheme.get>) {
                                 styleTheme.set(value);
+                            },
+                        }],
+                    },
+
+                    "glass-effect": {
+                        title: "磨砂玻璃质感",
+                        description:
+                            `为导航栏、首页标题栏、下拉菜单等元素启用磨砂玻璃背景效果`,
+                        widgets: [{
+                            type: "toggle",
+                            content: `关闭后，所有使用到磨砂玻璃质感的位置都将回退为普通半透明背景`,
+                            init() {
+                                return glassEffect.get();
+                            },
+                            event() {
+                                glassEffect.set(!glassEffect.get());
+                                return glassEffect.get();
                             },
                         }],
                     },

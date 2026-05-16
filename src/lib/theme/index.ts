@@ -39,22 +39,47 @@ export function applyThemeColor() {
     const darkHSLA = rgbaToHSLA(darkRGBA);
     const lightHSLA = rgbaToHSLA(lightRGBA);
 
+    const darkHover = `hsl(${darkHSLA.h}deg ${parseInt(darkHSLA.s) + 40}% ${parseInt(darkHSLA.l) + 10}%)`;
+    const darkActive = `hsl(${darkHSLA.h}deg ${parseInt(darkHSLA.s) + 50}% ${parseInt(darkHSLA.l) + 20}%)`;
+    const darkTransp = `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 80%)`;
+    const darkBack = `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 24%)`;
+    const darkFore = `hsl(${darkHSLA.h}deg 100% 75%)`;
+
+    const lightHover = `hsl(${lightHSLA.h}deg ${parseInt(lightHSLA.s) - 40}% ${parseInt(lightHSLA.l) - 10}%)`;
+    const lightActive = `hsl(${lightHSLA.h}deg ${parseInt(lightHSLA.s) - 50}% ${parseInt(lightHSLA.l) - 20}%)`;
+    const lightTransp = `rgb(${lightRGBA.r} ${lightRGBA.g} ${lightRGBA.b} / 80%)`;
+    const lightBack = `rgb(${lightRGBA.r} ${lightRGBA.g} ${lightRGBA.b} / 24%)`;
+    const lightFore = `hsl(${lightHSLA.h}deg 60% 32%)`;
+
     const css = parseMultiCSS({
         "html.dark-theme": {
             "--tieba-theme-color": theme.dark,
-            "--trans-tieba-theme-color": `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 80%)`,
-            "--tieba-theme-hover": `hsl(${darkHSLA.h}deg ${parseInt(darkHSLA.s) + 40}% ${parseInt(darkHSLA.l) + 10}%)`,
-            "--tieba-theme-active": `hsl(${darkHSLA.h}deg ${parseInt(darkHSLA.s) + 50}% ${parseInt(darkHSLA.l) + 20}%)`,
-            "--tieba-theme-background": `rgb(${darkRGBA.r} ${darkRGBA.g} ${darkRGBA.b} / 24%)`,
-            "--tieba-theme-fore": `hsl(${darkHSLA.h}deg 100% 75%)`,
+            "--trans-tieba-theme-color": darkTransp,
+            "--tieba-theme-hover": darkHover,
+            "--tieba-theme-active": darkActive,
+            "--tieba-theme-background": darkBack,
+            "--tieba-theme-fore": darkFore,
+            // 桥接 user-view 内部变量，使聚焦/激活态跟随主题色
+            "--user-theme": theme.dark,
+            "--user-theme-transp": darkTransp,
+            "--user-theme-hover": darkHover,
+            "--user-theme-active": darkActive,
+            "--user-theme-back": darkBack,
+            "--user-theme-fore": darkFore,
         },
         "html.light-theme": {
             "--tieba-theme-color": theme.light,
-            "--trans-tieba-theme-color": `rgb(${lightRGBA.r} ${lightRGBA.g} ${lightRGBA.b} / 80%)`,
-            "--tieba-theme-hover": `hsl(${lightHSLA.h}deg ${parseInt(lightHSLA.s) - 40}% ${parseInt(lightHSLA.l) - 10}%)`,
-            "--tieba-theme-active": `hsl(${lightHSLA.h}deg ${parseInt(lightHSLA.s) - 50}% ${parseInt(lightHSLA.l) - 20}%)`,
-            "--tieba-theme-background": `rgb(${lightRGBA.r} ${lightRGBA.g} ${lightRGBA.b} / 24%)`,
-            "--tieba-theme-fore": `hsl(${lightHSLA.h}deg 60% 32%)`,
+            "--trans-tieba-theme-color": lightTransp,
+            "--tieba-theme-hover": lightHover,
+            "--tieba-theme-active": lightActive,
+            "--tieba-theme-background": lightBack,
+            "--tieba-theme-fore": lightFore,
+            "--user-theme": theme.light,
+            "--user-theme-transp": lightTransp,
+            "--user-theme-hover": lightHover,
+            "--user-theme-active": lightActive,
+            "--user-theme-back": lightBack,
+            "--user-theme-fore": lightFore,
         },
     });
 

@@ -204,3 +204,12 @@
 .raster-effect {
     @include raster-effect;
 }
+
+// 模态框遮罩延伸到滚动条占位区域（含 scrollbar-gutter stable 的 17px）
+// position: fixed 默认 100% 宽不含滚动条占位，会留下一条未变暗的竖线。
+// 用 100vw 让遮罩覆盖整个视口，配合 html { overflow-x: hidden } 不会触发水平滚动。
+.user-dialog-modal {
+    width: 100vw !important;
+    left: 0 !important;
+    right: auto !important;
+}

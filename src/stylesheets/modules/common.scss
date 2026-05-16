@@ -69,19 +69,24 @@
 }
 
 @mixin blur-effect($radius: 24px) {
-    backdrop-filter: blur($radius);
+    html[glass-effect] & {
+        backdrop-filter: blur($radius);
+    }
 
-    html.dark-theme & {
+    html[glass-effect].dark-theme & {
         backdrop-filter: blur($radius) brightness(0.8);
     }
 }
 
 @mixin raster-effect($back-color: var(--trans-page-background),
     $base-color: var(--page-background), $size: 4px, $radius: 4px) {
-    backdrop-filter: saturate(0.8) blur($radius);
     background-color: $back-color;
     background-image: radial-gradient(transparent 1px, $base-color 1px);
     background-size: $size $size;
+
+    html[glass-effect] & {
+        backdrop-filter: saturate(0.8) blur($radius);
+    }
 }
 
 @mixin main-box-shadow($offset-x: 0, $offset-y: 0) {

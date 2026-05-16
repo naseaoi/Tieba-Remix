@@ -203,6 +203,14 @@ export const styleTheme = new UserKey<"remixed" | "vercel">(
     });
 /** 紧凑布局 */
 export const compactLayout = new UserKey("compactLayout", false);
+/** 磨砂玻璃质感（导航栏、首页标题栏等模糊背景） */
+export const glassEffect = new UserKey("glassEffect", false, {
+    setter(value) {
+        document.documentElement.toggleAttribute("glass-effect", value);
+    },
+});
+/** 首页「贴吧热议」折叠状态记忆 */
+export const indexTopicCollapsed = new UserKey<boolean>("indexTopicCollapsed", false);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",

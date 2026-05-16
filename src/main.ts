@@ -16,13 +16,16 @@ import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinn
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
-import { REMIXED, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
+import { REMIXED, glassEffect, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
 // 尽早完成主题设置，降低闪屏概率
 setTheme(themeType.get());
 setStyleTheme(styleTheme.get());
 darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
+
+// 同步磨砂玻璃质感开关到 <html glass-effect>
+document.documentElement.toggleAttribute("glass-effect", glassEffect.get());
 
 // 将页面类型标记到 <html data-page-type="..."> 上，供 CSS 按页面类型限定作用域。
 // 这样 vercel/tieba-thread.scss 等"虽然按文件名属于某页"但实际全局注入的样式，
@@ -85,6 +88,21 @@ waitUntil(() => !_.isNil(document.body)).then(function () {
     if (!showBottomEditor.get()) {
         document.body.toggleAttribute("hide-bottom-editor", true);
     }
+
+    // 滚动锁定时同步禁用 html 滚动，并兜底 :has() 不支持的浏览器
+    // 同时抑制 user-view inline 写入的 padding-right，避免与 html 上的 scrollbar-gutter 双补偿
+    const syncHtmlScrollLock = () => {
+        if (document.body.hasAttribute("no-scrollbar")) {
+            document.documentElement.style.overflow = "hidden";
+        } else {
+            document.documentElement.style.overflow = "";
+        }
+    };
+    new MutationObserver(syncHtmlScrollLock).observe(document.body, {
+        attributes: true,
+        attributeFilter: ["no-scrollbar"],
+    });
+    syncHtmlScrollLock();
 
     // 回顶按钮平滑滚动
     document.addEventListener("click", (e) => {

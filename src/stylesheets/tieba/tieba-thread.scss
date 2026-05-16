@@ -193,7 +193,7 @@
 .core_title_wrap_bright {
     /* 标题栏 */
     border-color: var(--border-color);
-    backdrop-filter: blur(24px);
+    @include blur-effect(24px);
     background-color: var(--trans-default-background);
 }
 
@@ -205,7 +205,7 @@
 }
 
 .left_section .core_title_absolute_bright {
-    backdrop-filter: blur(24px);
+    @include blur-effect(24px);
     background-color: var(--trans-default-background);
 }
 
@@ -878,7 +878,7 @@ span.tP {
     height: 92px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    backdrop-filter: blur(24px);
+    @include blur-effect(24px);
 }
 
 .card_userinfo_middle .userinfo_sex {

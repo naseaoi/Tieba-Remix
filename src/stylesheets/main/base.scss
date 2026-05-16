@@ -2,18 +2,30 @@ html {
     padding: 0;
     margin: 0;
     text-align: justify;
+    // 让 html 永久作为 viewport 滚动容器：
+    //   1. overflow-y: scroll 让滚动条永远存在
+    //   2. scrollbar-gutter: stable 在 overflow 切换为 hidden 时仍保留占位
+    // 这样模态框 lockScroll 不会让网页内容左右偏移。
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
+// body[no-scrollbar] 同步禁用 html 滚动（user-view 仅锁 body，需要同步到 html）
+// :has() 不可用时由 main.ts 的 MutationObserver 兜底
+html:has(body[no-scrollbar]) {
+    overflow: hidden;
 }
 
 body {
-    overflow: hidden scroll;
     padding: 0;
     margin: 0;
     font-family: var(--code-zh);
     font-weight: var(--font-weight-normal);
 
     &[no-scrollbar] {
-        overflow: hidden;
-        padding-right: var(--scrollbar-width) !important;
+        // 抑制 user-view inline 写入的 paddingRight：html 上的 scrollbar-gutter 已占位
+        padding-right: 0 !important;
     }
 
     // 强制所有元素继承自定义字体，覆盖贴吧原生 font-family
@@ -63,4 +75,13 @@ a {
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%);
+}
+
+// 与磨砂玻璃开关联动的表面背景：关闭时不透明，开启时半透明（供磨砂层叠加）
+:root {
+    --surface-glass: var(--default-background);
+}
+
+html[glass-effect] {
+    --surface-glass: var(--trans-default-background);
 }

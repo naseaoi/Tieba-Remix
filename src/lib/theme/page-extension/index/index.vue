@@ -1,5 +1,5 @@
 <template>
-    <div class="index-wrapper">
+    <div class="index-wrapper" :style="{ '--sticky-top': stickyTopPx + 'px' }">
         <div class="grid-container">
             <div class="head-controls">
                 <!-- <div class="main-title">
@@ -52,21 +52,25 @@
 
             <!-- 关注的吧 -->
             <div v-if="followed" class="block-wrapper followed-container">
-                <div class="block-controls followed">
-                    <p class="block-title">关注的吧</p>
+                <div ref="followedHeader" class="block-controls followed sticky-header"
+                    :class="{ stuck: isFollowedHeaderStuck }">
+                    <p class="block-title">
+                        <span class="block-title-icon icon-followed" v-html="ICON_FOLLOWED"></span>
+                        <span>关注的吧</span>
+                    </p>
                     <BlockPanel class="signed-count left-align">{{ signedForums }} /
                         {{ followed?.like_forum.length }}
                     </BlockPanel>
 
-                    <BlockPanel class="followed">
-                        <UserButton class="panel-btn icon sign-btn" @click="oneKeySignInstance" unset-background
-                            no-border>
-                            task_alt</UserButton>
-                        <UserButton class="panel-btn icon settings" unset-background no-border>settings</UserButton>
+                    <BlockPanel class="followed actions">
+                        <UserButton class="panel-btn icon sign-btn" title="一键签到"
+                            @click="oneKeySignInstance" unset-background no-border>
+                            task_alt
+                        </UserButton>
                     </BlockPanel>
                 </div>
 
-                <div class="block-container followed-list">
+                <div class="followed-list">
                     <UserButton v-for="forum in followed.like_forum" :is-anchor="true" class="followed-btn"
                         :shadow-border="true" :href="tiebaAPI.URL_forum(forum.forum_name)" target="_blank" no-border>
                         <div v-if="forum.is_sign === 1" class="icon signed">check</div>
@@ -79,21 +83,31 @@
             </div>
 
             <!-- 贴吧热议 -->
-            <div v-if="topicList.length > 0" class="block-wrapper topic-container">
-                <div class="block-controls topics">
-                    <p class="block-title">贴吧热议</p>
+            <div v-if="topicList.length > 0" class="block-wrapper topic-container"
+                :class="{ collapsed: topicCollapsed }">
+                <div ref="topicHeader" class="block-controls topics sticky-header"
+                    :class="{ stuck: isTopicHeaderStuck }">
+                    <p class="block-title">
+                        <span class="block-title-icon icon-topic" v-html="ICON_TOPIC"></span>
+                        <span>贴吧热议</span>
+                    </p>
 
-                    <BlockPanel class="topics">
-                        <UserButton class="panel-btn icon switch" :unset-background="true" no-border>tune</UserButton>
-                        <UserButton class="panel-btn icon more" :unset-background="true" no-border>more_horiz
+                    <BlockPanel class="topics actions">
+                        <UserButton class="panel-btn icon toggle-collapse"
+                            :title="topicCollapsed ? '展开列表' : '收起列表'"
+                            @click="toggleTopicCollapsed" :unset-background="true" no-border>
+                            {{ topicCollapsed ? 'expand_more' : 'expand_less' }}
                         </UserButton>
-                        <UserButton class="panel-btn icon settings" :unset-background="true" no-border>settings
+                        <UserButton class="panel-btn icon more"
+                            :title="topicShowAll ? '只看前 10 条' : '查看更多'"
+                            @click="toggleTopicShowAll" :unset-background="true" no-border>
+                            more_horiz
                         </UserButton>
                     </BlockPanel>
                 </div>
 
-                <div class="block-container topic-list">
-                    <UserButton v-for="topic in _.take(topicList, 10)" :is-anchor="true" class="topic-btn"
+                <div v-show="!topicCollapsed" class="topic-list">
+                    <UserButton v-for="topic in displayedTopics" :is-anchor="true" class="topic-btn"
                         :shadow-border="true" :href="topic.topic_url" target="_blank">
                         <img class="topic-img" :src="topic.topic_pic">
                         <div class="topic-content">
@@ -112,19 +126,19 @@
 
         <div ref="masonryContainer" class="masonry-container">
             <!-- 推送 -->
-            <div class="block-controls feeds">
-                <p class="block-title">推送</p>
+            <div ref="feedsHeader" class="block-controls feeds sticky-header"
+                :class="{ stuck: isFeedsHeaderStuck }">
+                <p class="block-title">
+                    <span class="block-title-icon icon-feeds" v-html="ICON_FEEDS"></span>
+                    <span>推送</span>
+                </p>
 
-                <BlockPanel
+                <BlockPanel class="actions"
                     v-if="feedsMasonry && feedsMasonry.feeds && (feedsMasonry.feeds.length > 0 || feedsMasonry.isFetchingFeeds)">
-                    <UserButton class="panel-button icon refresh" unset-background @click="feedsMasonry.refreshAndMove"
-                        no-border>refresh
+                    <UserButton class="panel-button icon refresh" title="刷新推送"
+                        unset-background @click="refreshFeeds" no-border>
+                        refresh
                     </UserButton>
-
-                    <UserButton
-                        class="panel-button icon settings"
-                        unset-background
-                        no-border>settings</UserButton>
                 </BlockPanel>
             </div>
 
@@ -134,6 +148,13 @@
                 <p class="no-feed-content">没有更多了</p>
             </div>
         </div>
+
+        <Transition name="back-to-top">
+            <UserButton v-if="isFeedsHeaderStuck" class="back-to-top-btn" title="回到「推送」顶部"
+                @click="scrollToFeeds" no-border>
+                <span class="icon">arrow_upward</span>
+            </UserButton>
+        </Transition>
     </div>
 </template>
 
@@ -147,7 +168,7 @@ import {
 } from "@/lib/api/tieba";
 
 import _ from "lodash";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 import { renderDialog } from "@/lib/render";
 import { errorMessage, requestInstance } from "@/lib/utils";
@@ -156,7 +177,8 @@ import { toast } from "user-view";
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
 import Settings from "@/components/settings.vue";
-import { BaiduPassport, GiteeRepo, GithubRepo, unreadFeeds } from "@/lib/user-values";
+import type { NavBarHideMode } from "@/components/nav-bar.vue";
+import { BaiduPassport, GiteeRepo, GithubRepo, indexTopicCollapsed, navBarHideMode, unreadFeeds } from "@/lib/user-values";
 import { UserButton, UserTextbox } from "user-view";
 import { useSearchSuggestions } from "./use-search-suggestions";
 import { useSignIn } from "./use-sign-in";
@@ -166,6 +188,16 @@ const userInfo = ref<UserInfoResponse["data"]>();
 
 const masonryContainer = ref<HTMLDivElement>();
 const feedsContainer = ref<HTMLAnchorElement>();
+const followedHeader = ref<HTMLDivElement>();
+const feedsHeader = ref<HTMLDivElement>();
+const topicHeader = ref<HTMLDivElement>();
+const isFollowedHeaderStuck = ref(false);
+const isFeedsHeaderStuck = ref(false);
+const isTopicHeaderStuck = ref(false);
+const navHideMode = ref<NavBarHideMode>(navBarHideMode.get());
+navBarHideMode.on("setter", (v) => { navHideMode.value = v; });
+// 「常显」模式下让出 nav-bar（top:8 + height:48 + 间隙）；其它模式下留 16px 顶部呼吸距离
+const stickyTopPx = computed(() => navHideMode.value === "never" ? 64 : 16);
 const configToggle = ref(false);
 const configMenu = ref<DropdownMenu[]>();
 const profileToggle = ref(false);
@@ -174,10 +206,58 @@ const topicList = ref<TopicList[]>([]);
 const feedsIntersecting = ref(false);
 const feedsMasonry = ref<InstanceType<typeof FeedsMasonry>>({} as any);
 
+// 贴吧热议视图状态
+const topicCollapsed = ref(indexTopicCollapsed.get());
+const topicShowAll = ref(false);
+const displayedTopics = computed(() =>
+    topicShowAll.value ? topicList.value : _.take(topicList.value, 10)
+);
+
+// 标题图标（线框 stroke 风格，颜色由 .block-title-icon 的语义类指定）
+const ICON_FOLLOWED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>`;
+const ICON_TOPIC = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>`;
+const ICON_FEEDS = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>`;
+
 const { searchText, suggToggle, suggestions, searchBoxFocus, searchMatch } = useSearchSuggestions();
 const { followed, signedForums, getFollowedInstance, oneKeySignInstance } = useSignIn();
 
 initFeeds.value = unreadFeeds.get();
+
+function toggleTopicCollapsed() {
+    topicCollapsed.value = !topicCollapsed.value;
+    indexTopicCollapsed.set(topicCollapsed.value);
+}
+
+function toggleTopicShowAll() {
+    if (topicCollapsed.value) topicCollapsed.value = false;
+    topicShowAll.value = !topicShowAll.value;
+}
+
+function scrollToFeeds() {
+    if (!masonryContainer.value) return;
+    window.scrollTo({
+        top: masonryContainer.value.offsetTop - stickyTopPx.value,
+        behavior: "smooth",
+    });
+}
+
+function refreshFeeds() {
+    scrollToFeeds();
+    feedsMasonry.value?.refresh();
+}
+
+// 标题吸附状态：当 header.top ≈ stickyTop 时视为吸附
+const updateStuck = _.throttle(() => {
+    const top = stickyTopPx.value;
+    const isStuck = (el: HTMLElement | undefined) => {
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        return r.top <= top + 0.5 && r.top >= top - 0.5;
+    };
+    isFollowedHeaderStuck.value = isStuck(followedHeader.value);
+    isFeedsHeaderStuck.value = isStuck(feedsHeader.value);
+    isTopicHeaderStuck.value = isStuck(topicHeader.value);
+}, 80);
 
 // 初始化
 onMounted(async () => {
@@ -194,6 +274,15 @@ onMounted(async () => {
             iObs.observe(masonryContainer.value);
         }
     });
+
+    window.addEventListener("scroll", updateStuck, { passive: true });
+    window.addEventListener("resize", updateStuck);
+    updateStuck();
+});
+
+onUnmounted(() => {
+    window.removeEventListener("scroll", updateStuck);
+    window.removeEventListener("resize", updateStuck);
 });
 
 async function init() {
@@ -304,9 +393,49 @@ a {
     gap: 8px;
 
     .block-title {
+        display: flex;
+        align-items: center;
         margin: 0;
-        font-size: 24px;
+        font-size: 18px;
         font-weight: var(--font-weight-bold);
+        gap: 8px;
+
+        .block-title-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+
+            :deep(svg) {
+                width: 18px;
+                height: 18px;
+                stroke-width: 2;
+            }
+
+            &.icon-followed {
+                // 心形 → 红色
+                color: #ef4444;
+
+                :deep(svg) {
+                    fill: rgb(239 68 68 / 18%);
+                }
+            }
+
+            &.icon-topic {
+                // 火焰 → 橙色
+                color: #f97316;
+
+                :deep(svg) {
+                    fill: rgb(249 115 22 / 16%);
+                }
+            }
+
+            &.icon-feeds {
+                // RSS / 推送 → 主题色
+                color: var(--tieba-theme-color);
+            }
+        }
     }
 }
 
@@ -318,31 +447,9 @@ a {
     @include blur-if-custom-background;
 }
 
+// 让 BlockPanel 靠右对齐（block-panel.vue 内部不带 margin-left，由父组件决定布局位置）
 .block-panel {
-    display: flex;
-    min-width: 30px;
-    height: 26px;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    border-radius: 24px;
     margin-left: auto;
-    background-color: var(--trans-light-background);
-    font-size: 14px;
-    text-align: center;
-
-    .icon {
-        color: var(--light-fore);
-        font-size: 18px;
-    }
-
-    .panel-btn {
-        width: 30px;
-        height: 30px;
-        padding: 4px;
-        border: none;
-        border-radius: 48px;
-    }
 
     &.left-align {
         margin-left: 0;
@@ -354,6 +461,29 @@ a {
     flex-direction: column;
     align-items: center;
     gap: 12px;
+
+    // 标题吸附顶部：「关注的吧」、「推送」、「贴吧热议」共用
+    .sticky-header {
+        position: sticky;
+        top: var(--sticky-top, 0px);
+        z-index: 5;
+        box-sizing: border-box;
+        padding: 8px 12px;
+        border-radius: 12px;
+        transition: background-color var(--default-duration),
+            box-shadow var(--default-duration),
+            backdrop-filter var(--default-duration);
+
+        &.stuck {
+            background-color: var(--surface-glass);
+            @include blur-effect(12px);
+            box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+
+            html.dark-theme & {
+                box-shadow: 0 2px 12px rgb(0 0 0 / 40%);
+            }
+        }
+    }
 
     .grid-container {
         display: grid;
@@ -403,12 +533,24 @@ a {
                     font-size: 16px;
                 }
 
-                .search-button {
+                // user-view 的 .theme-style.user-button 对 color 用了 !important，需同样手段覆盖
+                .search-button.search-button {
                     border: none;
                     border-bottom-left-radius: 0;
                     border-top-left-radius: 0;
+                    background-color: var(--tieba-theme-color);
+                    color: var(--default-background) !important;
                     font-size: 16px;
                     font-weight: var(--font-weight-bold);
+                    transition: background-color var(--default-duration);
+
+                    &:hover {
+                        background-color: var(--tieba-theme-hover, var(--tieba-theme-color));
+                    }
+
+                    &:active {
+                        background-color: var(--tieba-theme-active, var(--tieba-theme-color));
+                    }
                 }
 
                 .search-suggestions {
@@ -563,9 +705,6 @@ a {
             .followed-list {
                 display: flex;
                 flex-wrap: wrap;
-                padding: 8px;
-                border-radius: 12px;
-                background-color: var(--trans-light-background);
                 gap: 4px;
 
                 .followed-btn {
@@ -721,6 +860,54 @@ a {
                 text-align: center;
             }
         }
+    }
+
+    // 回顶按钮：仅当「推送」吸附顶部时显示，靠近 .masonry-container 右侧；窄屏退化为靠右 20px
+    .back-to-top-btn {
+        position: fixed;
+        z-index: 1100;
+        // 56px ≈ 按钮宽度(44) + 与容器间距(12)；让按钮整体落在容器右边沿外侧
+        right: max(20px, calc((100% - var(--content-max)) / 2 - 56px));
+        bottom: 32px;
+        display: flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background-color: var(--surface-glass);
+        @include blur-effect(12px);
+        box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+        color: var(--default-fore);
+
+        .icon {
+            font-size: 22px;
+        }
+
+        &:hover {
+            background-color: var(--default-hover);
+        }
+
+        &:active {
+            background-color: var(--default-active);
+        }
+
+        html.dark-theme & {
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+        }
+    }
+
+    .back-to-top-enter-active,
+    .back-to-top-leave-active {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .back-to-top-enter-from,
+    .back-to-top-leave-to {
+        opacity: 0;
+        transform: translateY(12px);
     }
 }
 </style>

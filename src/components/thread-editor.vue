@@ -199,10 +199,6 @@ async function returnEditor() {
     to { transform: translateY(100%); }
 }
 
-body {
-    overflow: hidden scroll;
-}
-
 #thread-editor {
     #ueditor_replace {
         font-size: 16px;
