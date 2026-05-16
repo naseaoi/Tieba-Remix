@@ -26,6 +26,9 @@ type UserKeyEvent = typeof userKeyEvents[number];
 type UserKeyEventsListener<T> = Record<UserKeyEvent, ((value: T) => unknown)>;
 type UserKeyEventsListeners<T> = Record<UserKeyEvent, Array<((value: T) => unknown)>>;
 export class UserKey<T, LegacyType = unknown> {
+    // 备份注册表：UserKey 默认加入，UserKeyTS（运行时缓存）在子类构造里 excludeFromBackup() 退出
+    private static backupRegistry = new Set<UserKey<unknown>>();
+
     public key: string;
     public defaultValue: T;
     private listeners: UserKeyEventsListeners<T>;
@@ -44,6 +47,15 @@ export class UserKey<T, LegacyType = unknown> {
             setter: listeners?.setter ? [listeners.setter] : [],
         };
         this.migration = migration;
+        UserKey.backupRegistry.add(this as UserKey<unknown>);
+    }
+
+    protected excludeFromBackup(): void {
+        UserKey.backupRegistry.delete(this as UserKey<unknown>);
+    }
+
+    public static getBackupableKeys(): UserKey<unknown>[] {
+        return Array.from(UserKey.backupRegistry);
     }
 
     protected dispatchEvent(event: UserKeyEvent, value: T) {
@@ -109,6 +121,8 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
     ) {
         super(key, defaultValue, listeners, migration);
         this.defaultInvalid = invalidfn ? invalidfn : this.defaultInvalid;
+        // 时间敏感的键是运行时缓存（推送、版本检查等），不纳入备份
+        this.excludeFromBackup();
     }
 
     public get() {

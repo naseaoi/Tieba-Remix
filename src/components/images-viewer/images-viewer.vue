@@ -115,6 +115,8 @@ const scale = ref(1.0);
 const deg = ref(0);
 const imageLeft = ref<Maybe<number>>(undefined);
 const imageTop = ref<Maybe<number>>(undefined);
+// 用 width/height 替代 transform:scale，避开合成层缩放导致的模糊
+const naturalSize = ref({ width: 0, height: 0 });
 const showControls = ref<ControlDirectionMap<boolean>>({
     left: false,
     right: false,
@@ -131,24 +133,28 @@ const vliMode = ref(false);
 const loading = ref(true);
 
 const imageStyle = computed<CSSRule>(() => {
+    const w = naturalSize.value.width * scale.value;
+    const h = naturalSize.value.height * scale.value;
     return {
-        transform: `scale(${scale.value}) rotate(${deg.value}deg)`,
+        width: w ? `${w}px` : undefined,
+        height: h ? `${h}px` : undefined,
+        transform: `rotate(${deg.value}deg)`,
         left: `${imageLeft.value}px`,
         top: `${imageTop.value}px`,
         transition: vliMode.value
-            ? "all 0.4s ease, left 0s, top 0.1s ease-out"
-            : "all 0.4s ease, left 0s, top 0s",
+            ? "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0.1s ease-out"
+            : "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0s",
     };
 });
 
 const imageProps = computed(function () {
-    const naturalHeight = currImage.value?.naturalHeight ?? 0;
+    const naturalHeight = naturalSize.value.height;
     const scaledHeight = naturalHeight * scale.value;
     return {
         naturalHeight,
         scaledHeight,
-        vliMaxTop: -(naturalHeight * (1 - scale.value) / 2) + window.innerHeight / 2,
-        vliMinTop: -(naturalHeight * scale.value) - (naturalHeight * (1 - scale.value) / 2) + window.innerHeight / 2,
+        vliMaxTop: window.innerHeight / 2,
+        vliMinTop: -scaledHeight + window.innerHeight / 2,
     };
 });
 
@@ -243,6 +249,11 @@ onMounted(async () => {
         if (!currImage.value) return;
         vliMode.value = false;
 
+        naturalSize.value = {
+            width: currImage.value.naturalWidth,
+            height: currImage.value.naturalHeight,
+        };
+
         (() => {
             const availableW = window.innerWidth - UI_RESERVED_WIDTH;
             const availableH = window.innerHeight - UI_RESERVED_HEIGHT;
@@ -268,7 +279,10 @@ onMounted(async () => {
         })();
 
         loading.value = false;
-        currImage.value.classList.remove("changing");
+        // 下一帧再启用过渡，避免首次加载时 width/height 从 0 动画放大
+        nextTick(() => {
+            currImage.value?.classList.remove("changing");
+        });
     });
 
     evproxy.on(currImage.value, "transitionend", function () {
@@ -346,6 +360,7 @@ watch(curr, function () {
     deg.value = 0;
     imageLeft.value = undefined;
     imageTop.value = undefined;
+    naturalSize.value = { width: 0, height: 0 };
 });
 
 watch(imageTop, function (newTop) {
@@ -364,10 +379,7 @@ watch(imageTop, function (newTop) {
 watch(vliMode, function (newMode) {
     lockControlsTemporarily("top", DEFAULT_HIDE_CONTROLS_DELAY);
     if (newMode && currImage.value && !imageTop.value) {
-        imageTop.value = Math.max(
-            imageProps.value.vliMinTop,
-            -(currImage.value.naturalHeight * (1 - scale.value) / 2),
-        );
+        imageTop.value = Math.max(imageProps.value.vliMinTop, 0);
     }
 });
 

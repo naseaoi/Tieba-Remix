@@ -1,5 +1,5 @@
-import { GM_getValue, GM_info, GM_listValues, GM_openInTab, GM_setValue } from "$";
-import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
+import { GM_getValue, GM_info, GM_openInTab, GM_setValue } from "$";
+import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import _ from "lodash";
 import { marked } from "marked";
@@ -253,19 +253,70 @@ export function setTheme(theme: ReturnType<typeof themeType.get>) {
     }
 }
 
+/** 备份文件 v1：__meta 用于跨版本迁移；configs 是所有可备份 UserKey 的快照（含默认值，自包含）。旧版扁平 JSON 在 restore 时自动兼容。 */
+interface BackupPayload {
+    __meta: {
+        version: 1;
+        createdAt: string;
+        scriptVersion: string;
+    };
+    configs: Record<string, unknown>;
+}
+
 export function backupUserConfigs() {
-    const excluded = ["unreadFeeds", "latestRelease", "showUpdateToday"];
-    const userKeys = _.filter(GM_listValues(), key => !_.includes(excluded, key));
-    const userValues = _.map(userKeys, key => {
-        return GM_getValue(key);
-    });
-    const configs = _.zipObject(userKeys, userValues);
-    outputFile(`tieba-remix-backup@${new Date().getTime()}.json`, JSON.stringify(configs));
+    const configs: Record<string, unknown> = {};
+    for (const userKey of UserKey.getBackupableKeys()) {
+        configs[userKey.key] = GM_getValue(userKey.key, userKey.defaultValue);
+    }
+    const payload: BackupPayload = {
+        __meta: {
+            version: 1,
+            createdAt: new Date().toISOString(),
+            scriptVersion: GM_info.script.version,
+        },
+        configs,
+    };
+    outputFile(
+        `tieba-remix-backup@${new Date().getTime()}.json`,
+        JSON.stringify(payload, null, 2),
+    );
 }
 
 export async function restoreUserConfigs() {
-    const backupData = JSON.parse(await selectLocalFile());
-    _.forEach(Object.entries(backupData), ([key, value]) => {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(await selectLocalFile());
+    } catch {
+        toast({ message: "备份文件解析失败，请检查 JSON 格式", type: "warning" });
+        return;
+    }
+
+    const configs = extractConfigs(parsed);
+    if (!configs) {
+        toast({ message: "备份文件格式无效", type: "warning" });
+        return;
+    }
+
+    const entries = Object.entries(configs);
+    for (const [key, value] of entries) {
         GM_setValue(key, value);
-    });
+    }
+
+    if (await messageBox({
+        title: "恢复完成",
+        content: `已恢复 ${entries.length} 项配置。需要刷新页面以应用所有设置，是否立即刷新？`,
+        type: "okCancel",
+    }) === "positive") {
+        location.reload();
+    }
+}
+
+// 兼容新版 { __meta, configs } 与旧版扁平 { key: value }
+function extractConfigs(parsed: unknown): Record<string, unknown> | null {
+    if (!_.isPlainObject(parsed)) return null;
+    const obj = parsed as Record<string, unknown>;
+    if (_.isPlainObject(obj.__meta) && _.isPlainObject(obj.configs)) {
+        return obj.configs as Record<string, unknown>;
+    }
+    return obj;
 }

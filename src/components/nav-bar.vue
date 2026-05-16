@@ -124,10 +124,13 @@ function positionMenu(trigger: HTMLElement) {
     if (!menu || !navBar.value) return;
     const triggerRect = trigger.getBoundingClientRect();
     const navRect = navBar.value.getBoundingClientRect();
-    menu.style.top = `${navRect.bottom}px`;
-    // nav-menu is positioned inside the nav bar context, so its horizontal offset
-    // needs to be relative to the nav bar instead of the viewport.
+    const gap = 4;
+    // #nav-bar 的 backdrop-filter 让 position:fixed 子元素改以 nav 为 containing block，坐标按 nav-local 给
+    menu.style.top = `${navRect.height + gap}px`;
     menu.style.left = `${triggerRect.left - navRect.left + triggerRect.width / 2 - menu.offsetWidth / 2}px`;
+    // 触发器向下的命中区高度：穿过 nav 下半部+视觉缝+菜单全高，确保下移全程都在 .menu-trigger 内
+    const gapToMenu = navRect.bottom + gap - triggerRect.bottom;
+    trigger.style.setProperty("--trigger-extend-height", `${gapToMenu + menu.offsetHeight}px`);
 }
 
 function revealNav() {
@@ -189,7 +192,6 @@ function handleMenuTriggerLeave(e: MouseEvent, key: MenuKey) {
     const nextTarget = e.relatedTarget as Element | null;
     const menu = getMenuElement(key);
     if (menu && nextTarget && menu.contains(nextTarget)) return;
-    if (nextTarget && navBar.value?.contains(nextTarget)) return;
 
     if (activeMenu.value === key) {
         activeMenu.value = null;
@@ -492,6 +494,16 @@ $hover-trigger-height: 16px;
 .menu-trigger {
     position: relative;
     background-color: transparent;
+
+    // 触发器向下延伸的命中区：宽度严格等于按钮，高度由 positionMenu 动态写入到菜单底部
+    &::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: var(--trigger-extend-height, 0);
+    }
 }
 
 .nav-menu {
