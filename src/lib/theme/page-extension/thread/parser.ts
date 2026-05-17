@@ -1,6 +1,5 @@
 import { dom } from "@/lib/elemental";
 import { TiebaForum } from "@/lib/tieba-components/forum";
-import _ from "@/lib/utils/_";
 
 export interface ThreadContent {
     post: HTMLDivElement;
@@ -77,44 +76,46 @@ export interface PostDataField {
 
 export function threadParser(): TiebaThread {
     const postWrappers = dom<"div">(".l_post", []);
-    const contents = dom<"div">(".d_post_content", []);
-    const dAuthors = dom<"div">(".d_author", []);
-    const avatars = dom<"a">(".p_author_face", []);
-    const nameAnchors = dom<"a">(".p_author_name", []);
-    const levels = dom<"div">(".d_badge_lv", []);
-    const badgeTitles = dom<"div">(".d_badge_title", []);
-
-    const replyButtons = dom<"a">(".lzl_link_unfold", []);
-
-    const locations = (dom<"span">(".post-tail-wrap span:first-child, .ip-location", [])).map(el => el.innerText);
-    const platforms = (dom<"a">(".tail-info a, .p_tail_wap", [])).map(el => el.innerText);
-    const floors = (dom<"span">(".j_jb_ele + .tail-info + .tail-info, .p_tail li:first-child span", [])).map(el => el.innerText);
-    const times = (dom<"span">(".post-tail-wrap span:nth-last-child(2), .p_tail li:last-child span", [])).map(el => el.innerText);
-
     const threadContents: ThreadContent[] = [];
 
-    for (let i = 0; i < contents.length; i++) {
-        contents[i].classList.add("floor-content");
-        avatars[i].classList.add("floor-avatar");
-        nameAnchors[i].classList.add("floor-name");
+    for (let i = 0; i < postWrappers.length; i++) {
+        const wrap = postWrappers[i];
+        const content = dom<"div">(".d_post_content", wrap);
+        if (!content) continue;
+        const dAuthor = dom<"div">(".d_author", wrap);
+        const avatar = dom<"a">(".p_author_face", wrap);
+        const nameAnchor = dom<"a">(".p_author_name", wrap);
+        if (!avatar || !nameAnchor) continue;
+
+        const levelEl = dom<"div">(".d_badge_lv", wrap);
+        const badgeTitleEl = dom<"div">(".d_badge_title", wrap);
+        const replyButton = dom<"a">(".lzl_link_unfold", wrap);
+        const locationEl = dom<"span">(".post-tail-wrap span:first-child, .ip-location", wrap);
+        const platformEl = dom<"a">(".tail-info a, .p_tail_wap", wrap);
+        const floorEl = dom<"span">(".j_jb_ele + .tail-info + .tail-info, .p_tail li:first-child span", wrap);
+        const timeEl = dom<"span">(".post-tail-wrap span:nth-last-child(2), .p_tail li:last-child span", wrap);
+
+        content.classList.add("floor-content");
+        avatar.classList.add("floor-avatar");
+        nameAnchor.classList.add("floor-name");
 
         threadContents.push({
-            post: contents[i],
-            replyButton: replyButtons[i],
-            dataField: postWrappers[i].getAttribute("data-field") ?? "",
-            isLouzhu: !!dom(".louzhubiaoshi_wrap", dAuthors[i]),
+            post: content,
+            replyButton: replyButton as HTMLAnchorElement,
+            dataField: wrap.getAttribute("data-field") ?? "",
+            isLouzhu: !!(dAuthor && dom(".louzhubiaoshi_wrap", dAuthor)),
 
             profile: {
-                avatar: avatars[i],
-                nameAnchor: nameAnchors[i],
-                level: parseInt(levels[i]?.innerText ?? ""),
-                badgeTitle: badgeTitles[i]?.innerText ?? "",
+                avatar,
+                nameAnchor,
+                level: parseInt((levelEl?.textContent ?? "").trim()),
+                badgeTitle: (badgeTitleEl?.textContent ?? "").trim(),
             },
             tail: {
-                location: locations[i],
-                platform: platforms[i],
-                floor: floors[i],
-                time: times[i],
+                location: (locationEl?.textContent ?? "").trim(),
+                platform: (platformEl?.textContent ?? "").trim(),
+                floor: (floorEl?.textContent ?? "").trim(),
+                time: (timeEl?.textContent ?? "").trim(),
             },
         });
     }

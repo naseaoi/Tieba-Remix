@@ -313,7 +313,9 @@ export default async function () {
 
             // TODO: performance
             thread = threadParser();
-            (dom(".d_post_content_main", threadList, [])).forEach((floor, i) => {
+            thread.cotents.forEach((c, i) => {
+                const floor = c.post.closest(".l_post")?.querySelector<HTMLDivElement>(".d_post_content_main");
+                if (!floor) return;
                 const authorContainer = createAuthorContainer(i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
@@ -335,11 +337,12 @@ export default async function () {
             const badgeContainer = appendJSX<HTMLDivElement>(<div class="badge-container"></div>, authorContainer);
 
             const profileLevel = thread.cotents[index].profile.level;
-            const safeLevel = Number.isFinite(profileLevel) ? profileLevel : 0;
+            const badgeTitle = thread.cotents[index].profile.badgeTitle;
+            const hasLevel = Number.isFinite(profileLevel) && profileLevel > 0;
             appendJSX(
-                <div class={`floor-badge level-${levelToClass(safeLevel)}`}>
-                    <div class="badge-level">{Number.isFinite(profileLevel) ? profileLevel : ""}</div>
-                    <div class="badge-title">{thread.cotents[index].profile.badgeTitle}</div>
+                <div class={hasLevel ? `floor-badge level-${levelToClass(profileLevel)}` : "floor-badge"}>
+                    <div class="badge-level">{hasLevel ? profileLevel : ""}</div>
+                    <div class="badge-title">{badgeTitle}</div>
                 </div>, badgeContainer.root);
 
             if (thread.cotents[index].isLouzhu)

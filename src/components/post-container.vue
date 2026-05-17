@@ -38,9 +38,10 @@
 
 <script setup lang="ts">
 import { tiebaAPI } from "@/lib/api/tieba";
+import { threadImageQueueScope } from "@/lib/user-values";
 import { UserButton } from "user-view";
 import { onMounted, ref } from "vue";
-import { openThreadImages } from "./images-viewer";
+import { imagesViewer, openThreadImages } from "./images-viewer";
 
 interface Props {
     post: TiebaPost
@@ -81,6 +82,18 @@ onMounted(() => {
 
 function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
+    if (threadImageQueueScope.get() === "floor") {
+        const localImages: ThreadPicture[] = props.post.images.map(img => ({
+            original: img.original || img.thumb,
+            thumbnail: img.thumb || img.original,
+        }));
+        if (localImages.length === 0) return;
+        imagesViewer({
+            content: localImages,
+            defaultIndex: Math.max(0, Math.min(index, localImages.length - 1)),
+        });
+        return;
+    }
     openThreadImages(+props.post.id, index);
 }
 

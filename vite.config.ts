@@ -109,6 +109,11 @@ const commonConfig = defineConfig({
             },
         },
     },
+    optimizeDeps: {
+        exclude: [
+            "vite-plugin-monkey/dist/client",
+        ],
+    },
 });
 
 const devConfig = defineConfig({
