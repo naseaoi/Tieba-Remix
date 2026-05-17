@@ -79,6 +79,7 @@ export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<Re
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any;
     try {
         result = await response.json();

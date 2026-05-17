@@ -1,6 +1,5 @@
 import {
     chunk,
-    defaults,
     find,
     findKey,
     findLastIndex,
@@ -21,7 +20,6 @@ import {
 
 export default {
     chunk,
-    defaults,
     find,
     findKey,
     findLastIndex,

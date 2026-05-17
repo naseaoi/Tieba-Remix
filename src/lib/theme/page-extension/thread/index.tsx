@@ -334,9 +334,11 @@ export default async function () {
 
             const badgeContainer = appendJSX<HTMLDivElement>(<div class="badge-container"></div>, authorContainer);
 
+            const profileLevel = thread.cotents[index].profile.level;
+            const safeLevel = Number.isFinite(profileLevel) ? profileLevel : 0;
             appendJSX(
-                <div class={`floor-badge level-${levelToClass(thread.cotents[index].profile.level)}`}>
-                    <div class="badge-level">{thread.cotents[index].profile.level}</div>
+                <div class={`floor-badge level-${levelToClass(safeLevel)}`}>
+                    <div class="badge-level">{Number.isFinite(profileLevel) ? profileLevel : ""}</div>
                     <div class="badge-title">{thread.cotents[index].profile.badgeTitle}</div>
                 </div>, badgeContainer.root);
 

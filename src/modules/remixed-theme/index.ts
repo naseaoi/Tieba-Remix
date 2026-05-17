@@ -75,7 +75,10 @@ function main(): void {
             ).forEach(elem => {
                 if (elem.className.indexOf(lvlClassHead) !== -1) return;
 
-                const lvl = parseInt(_.defaults(elem.textContent, "0"));
+                const text = elem.textContent?.trim();
+                if (!text) return;
+                const lvl = parseInt(text, 10);
+                if (Number.isNaN(lvl)) return;
                 if (lvl >= 1 && lvl <= 3) {
                     elem.classList.add(lvlGreen);
                 } else if (lvl >= 4 && lvl <= 9) {

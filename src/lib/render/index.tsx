@@ -62,6 +62,7 @@ export function createRenderWrapper(id: string, style?: CSSRule) {
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DialogEvents<PayloadType = any> {
     beforeRender(): void,
     rendered(rendered: RenderedComponent): void,
@@ -79,6 +80,7 @@ export interface DialogEvents<PayloadType = any> {
  */
 export function renderDialog<
     ContentOpts extends LiteralObject,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     PayloadType = any,
 >(
     content: SupportedComponent,

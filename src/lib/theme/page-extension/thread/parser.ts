@@ -101,14 +101,14 @@ export function threadParser(): TiebaThread {
         threadContents.push({
             post: contents[i],
             replyButton: replyButtons[i],
-            dataField: _.defaults(postWrappers[i].getAttribute("data-field"), ""),
+            dataField: postWrappers[i].getAttribute("data-field") ?? "",
             isLouzhu: !!dom(".louzhubiaoshi_wrap", dAuthors[i]),
 
             profile: {
                 avatar: avatars[i],
                 nameAnchor: nameAnchors[i],
-                level: parseInt(levels[i].innerText),
-                badgeTitle: badgeTitles[i].innerText,
+                level: parseInt(levels[i]?.innerText ?? ""),
+                badgeTitle: badgeTitles[i]?.innerText ?? "",
             },
             tail: {
                 location: locations[i],

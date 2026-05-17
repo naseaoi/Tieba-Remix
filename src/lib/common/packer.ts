@@ -4,6 +4,7 @@ import { afterHead } from "../elemental";
 import { disabledModules } from "../user-values";
 
 export async function parseUserModules(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     glob: Record<string, () => Promise<any>>,
     callbackfn?: ((module: UserModule) => void)
 ): Promise<UserModule[]> {

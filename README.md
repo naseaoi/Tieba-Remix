@@ -41,9 +41,10 @@
 pnpm install
 pnpm dev        # 开发模式
 pnpm build      # 生产构建
+pnpm lint       # 代码检查
 ```
 
-技术栈：Vue 3 + TypeScript + Vite + vite-plugin-monkey
+技术栈：Vue 3 + TypeScript + Vite + vite-plugin-monkey + ESLint 9 (flat config)
 
 ## 注意事项
 

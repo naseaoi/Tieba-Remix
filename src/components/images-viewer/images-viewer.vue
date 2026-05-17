@@ -526,7 +526,7 @@ function onScrollBarMouseDown(e: MouseEvent) {
  * @param timeout 超时时间
  */
 function lockControlsTemporarily(
-    direction: keyof ControlDirectionMap<any> | "all",
+    direction: keyof ControlDirectionMap<unknown> | "all",
     timeout: number
 ) {
     if (direction !== "all") {
@@ -538,7 +538,7 @@ function lockControlsTemporarily(
         lock("bottom");
     }
 
-    function lock(direction: keyof ControlDirectionMap<any>) {
+    function lock(direction: keyof ControlDirectionMap<unknown>) {
         lockControls.value[direction] = true;
         if (lastControlTimeout[direction]) {
             clearTimeout(lastControlTimeout[direction]);

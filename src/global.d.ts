@@ -3,7 +3,8 @@ declare module "*.json";
 type Maybe<T> = T | undefined;
 
 interface LiteralObject {
-    [prop: string]: T
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [prop: string]: any
 }
 
 type ValueOf<T> = T[keyof T]
@@ -24,6 +25,7 @@ type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
 
 /** 用户模块 */
 interface UserModule {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [prop: string]: any
 
     id: string
@@ -116,6 +118,7 @@ declare global {
 interface EventRecord {
     target: EventTarget;
     type: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     callback: ((e: any) => void) | EventListenerObject;
     options?: EventListenerOptions | boolean;
 }

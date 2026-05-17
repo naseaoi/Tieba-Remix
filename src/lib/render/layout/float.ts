@@ -14,6 +14,7 @@ export function getFloatCoord(
     mode: FloatMode
 ): Coord;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getFloatCoord(...args: any[]): Coord {
     if (args[0] instanceof HTMLElement)
         return getFloatCoord1(args[0], args[1], args[2]);

@@ -175,7 +175,9 @@ export interface SettingContent {
     description?: string;
     widgets?: {
         type: "toggle" | "icon" | "button" | "select" | "subTitle" | "desc" | "textbox" | "textarea" | "image" | "component";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         init?: (() => any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         event?: ((e: any) => any);
         content?: string | LiteralObject | Array<unknown>;
         component?: SupportedComponent;
