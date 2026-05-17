@@ -1,3 +1,14 @@
+import {
+    GM_addStyle as importedGMAddStyle,
+    GM_deleteValue as importedGMDeleteValue,
+    GM_getValue as importedGMGetValue,
+    GM_info as importedGMInfo,
+    GM_listValues as importedGMListValues,
+    GM_openInTab as importedGMOpenInTab,
+    GM_registerMenuCommand as importedGMRegisterMenuCommand,
+    GM_setValue as importedGMSetValue,
+} from "$";
+
 interface MonkeyScriptInfo {
     script: {
         name: string;
@@ -27,8 +38,32 @@ const fallbackInfo: MonkeyScriptInfo = {
 
 let cachedMonkeyGlobal: MonkeyGlobal | undefined;
 
+function importedMonkeyGlobal(): MonkeyGlobal | undefined {
+    if (typeof importedGMGetValue !== "function") return undefined;
+    if (typeof importedGMSetValue !== "function") return undefined;
+    if (typeof importedGMDeleteValue !== "function") return undefined;
+    if (!importedGMInfo?.script) return undefined;
+
+    return {
+        GM_addStyle: importedGMAddStyle,
+        GM_deleteValue: importedGMDeleteValue,
+        GM_getValue: importedGMGetValue,
+        GM_info: importedGMInfo as unknown as MonkeyScriptInfo,
+        GM_listValues: importedGMListValues,
+        GM_openInTab: importedGMOpenInTab,
+        GM_registerMenuCommand: importedGMRegisterMenuCommand,
+        GM_setValue: importedGMSetValue,
+    };
+}
+
 function monkeyGlobal() {
     if (cachedMonkeyGlobal) return cachedMonkeyGlobal;
+
+    const importedGlobal = importedMonkeyGlobal();
+    if (importedGlobal) {
+        cachedMonkeyGlobal = importedGlobal;
+        return cachedMonkeyGlobal;
+    }
 
     const directGlobal = globalThis as typeof globalThis & MonkeyGlobal;
     if (hasMonkeyValueApis(directGlobal)) {
