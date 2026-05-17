@@ -67,7 +67,7 @@ export class UserKey<T, LegacyType = unknown> {
 
     public get() {
         let value = GM_getValue<T>(this.key, this.defaultValue);
-        if (isLiteralObject(value) &&
+        if (isLiteralObject(value) && isLiteralObject(this.defaultValue) &&
             Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
             value = _.merge(this.defaultValue, value);
         }
@@ -126,7 +126,7 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
 
     public get() {
         let value = getUserValueTS<T>(this.key, this.defaultValue);
-        if (isLiteralObject(value) &&
+        if (isLiteralObject(value) && isLiteralObject(this.defaultValue) &&
             Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
             value = _.merge(this.defaultValue, value);
         }

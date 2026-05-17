@@ -11,7 +11,7 @@ const scriptOptions: MonkeyOption = {
     userscript: {
         name: "Tieba Remix Dev",
         namespace: "https://github.com/naseaoi/Tieba-Remix",
-        version: "0.5.2",
+        version: "0.5.3",
         description: "贴吧网页端重塑",
         author: "naseaoi",
         license: "MIT",

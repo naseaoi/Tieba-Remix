@@ -4,8 +4,7 @@ import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/uti
 import { renderMarkdown } from "@/lib/utils/markdown";
 import _ from "@/lib/utils/_";
 import { messageBox, toast } from "user-view";
-import { parseCSSRule } from "../elemental/styles";
-import { userDialog } from "../render";
+import { updateNotifyDialog } from "@/components/update-notify-dialog";
 import { darkPrefers } from "../theme";
 
 export type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
@@ -117,37 +116,23 @@ export function checkUpdateAndNotify(showLatest = false) {
 
             const releaseHtml = await renderMarkdown(latestRelease.body);
 
-            userDialog(
-                <div class="markdown"
-                    v-html={releaseHtml}
-                    style={parseCSSRule({ maxWidth: "600px" })} />,
-                {
-                    title: latestRelease.name,
-                    dialogButtons: [
-                        {
-                            text: "安装",
-                            event() {
-                                installFromRelease(latestRelease);
-                                return true;
-                            },
-                            style: "themed",
-                        },
-                        {
-                            text: "今日不再提醒",
-                            event() {
-                                showUpdateToday.set(false);
-                                return true;
-                            },
-                        },
-                        {
-                            text: "跳过该版本",
-                            event() {
-                                ignoredTag.set(latestRelease.tag_name);
-                                return true;
-                            },
-                        },
-                    ],
-                });
+            const action = await updateNotifyDialog({
+                title: latestRelease.name,
+                bodyHtml: releaseHtml,
+                actions: [
+                    { text: "安装", value: "install", variant: "primary" },
+                    { text: "今日不再提醒", value: "defer" },
+                    { text: "跳过该版本", value: "skip" },
+                ],
+            });
+
+            if (action === "install") {
+                installFromRelease(latestRelease);
+            } else if (action === "defer") {
+                showUpdateToday.set(false);
+            } else if (action === "skip") {
+                ignoredTag.set(latestRelease.tag_name);
+            }
         } else {
             if (showLatest)
                 messageBox({
