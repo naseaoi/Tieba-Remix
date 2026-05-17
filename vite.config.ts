@@ -11,7 +11,7 @@ const scriptOptions: MonkeyOption = {
     userscript: {
         name: "Tieba Remix Dev",
         namespace: "https://github.com/naseaoi/Tieba-Remix",
-        version: "0.5.1",
+        version: "0.5.2",
         description: "贴吧网页端重塑",
         author: "naseaoi",
         license: "MIT",
@@ -38,34 +38,18 @@ const scriptOptions: MonkeyOption = {
             "vue": cdn.jsdelivrFastly("Vue", "dist/vue.global.prod.js")
                 .concat(util.dataUrl(";window.Vue=Vue;")),
             "libelemental": cdn.jsdelivrFastly("libelemental", "build/index.min.js"),
-            "user-view": cdn.jsdelivrFastly("user-view", "build/index.min.js"),
+            "user-view": cdn.jsdelivrFastly("UserView", "build/index.min.js"),
         },
     },
 };
 
 const commonConfig = defineConfig({
     build: {
-        lib: {
-            entry: "./src/main.ts",
-            name: "TiebaRemix",
-            formats: ["iife"],
-            fileName: () => `tieba-remix.user.js`,
-        },
         outDir: "build",
         reportCompressedSize: false,
         cssCodeSplit: false,
         // 静态资源 base64 内联上限
         assetsInlineLimit: 64 * 1024,
-        rollupOptions: {
-            output: {
-                globals: {
-                    "vue": "Vue",
-                    "libelemental": "libelemental",
-                    "user-view": "UserView",
-                    "virtual:monkey-css-side-effects": "void 0",
-                },
-            },
-        },
     },
     css: {
         preprocessorOptions: {
