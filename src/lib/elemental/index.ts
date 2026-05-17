@@ -1,5 +1,5 @@
 import { isLiteralObject, waitUntil } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 export const fadeInElems: string[] = [];
 const fadeInClass = "fade-in-elem";
@@ -72,7 +72,7 @@ export async function asyncdom<T extends DOMTagNames = "default">(
     parent?: Element,
     timeout = Infinity
 ) {
-    return waitUntil(() => !_.isNil(dom<T>(selector, parent)), timeout)
+    return waitUntil(() => !(dom<T>(selector, parent) == null), timeout)
         .then(() => dom<T>(selector, parent));
 }
 
@@ -192,7 +192,7 @@ export function domrd<T extends keyof HTMLElementTagNameMap>(
     if (typeof children === "string") {
         elem.appendChild(document.createTextNode(children));
     } else {
-        _.forEach(children, child => {
+        children.forEach(child => {
             if (typeof child === "string") {
                 elem.appendChild(document.createTextNode(child));
             } else {

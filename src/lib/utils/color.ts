@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 export interface RGBA {
     r: number;
@@ -32,10 +32,10 @@ export function colorToRGBA(color: string): Maybe<RGBA> {
 }
 
 export function hexToRGBA(hex: string): RGBA {
-    const hexValue = _.startsWith(hex, "#") ? _.trimStart(hex, "#") : hex;
+    const hexValue = hex.startsWith("#") ? _.trimStart(hex, "#") : hex;
     const tokenConverter = hexValue.length <= 4
-        ? (chunk: string[]) => parseInt(_.repeat(chunk[0], 2), 16)
-        : (chunk: string[]) => parseInt(_.join(chunk, ""), 16);
+        ? (chunk: string[]) => parseInt(chunk[0].repeat(2), 16)
+        : (chunk: string[]) => parseInt(chunk.join(""), 16);
     const chunkSize = hexValue.length <= 4 ? 1 : 2;
     const chunks = _.chunk(hexValue, chunkSize);
     return {
@@ -82,8 +82,8 @@ export function rgbaToHSLA(rgba: RGBA): HSLA {
 
     return {
         h: _.round(hue, 2),
-        s: `${_.round(saturation * 100)}%`,
-        l: `${_.round(lightness * 100)}%`,
+        s: `${Math.round(saturation * 100)}%`,
+        l: `${Math.round(lightness * 100)}%`,
         a: rgba.a,
     };
 }

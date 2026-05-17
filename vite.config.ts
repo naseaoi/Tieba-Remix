@@ -28,14 +28,15 @@ const scriptOptions: MonkeyOption = {
             "*://jump.bdimg.com/safecheck/*",
             "*://jump2.bdimg.com/safecheck/*",
         ],
+        require: [
+            "https://fastly.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
+        ],
         "run-at": "document-start",
     },
     build: {
         externalGlobals: {
             "vue": cdn.jsdelivrFastly("Vue", "dist/vue.global.prod.js")
                 .concat(util.dataUrl(";window.Vue=Vue;")),
-            "marked": cdn.jsdelivrFastly("marked", "lib/marked.umd.min.js"),
-            "lodash": cdn.jsdelivrFastly("_", "lodash.min.js"),
             "libelemental": cdn.jsdelivrFastly("libelemental", "build/index.min.js"),
             "user-view": cdn.jsdelivrFastly("user-view", "build/index.min.js"),
         },
@@ -54,15 +55,14 @@ const commonConfig = defineConfig({
         reportCompressedSize: false,
         cssCodeSplit: false,
         // 静态资源 base64 内联上限
-        assetsInlineLimit: 4 * 1024 * 1024,
+        assetsInlineLimit: 64 * 1024,
         rollupOptions: {
             output: {
                 globals: {
                     "vue": "Vue",
-                    "marked": "marked",
-                    "lodash": "_",
                     "libelemental": "libelemental",
                     "user-view": "UserView",
+                    "virtual:monkey-css-side-effects": "void 0",
                 },
             },
         },
@@ -141,6 +141,8 @@ const prodConfig = defineConfig({
             compress: {
                 pure_funcs: [
                     "console.log",
+                    "console.info",
+                    "console.debug",
                     "deb",
                 ],
             },

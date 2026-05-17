@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 /** 原生事件的代理，用于方便地注册和销毁事件。 */
 export class EventProxy {
@@ -24,7 +24,7 @@ export class EventProxy {
 
     /** 销毁通过该代理注册的所有事件 */
     public release() {
-        _.forEach(this.records, ({ target, type, callback, options }) => {
+        this.records.forEach(({ target, type, callback, options }) => {
             target.removeEventListener(type, callback, options);
         });
         this.records = [];

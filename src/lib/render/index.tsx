@@ -1,7 +1,7 @@
 import { SupportedComponent } from "@/ex";
 import { dom, domrd } from "@/lib/elemental";
 import { CSSRule, injectCSSRule, parseCSSRule } from "@/lib/elemental/styles";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { UserDialog, UserDialogAbnormal, UserDialogOpts } from "user-view";
 import { App, Component, ComponentPublicInstance, createApp, h } from "vue";
 
@@ -51,7 +51,7 @@ export function renderPage(root: Component, rootProps?: LiteralObject) {
 export function createRenderWrapper(id: string, style?: CSSRule) {
     let wrapper = dom<"div">(`#${id}`);
     return () => {
-        if (_.isNil(wrapper)) {
+        if ((wrapper == null)) {
             wrapper = document.body.appendChild(domrd("div", {
                 id,
                 style: parseCSSRule(style ?? {} as CSSRule),
@@ -130,21 +130,21 @@ export function userDialog<ContentOpts extends LiteralObject>(
 }
 
 export function removeDefault() {
-    _.forEach(document.head.children, (el) => {
+    Array.from(document.head.children).forEach((el) => {
         if (el && el.tagName.toUpperCase() === "LINK"
-            && _.includes(el.getAttribute("href"), "static-common/style")) {
+            && el.getAttribute("href")?.includes("static-common/style")) {
             el.remove();
         }
 
         if (el && el.tagName.toUpperCase() === "SCRIPT"
-            && _.includes(el.getAttribute("src"), "static-common/lib")) {
+            && el.getAttribute("src")?.includes("static-common/lib")) {
             el.remove();
         }
     });
 
     // document.getElementById("com_userbar")?.remove();
 
-    _.forEach(document.body.children, (el) => {
+    Array.from(document.body.children).forEach((el) => {
         if (el && el.tagName.toUpperCase() === "STYLE") {
             el.remove();
         }
@@ -157,11 +157,11 @@ export function removeDefault() {
             el.remove();
         }
 
-        if (el && _.includes(el.className, "translatorExtension")) {
+        if (el && typeof el.className === "string" && el.className.includes("translatorExtension")) {
             el.remove();
         }
 
-        if (el && _.includes(el.className, "dialogJ")) {
+        if (el && typeof el.className === "string" && el.className.includes("dialogJ")) {
             el.remove();
         }
     });

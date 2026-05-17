@@ -6,8 +6,8 @@
 </template>
 
 <script setup lang="ts">
-import _ from "lodash";
-import { onBeforeUnmount, watch } from "vue";
+import { useDebounce } from "@/lib/utils/composables";
+import { watch } from "vue";
 
 export interface ColorPickerOpts {
     text?: string;
@@ -23,13 +23,9 @@ const emit = defineEmits<{ (e: "change", value: string): void }>();
 
 const DEBOUNCE_TIME = 500 as const;
 
-const debouncedUpdate = _.debounce(() => {
+const debouncedUpdate = useDebounce(() => {
     emit("change", model.value);
 }, DEBOUNCE_TIME);
-
-onBeforeUnmount(function () {
-    debouncedUpdate.cancel();
-});
 
 watch(model, function () {
     debouncedUpdate();

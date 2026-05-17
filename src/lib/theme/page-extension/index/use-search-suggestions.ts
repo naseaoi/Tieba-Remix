@@ -1,6 +1,7 @@
 import { SuggestionResponse, tiebaAPI } from "@/lib/api/tieba";
 import { findParent } from "@/lib/elemental";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
+import { useDebounce } from "@/lib/utils/composables";
 import { onUnmounted, ref } from "vue";
 
 export function useSearchSuggestions() {
@@ -20,7 +21,7 @@ export function useSearchSuggestions() {
                 if (!query || query === "") {
                     const topicList = value.hottopic_list.search_data;
                     if (topicList)
-                        suggestions.value = _.map(topicList, (topic) => ({
+                        suggestions.value = topicList.map((topic) => ({
                             image: topic.topic_pic,
                             title: topic.topic_name,
                             desc: topic.topic_desc,
@@ -29,7 +30,7 @@ export function useSearchSuggestions() {
                 } else {
                     const matchList = value.query_match.search_data;
                     if (matchList)
-                        suggestions.value = _.map(matchList, (match) => ({
+                        suggestions.value = matchList.map((match) => ({
                             image: match.fpic,
                             title: match.fname,
                             desc: match.forum_desc,
@@ -60,7 +61,7 @@ export function useSearchSuggestions() {
         loadSuggestions(searchText.value);
     }
 
-    const searchMatch = _.debounce(searchTextChange, 500);
+    const searchMatch = useDebounce(searchTextChange, 500);
 
     const onFocusin = (ev: Event) => toggleSuggControls(ev);
     const onMousedown = (ev: Event) => toggleSuggControls(ev);

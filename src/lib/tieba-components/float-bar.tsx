@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { TiebaAbstract, TiebaComponent } from "../api/abstract";
 import { dom, domrd } from "../elemental";
 

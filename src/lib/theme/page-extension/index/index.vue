@@ -7,27 +7,6 @@
                     <div class="title">贴吧</div>
                 </div> -->
 
-                <!-- 用户按钮 -->
-                <!-- <div class="profile-menu-container" @click="profileToggle = !profileToggle">
-                    <UserButton class="curr-user">
-                        <img :src="userInfo ? tiebaAPI.URL_profile(userInfo.user_portrait) : tiebaAPI.URL_profile('un')"
-                            alt="用户头像" class="user-profile">
-                    </UserButton>
-
-                    <DropdownMenu v-if="profileToggle" :menu-items="profileMenu!" class="profile-menu" :blur-effect="true"
-                        @request-close="profileToggle = false">
-                    </DropdownMenu>
-                </div> -->
-
-                <!-- 配置按钮 -->
-                <!-- <div class="config-menu-container" @click="configToggle = !configToggle">
-                    <UserButton class="config-menu-btn icon" :unset-background="true">menu</UserButton>
-
-                    <DropdownMenu v-if="configToggle" :menu-items="configMenu!" class="config-menu" :blur-effect="true"
-                        @request-close="configToggle = false">
-                    </DropdownMenu>
-                </div> -->
-
                 <!-- 搜索组件 -->
                 <div class="search-controls">
                     <UserTextbox v-model="searchText" class="search-box" placeholder="搜索 贴吧" autocomplete="none"
@@ -167,18 +146,17 @@ import {
     tiebaAPI,
 } from "@/lib/api/tieba";
 
-import _ from "lodash";
+import _ from "@/lib/utils/_";
+import { useThrottle } from "@/lib/utils/composables";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
-import { renderDialog } from "@/lib/render";
 import { errorMessage, requestInstance } from "@/lib/utils";
 import { toast } from "user-view";
 
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
-import Settings from "@/components/settings.vue";
 import type { NavBarHideMode } from "@/components/nav-bar.vue";
-import { BaiduPassport, GiteeRepo, GithubRepo, indexTopicCollapsed, navBarHideMode, unreadFeeds } from "@/lib/user-values";
+import { indexTopicCollapsed, navBarHideMode, unreadFeeds } from "@/lib/user-values";
 import { UserButton, UserTextbox } from "user-view";
 import { useSearchSuggestions } from "./use-search-suggestions";
 import { useSignIn } from "./use-sign-in";
@@ -198,19 +176,15 @@ const navHideMode = ref<NavBarHideMode>(navBarHideMode.get());
 navBarHideMode.on("setter", (v) => { navHideMode.value = v; });
 // 「常显」模式下让出 nav-bar（top:8 + height:48 + 间隙）；其它模式下留 16px 顶部呼吸距离
 const stickyTopPx = computed(() => navHideMode.value === "never" ? 64 : 16);
-const configToggle = ref(false);
-const configMenu = ref<DropdownMenu[]>();
-const profileToggle = ref(false);
-const profileMenu = ref<DropdownMenu[]>();
 const topicList = ref<TopicList[]>([]);
 const feedsIntersecting = ref(false);
-const feedsMasonry = ref<InstanceType<typeof FeedsMasonry>>({} as any);
+const feedsMasonry = ref<InstanceType<typeof FeedsMasonry> | null>(null);
 
 // 贴吧热议视图状态
 const topicCollapsed = ref(indexTopicCollapsed.get());
 const topicShowAll = ref(false);
 const displayedTopics = computed(() =>
-    topicShowAll.value ? topicList.value : _.take(topicList.value, 10)
+    topicShowAll.value ? topicList.value : topicList.value.slice(0, 10)
 );
 
 // 标题图标（线框 stroke 风格，颜色由 .block-title-icon 的语义类指定）
@@ -247,7 +221,7 @@ function refreshFeeds() {
 }
 
 // 标题吸附状态：当 header.top ≈ stickyTop 时视为吸附
-const updateStuck = _.throttle(() => {
+const updateStuck = useThrottle(() => {
     const top = stickyTopPx.value;
     const isStuck = (el: HTMLElement | undefined) => {
         if (!el) return false;
@@ -307,58 +281,6 @@ async function init() {
 
     if (topicListResp) {
         topicList.value.push(...topicListResp.data.bang_topic.topic_list);
-    }
-
-    // 配置菜单
-    configMenu.value = [
-        {
-            title: "设置",
-            click() {
-                renderDialog(Settings);
-            },
-        },
-        "separator",
-        {
-            title: "源代码 (GitHub)",
-            href: GithubRepo,
-        },
-        {
-            title: "源代码 (Gitee)",
-            href: GiteeRepo,
-        },
-    ];
-
-    // 用户菜单
-    profileMenu.value = [
-        {
-            title: "登录",
-            icon: "login",
-            href: BaiduPassport,
-        },
-    ];
-
-    if (userInfo.value) {
-        profileMenu.value = [
-            {
-                title: "我的收藏",
-                icon: "star",
-            },
-            "separator",
-            {
-                title: "主页",
-                icon: "home",
-                href: tiebaAPI.URL_userHome(userInfo.value.user_portrait),
-            },
-            {
-                title: "修改",
-                icon: "settings",
-            },
-            "separator",
-            {
-                title: "退出登录",
-                icon: "logout",
-            },
-        ];
     }
 
     // 获取关注的吧

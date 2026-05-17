@@ -1,7 +1,7 @@
 import { confirmDialog } from "@/components/confirm-dialog";
 import { FollowedForumsResponse, OneKeySignResponse, tiebaAPI } from "@/lib/api/tieba";
 import { requestInstance } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { toast } from "user-view";
 import { ref } from "vue";
 
@@ -15,7 +15,7 @@ export function useSignIn() {
                 signedForums.value = 0;
                 followed.value = response.data;
 
-                _.forEach(followed.value.like_forum, forum => {
+                followed.value.like_forum.forEach(forum => {
                     if (forum.is_sign === 1) signedForums.value++;
                 });
                 followed.value.like_forum.sort((a, b) =>

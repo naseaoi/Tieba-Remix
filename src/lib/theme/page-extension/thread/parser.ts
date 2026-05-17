@@ -1,6 +1,6 @@
 import { dom } from "@/lib/elemental";
 import { TiebaForum } from "@/lib/tieba-components/forum";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 export interface ThreadContent {
     post: HTMLDivElement;
@@ -86,10 +86,10 @@ export function threadParser(): TiebaThread {
 
     const replyButtons = dom<"a">(".lzl_link_unfold", []);
 
-    const locations = _.map(dom<"span">(".post-tail-wrap span:first-child, .ip-location", []), el => el.innerText);
-    const platforms = _.map(dom<"a">(".tail-info a, .p_tail_wap", []), el => el.innerText);
-    const floors = _.map(dom<"span">(".j_jb_ele + .tail-info + .tail-info, .p_tail li:first-child span", []), el => el.innerText);
-    const times = _.map(dom<"span">(".post-tail-wrap span:nth-last-child(2), .p_tail li:last-child span", []), el => el.innerText);
+    const locations = (dom<"span">(".post-tail-wrap span:first-child, .ip-location", [])).map(el => el.innerText);
+    const platforms = (dom<"a">(".tail-info a, .p_tail_wap", [])).map(el => el.innerText);
+    const floors = (dom<"span">(".j_jb_ele + .tail-info + .tail-info, .p_tail li:first-child span", [])).map(el => el.innerText);
+    const times = (dom<"span">(".post-tail-wrap span:nth-last-child(2), .p_tail li:last-child span", [])).map(el => el.innerText);
 
     const threadContents: ThreadContent[] = [];
 

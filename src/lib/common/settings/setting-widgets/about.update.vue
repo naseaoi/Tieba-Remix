@@ -11,7 +11,7 @@
                 <div v-if="release?.prerelease" class="is-pre-release">预览版</div>
             </div>
 
-            <div class="release-body markdown" v-html="release?.body ? marked(release?.body) : ''"></div>
+            <div class="release-body markdown" v-html="releaseHtml"></div>
 
             <div class="update-controls">
                 <UserButton class="up-button download-button" shadow-border theme-style is-anchor
@@ -37,11 +37,12 @@
 import { GM_info } from "$";
 import { ReleaseFetchErrorKind, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/utils/markdown";
 import { UserButton } from "user-view";
 import { computed, onMounted, ref } from "vue";
 
 const release = ref<GiteeRelease>();
+const releaseHtml = ref("");
 const isLatest = ref<boolean>();
 const loading = ref(true);
 const errorKind = ref<ReleaseFetchErrorKind>();
@@ -68,6 +69,7 @@ async function loadRelease() {
     errorKind.value = undefined;
     errorText.value = "";
     release.value = undefined;
+    releaseHtml.value = "";
     isLatest.value = undefined;
 
     // 强制刷新跳过缓存
@@ -78,6 +80,9 @@ async function loadRelease() {
     if (outcome.release) {
         release.value = outcome.release;
         isLatest.value = `v${scriptInfo.script.version}` >= outcome.release.tag_name;
+        if (!isLatest.value && outcome.release.body) {
+            releaseHtml.value = await renderMarkdown(outcome.release.body);
+        }
     } else {
         errorKind.value = outcome.errorKind;
         errorText.value = outcome.errorMessage ?? "未知错误";

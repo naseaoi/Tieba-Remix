@@ -1,5 +1,5 @@
 import { UserKey } from "@/lib/user-values";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 /**
  * 屏蔽规则对象
@@ -29,7 +29,7 @@ export interface ShieldRuleLegacy {
 }
 
 export const shieldList = new UserKey<ShieldRule[], (ShieldRule | ShieldRuleLegacy)[]>(
-    "shieldList", [], undefined, (maybeLegacy) => _.map(maybeLegacy, shieldRuleMigration)
+    "shieldList", [], undefined, (maybeLegacy) => maybeLegacy.map(shieldRuleMigration)
 );
 
 /**
@@ -82,7 +82,7 @@ export function matchShield(rule: ShieldRule, str: string, scope: ShieldRule["sc
 }
 
 export function shieldRuleMigration(rule: ShieldRule | ShieldRuleLegacy): ShieldRule {
-    if (!_.has(rule, "rule")) return rule as ShieldRule;
+    if (!Object.hasOwn(rule, "rule")) return rule as ShieldRule;
     rule = rule as ShieldRuleLegacy;
 
     const newRule: ShieldRule = {

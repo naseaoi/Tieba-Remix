@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { currentPageType } from "../api/remixed";
 import { afterHead } from "../elemental";
 import { disabledModules } from "../user-values";

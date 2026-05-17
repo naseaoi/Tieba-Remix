@@ -143,7 +143,8 @@ import SettingSelect from "@/components/setting-select.vue";
 import SettingSwitch from "@/components/setting-switch.vue";
 import { SupportedComponent } from "@/ex";
 import { getUserSettings } from "@/lib/common/settings";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
+import { useDebounce } from "@/lib/utils/composables";
 import { UserButton, UserDialog, UserDialogOpts, UserSelectItem, UserTextbox } from "user-view";
 import { onMounted, provide, ref } from "vue";
 
@@ -247,7 +248,7 @@ function searchKey() {
     })) clearSelections();
 }
 
-const debSearchKey = _.debounce(searchKey, 300);
+const debSearchKey = useDebounce(searchKey, 300);
 
 // 渲染辅助
 const SIMPLE_TYPES = new Set(["toggle", "button", "select"]);
@@ -280,9 +281,9 @@ function resolveSimpleDesc(content: SettingContent): string[] {
 
 // 首次打开默认选中第一个分类的第一个子分类
 onMounted(() => {
-    const firstMain = _.values(userSettings)[0];
+    const firstMain = Object.values(userSettings)[0];
     if (firstMain) {
-        const firstSub = _.values(firstMain.sub)[0];
+        const firstSub = Object.values(firstMain.sub)[0];
         if (firstSub) {
             selectedKey.value = firstMain;
             selectedSubKey.value = firstSub;

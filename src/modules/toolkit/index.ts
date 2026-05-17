@@ -4,7 +4,7 @@ import { tiebaAPI } from "@/lib/api/tieba";
 import { dom, findParent } from "@/lib/elemental";
 import { threadCommentsObserver } from "@/lib/observers";
 import { UserKey } from "@/lib/user-values";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 export default {
     id: "toolkit",
@@ -40,7 +40,7 @@ const toolkitFeatures = {
     /** 重新加载错误头像 */
     reloadAvatars() {
         const observer = new IntersectionObserver(function (entries) {
-            _.forEach(entries, entry => {
+            entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const avatar = entry.target as HTMLImageElement;
                     if (!avatar.complete) return;

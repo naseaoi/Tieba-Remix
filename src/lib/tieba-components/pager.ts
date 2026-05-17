@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { TiebaComponent } from "../api/abstract";
 import { dom } from "../elemental";
 
@@ -56,7 +56,7 @@ export class Pager extends TiebaComponent<"li"> {
         const params = new URLSearchParams(location.search);
         const newParams = new URLSearchParams();
         for (const [key, value] of params) {
-            if (_.includes(permKeys, key)) {
+            if (permKeys.includes(key)) {
                 newParams.set(key, value);
             }
         }

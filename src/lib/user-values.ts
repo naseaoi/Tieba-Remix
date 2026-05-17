@@ -1,6 +1,6 @@
 import { GM_deleteValue, GM_getValue, GM_setValue } from "$";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { setTheme } from "./api/remixed";
 import { applyCustomStyle, applyDynamicFonts, setCustomBackground, setStyleTheme } from "./theme";
 import { isLiteralObject, spawnOffsetTS } from "./utils";
@@ -21,8 +21,7 @@ export const REMIXED =
     "██║  ██║███████╗██║ ╚═╝ ██║██║██╔╝ ██╗███████╗██████╔╝\n" +
     "╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═╝╚══════╝╚═════╝ \n";
 
-const userKeyEvents = ["getter", "setter"] as const;
-type UserKeyEvent = typeof userKeyEvents[number];
+type UserKeyEvent = "getter" | "setter";
 type UserKeyEventsListener<T> = Record<UserKeyEvent, ((value: T) => unknown)>;
 type UserKeyEventsListeners<T> = Record<UserKeyEvent, Array<((value: T) => unknown)>>;
 export class UserKey<T, LegacyType = unknown> {
@@ -59,7 +58,7 @@ export class UserKey<T, LegacyType = unknown> {
     }
 
     protected dispatchEvent(event: UserKeyEvent, value: T) {
-        _.forEach(this.listeners[event], listener => listener(value));
+        this.listeners[event].forEach(listener => listener(value));
     }
 
     public on(event: UserKeyEvent, listener: (value: T) => unknown) {
@@ -69,7 +68,7 @@ export class UserKey<T, LegacyType = unknown> {
     public get() {
         let value = GM_getValue<T>(this.key, this.defaultValue);
         if (isLiteralObject(value) &&
-            _.keys(value).length < _.keys(this.defaultValue).length) {
+            Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
             value = _.merge(this.defaultValue, value);
         }
         if (this.migration) {
@@ -128,7 +127,7 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
     public get() {
         let value = getUserValueTS<T>(this.key, this.defaultValue);
         if (isLiteralObject(value) &&
-            _.keys(value).length < _.keys(this.defaultValue).length) {
+            Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
             value = _.merge(this.defaultValue, value);
         }
         if (this.migration) value = this.migration(value);
@@ -265,8 +264,8 @@ export const threadImageQueueScope = new UserKey<"full" | "floor">("threadImageQ
 
 export const SymbolFont = "Material Symbols";
 
-export const currentStorageBase = new Map<string, any>();
-export type CurrentStorageEntry<T = any> = [string, T];
+export const currentStorageBase = new Map<string, unknown>();
+export type CurrentStorageEntry<T = unknown> = [string, T];
 
 export const HOME_FEED_IMAGES: CurrentStorageEntry<Record<number, ThreadPicture[]>> = ["home_feed_images", {}];
 export const THREAD_IMAGES: CurrentStorageEntry<ThreadPicture[]> = ["thread_images", []];
@@ -294,10 +293,10 @@ export const currentStorage = {
     keys(): IterableIterator<string> {
         return currentStorageBase.keys();
     },
-    values(): IterableIterator<any> {
+    values(): IterableIterator<unknown> {
         return currentStorageBase.values();
     },
-    forEach(callback: (value: any, key: string) => void): void {
+    forEach(callback: (value: unknown, key: string) => void): void {
         currentStorageBase.forEach(callback);
     },
     size(): number {
@@ -382,7 +381,7 @@ export function setUserValueTS<T>(key: string, value: T, invalidTime: number): v
  */
 export function setUserValueTS<T>(key: string, value: UserValueTS<T>): void;
 
-export function setUserValueTS(key: string, value: any, invalidTime?: number): void {
+export function setUserValueTS(key: string, value: unknown, invalidTime?: number): void {
     try {
         if (invalidTime) {
             // 时间戳 + 值

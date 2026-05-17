@@ -13,7 +13,7 @@ import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-ba
 import { pager } from "@/lib/tieba-components/pager";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { UserButton } from "user-view";
 import { VNode } from "vue";
 import commentsStyle from "./comments.scss?inline";
@@ -29,7 +29,7 @@ export default async function () {
         const viewportPadding = 12;
         const triggerGap = 8;
 
-        _.forEach(root.querySelectorAll<HTMLElement>(".lzl_edui_dialog_container"), panel => {
+        (root.querySelectorAll<HTMLElement>(".lzl_edui_dialog_container")).forEach(panel => {
             if (getComputedStyle(panel).display === "none") {
                 panel.dataset.positioned = "false";
                 panel.style.width = "";
@@ -149,7 +149,7 @@ export default async function () {
         commentsStyle,
     );
 
-    await waitUntil(() => !_.isNil(document.body)).then(function () {
+    await waitUntil(() => !(document.body == null)).then(function () {
         // document.body.insertBefore(mainWrapper, document.body.firstChild);
         if (compactLayout.get()) {
             document.body.toggleAttribute("compact-layout");
@@ -180,7 +180,7 @@ export default async function () {
         });
     })();
 
-    waitUntil(() => !_.isNil(floatBar.get())).then(function () {
+    waitUntil(() => !(floatBar.get() == null)).then(function () {
         let settingsPanel: RenderedComponent | undefined;
         const settingsButton = floatBar.add("other", function () {
             if (settingsPanel) {
@@ -263,7 +263,7 @@ export default async function () {
 
         insertJSX(<div id="title-wrapper">
             <h3 class="thread-title">{
-                _.unescape(_(PageData.thread.title).split("回复：").last())
+                _.unescape(PageData.thread.title.split("回复：").pop() ?? "")
                     .replace(/&#039;/g, "'")
                     .replace(/&quot;/g, '"')
             }</h3>
@@ -294,7 +294,7 @@ export default async function () {
         // 由于一些动态加载行为，在 DOMContentLoaded 后判断举报按钮中的文字节点是否存在更为妥当
         document.addEventListener("DOMContentLoaded", function () {
             threadFloorsObserver.addEvent(function () {
-                _.forEach(dom<"a">(".j_jb_ele a", []), el => {
+                (dom<"a">(".j_jb_ele a", [])).forEach(el => {
                     if (el.lastChild?.nodeType !== Node.TEXT_NODE) {
                         el.appendChild(new Text("举报"));
                     }
@@ -313,13 +313,13 @@ export default async function () {
 
             // TODO: performance
             thread = threadParser();
-            _.forEach(dom(".d_post_content_main", threadList, []), (floor, i) => {
+            (dom(".d_post_content_main", threadList, [])).forEach((floor, i) => {
                 const authorContainer = createAuthorContainer(i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
 
             // 去除左侧用户栏
-            _.forEach(dom(".d_author", []), el => el.remove());
+            (dom(".d_author", [])).forEach(el => el.remove());
         });
 
         function createAuthorContainer(index: number) {
@@ -348,7 +348,7 @@ export default async function () {
 
         // 头像 lazy load
         const avatarObserver = new IntersectionObserver(function (entries, observer) {
-            _.forEach(entries, function (entry) {
+            entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     const avatar = entry.target.children[0] as HTMLImageElement;
                     const lazyLink = avatar.getAttribute("data-tb-lazyload");
@@ -369,13 +369,13 @@ export default async function () {
             threshold: 0.5,
         });
 
-        _.forEach(thread.cotents, content => {
+        thread.cotents.forEach(content => {
             avatarObserver.observe(content.profile.avatar);
         });
 
         threadFloorsObserver.addEvent(async () => {
             await waitUntil(() => !!PageData.thread.thread_id);
-            _.forEach(dom<"img">(".BDE_Image", threadList, []), el => {
+            (dom<"img">(".BDE_Image", threadList, [])).forEach(el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 const postContent = findParent(el, "d_post_content");
 
@@ -389,7 +389,7 @@ export default async function () {
                     ancestor = ancestor.parentElement;
                 }
 
-                newEl.dataset.pid = _(postContent?.id).split("_").last();
+                newEl.dataset.pid = postContent?.id?.split("_").pop();
                 const stop = (e: Event) => {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -412,7 +412,7 @@ export default async function () {
                         const pid = +(newEl.dataset.pid ?? 0);
                         const floorPics = allImages.filter(p => p.postId === pid);
                         const floorImages = dom<"img">(".BDE_Image", postContent!, []);
-                        const localIndex = Math.max(0, _.findIndex(floorImages, img => img === newEl));
+                        const localIndex = Math.max(0, floorImages.findIndex(img => img === newEl));
                         if (floorPics.length > 0) {
                             imagesViewer({
                                 content: floorPics,
@@ -422,10 +422,9 @@ export default async function () {
                         return;
                     }
 
-                    if (_.isNil(newEl.dataset.index)) {
-                        newEl.dataset.index = `${_.findIndex(allImages, { postId: +(newEl.dataset.pid ?? 0) }) + _.findIndex(
-                            dom<"img">(".BDE_Image", postContent!, []), img => img === newEl
-                        )}`;
+                    if (newEl.dataset.index == null) {
+                        const postIdMatch = +(newEl.dataset.pid ?? 0);
+                        newEl.dataset.index = `${allImages.findIndex(img => img.postId === postIdMatch) + dom<"img">(".BDE_Image", postContent!, []).findIndex(img => img === newEl)}`;
                     }
                     imagesViewer({
                         content: allImages,
@@ -438,8 +437,8 @@ export default async function () {
 
         // 去除楼中楼用户发言的冒号
         threadCommentsObserver.addEvent(() => {
-            _.forEach(dom(".lzl_cnt", []), el => {
-                _.forEach(el.childNodes, node => {
+            (dom(".lzl_cnt", [])).forEach(el => {
+                el.childNodes.forEach(node => {
                     if (node)
                         node.nodeType === 3 ? node.remove() : undefined;
                 });
@@ -503,9 +502,9 @@ export default async function () {
                     showPagers={PageData.pager.total_page > 1}
                     pagerChange={function (page) {
                         pager.jumpTo(page);
-                        _.forEach(pagerVNodes, pagerVNode => {
-                            // @ts-ignore
-                            pagerVNode.component.exposeProxy.current = page;
+                        pagerVNodes.forEach(pagerVNode => {
+                            const exposed = (pagerVNode.component as { exposeProxy?: { current: number } } | null)?.exposeProxy;
+                            if (exposed) exposed.current = page;
                         });
                     }}
                     style={parseCSSRule({
@@ -528,14 +527,14 @@ export default async function () {
 
     createTextbox();
     async function createTextbox() {
-        await waitUntil(() => !_.isNil(floatBar.get()));
-        await waitUntil(() => !_.isNil(dom("#ueditor_replace")));
+        await waitUntil(() => !(floatBar.get() == null));
+        await waitUntil(() => !(dom("#ueditor_replace") == null));
 
-        if (!_.some(floatBar.buttons(), { type: "post" })) {
+        if (!floatBar.buttons().some(b => b.type === "post")) {
             floatBar.add("post", showEditor, undefined, undefined, 2);
         }
 
-        const postButton = _.find(floatBar.buttons(), button => {
+        const postButton = floatBar.buttons().find(button => {
             return button.type === "post";
         });
         postButton?.el.addEventListener("click", showEditor);
@@ -546,7 +545,6 @@ export default async function () {
         });
         appendJSX(
             <div id="thread-jsx-components">
-                {/* @ts-ignore */}
                 <UserButton class="dummy-button" noBorder onClick={showEditor}>回复帖子</UserButton>
             </div>, pbContent);
 

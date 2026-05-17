@@ -1,5 +1,5 @@
 import { GM_info } from "$";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { toast } from "user-view";
 
 export function cookies(): LiteralObject;
@@ -9,11 +9,11 @@ export function cookies(key?: string) {
     const cookieArray = document.cookie.split(";");
 
     if (key) {
-        return _.find(cookieArray, (cookie) => cookie.trim().startsWith(`${key}=`));
+        return cookieArray.find((cookie) => cookie.trim().startsWith(`${key}=`));
     } else {
         const result: LiteralObject = {};
 
-        _.forEach(cookieArray, (cookie) => {
+        cookieArray.forEach((cookie) => {
             const [key, value] = cookie.split("=");
             result[key.trim()] = value.trim();
         });
@@ -198,5 +198,5 @@ export async function selectLocalFile<T extends Maybe<string | ArrayBuffer>>(
  * @returns 若 参数 1 为 参数 2 的超集，返回 `true`
  */
 export function isSuperset<T>(superset: Set<T>, subset: Set<T>) {
-    return _.every([...subset], element => superset.has(element));
+    return [...subset].every(element => superset.has(element));
 }

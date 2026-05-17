@@ -1,5 +1,5 @@
 import { GM_registerMenuCommand } from "$";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import "user-view/build/index.css";
 import Settings from "./components/settings.vue";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
@@ -100,7 +100,7 @@ function bootstrap({ onReady }: BootstrapSignal) {
     });
 
     // 收缩视图检测
-    waitUntil(() => !_.isNil(document.body)).then(function () {
+    waitUntil(() => !(document.body == null)).then(function () {
         // 吧首页底部发帖模块隐藏
         if (!showBottomEditor.get()) {
             document.body.toggleAttribute("hide-bottom-editor", true);
@@ -126,7 +126,7 @@ function bootstrap({ onReady }: BootstrapSignal) {
             }
         }, true);
 
-        waitUntil(() => !_.isNil(floatBar.get())).then(() => {
+        waitUntil(() => !(floatBar.get() == null)).then(() => {
             decorateFloatBarTooltips();
         });
     });

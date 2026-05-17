@@ -20,7 +20,8 @@ import { headerProgress } from "@/lib/render/universal";
 import { unreadFeeds } from "@/lib/user-values";
 import { requestInstance, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import { matchShield, shieldList } from "@/modules/shield";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
+import { useDebounce } from "@/lib/utils/composables";
 import { toast } from "user-view";
 import { ComponentPublicInstance, nextTick, onMounted, ref, watch } from "vue";
 import PostContainer from "./post-container.vue";
@@ -47,7 +48,7 @@ const unreadTTL = 2;
 let currentLoadedFeeds: Element[] = [];
 let isFetchingFeeds = false;
 
-const debAddFeeds = _.debounce(addFeeds, 2000, { leading: true });
+const debAddFeeds = useDebounce(addFeeds, 2000, { leading: true });
 
 let flexMasonry: FlexMasonry;
 
@@ -108,7 +109,7 @@ async function addFeeds(newFeeds?: TiebaPost[]) {
 
             // 屏蔽推送
             const ruleList = shieldList.get();
-            newFeeds = _.filter(newFeeds, feed => {
+            newFeeds = newFeeds.filter(feed => {
                 for (const rule of ruleList) {
                     if (matchShield(rule, feed.author.name, "username") ||
                         matchShield(rule, feed.title, "content") ||

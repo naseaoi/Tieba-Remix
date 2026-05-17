@@ -70,7 +70,7 @@ import { dom } from "@/lib/elemental";
 import { renderDialog } from "@/lib/render";
 import { navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { messageBox, toast, UserButton } from "user-view";
 import { computed, onMounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";

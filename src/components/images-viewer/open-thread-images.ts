@@ -1,18 +1,17 @@
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
 import { currentStorage, highQualityImage, HOME_FEED_IMAGES } from "@/lib/user-values";
 import { imagesViewer } from "./index";
 
 export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
     const cache = currentStorage.get(HOME_FEED_IMAGES);
-    if (!_.isNil(cache) && !_.isNil(cache[tid])) return cache[tid];
+    if (!(cache == null) && !(cache[tid] == null)) return cache[tid];
 
     try {
         const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(tid, true)).json();
         const picList = response?.data?.pic_list;
-        const pictureList: ThreadPicture[] = _(picList ?? {})
-            .keys()
-            .sortBy(key => parseInt(key.slice(1)))
+        const pictureList: ThreadPicture[] = Object.keys(picList ?? {})
+            .sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
             .map(key => {
                 const value = picList[key];
                 return {
@@ -21,8 +20,7 @@ export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
                     pictureId: value.img.original.id,
                     postId: value.post_id,
                 };
-            })
-            .value();
+            });
         currentStorage.set(HOME_FEED_IMAGES, {
             ...currentStorage.get(HOME_FEED_IMAGES),
             [tid]: pictureList,

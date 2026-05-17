@@ -17,7 +17,6 @@ import { onMounted, onUnmounted, ref } from "vue";
 
 const PANEL_GAP = 10;
 const VIEWPORT_PADDING = 12;
-const BORDER_COLOR = "rgb(0 0 0 / 10%)";
 
 interface Toggle {
     icon: string;

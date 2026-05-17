@@ -1,6 +1,6 @@
 import { dom } from "@/lib/elemental";
 import { requestBody, requestInstance } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { Except } from "type-fest";
 import { toast } from "user-view";
 import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values";
@@ -467,7 +467,7 @@ export function parsePostFromElement(elem: Element): TiebaPost {
     // 图片
     const imgArray: TiebaPost["images"] = [];
     if (imgs.length > 0) {
-        _.forEach(imgs, (img) => {
+        imgs.forEach((img) => {
             imgArray.push({
                 thumb: img.src,
                 original: img.getAttribute("original") ?? img.src,
@@ -476,21 +476,21 @@ export function parsePostFromElement(elem: Element): TiebaPost {
     }
 
     return {
-        id: _.defaultTo(elem.getAttribute("data-thread-id"), ""),
+        id: (elem.getAttribute("data-thread-id") ?? ""),
         forum: {
-            id: _.defaultTo(elem.getAttribute("data-forum-id"), ""),
+            id: (elem.getAttribute("data-forum-id") ?? ""),
             name: titleTagWrapperAnch?.title ?? "",
             href: titleTagWrapperAnch?.href ?? "",
         },
         author: {
-            portrait: _.split(nReplyAnch.href, /(\?id=)|&/)[2],
+            portrait: nReplyAnch.href.split(/(\?id=)|&/)[2],
             name: transEmojiFromDOMString(nReplyAnch.innerHTML),
             href: nReplyAnch.href,
         },
-        time: _.defaultTo(elem.getElementsByClassName("time")[0].textContent, ""),
+        time: (elem.getElementsByClassName("time")[0].textContent ?? ""),
         title: threadNameWrapperAnch.title,
-        content: _.defaultTo(elem.getElementsByClassName("n_txt")[0].textContent, ""),
-        replies: _.defaultTo(listPostNum?.getAttribute("data-num"), 0),
+        content: (elem.getElementsByClassName("n_txt")[0].textContent ?? ""),
+        replies: (listPostNum?.getAttribute("data-num") ?? 0),
         images: imgArray,
     };
 }
@@ -504,7 +504,7 @@ export function parsePostsFromString(
     const threads = dom.getElementsByClassName("j_feed_li");
     const undesired = "home-place-item";
 
-    _.forEach(threads, (thread) => {
+    Array.from(threads).forEach((thread) => {
         if (thread.classList.contains(undesired)) return;
         const post = parsePostFromElement(thread);
         if (callbackfn) callbackfn(post);
@@ -527,22 +527,10 @@ export async function getFeedList(
     callbackfn?: ((thread: TiebaPost) => void)
 ): Promise<TiebaPost[]> {
     const feedList: TiebaPost[] = [];
-    // const undesired = "home-place-item";
     const response = await tiebaAPI.feedlist();
 
     if (response.ok) {
         await response.json().then((value: FeedListResponse) => {
-            // const dom = new DOMParser().parseFromString(value.data.html, "text/html");
-            // const threads = dom.getElementsByClassName("j_feed_li");
-            // // console.log("🚀 ~ file: api/tieba.ts:57 ~ awaitresponse.json ~ threads:", threads);
-
-            // forEach(threads, (thread) => {
-            //     if (thread.classList.contains(undesired)) return;
-            //     const post = parsePostFromElement(thread);
-            //     if (callbackfn) callbackfn(post);
-            //     feedList.push(post);
-            // });
-
             parsePostsFromString(value.data.html, (thread) => {
                 if (callbackfn) callbackfn(thread);
                 feedList.push(thread);
@@ -627,10 +615,10 @@ export function transEmojiFromDOMString(str: string) {
     const arrIndex = str.match(indexRegex);
     arrIndex?.forEach(index => {
         const emoji = emojis[transformed.indexOf(`${index}.png`)];
-        const arrInner = _.split(str, RegExp(
+        const arrInner = str.split(RegExp(
             `<img[^>]*?${index}.png` + `(?:[^>]*?)*>`, "g"
         ));
-        str = _.join(arrInner, decodeURIComponent(emoji));
+        str = arrInner.join(decodeURIComponent(emoji));
     });
     return str;
 }
@@ -663,8 +651,8 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
     const startTime = Date.now();
 
     if (pictureList.length < firstResponse.data.pic_amount) {
-        let lastPicId: string = _(pictureList).last()?.pictureId ?? "";
-        let lastPostId: number = _(pictureList).last()?.postId ?? 0;
+        let lastPicId: string = pictureList.at(-1)?.pictureId ?? "";
+        let lastPostId: number = pictureList.at(-1)?.postId ?? 0;
         while (pictureList.length < firstResponse.data.pic_amount) {
             if (Date.now() - startTime > TIMEOUT) {
                 toast({
@@ -680,8 +668,8 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
                 0, firstResponse.data.pic_amount, lastPicId
             ));
             const newList = picListConv(response.data.pic_list);
-            pictureList.push(..._.slice(newList, _.findLastIndex(newList, { pictureId: lastPicId, postId: lastPostId }) + 1));
-            const lastItem = _.last(newList);
+            pictureList.push(...newList.slice(_.findLastIndex(newList, { pictureId: lastPicId, postId: lastPostId }) + 1));
+            const lastItem = newList.at(-1);
             lastPicId = lastItem?.pictureId ?? "";
             lastPostId = lastItem?.postId ?? 0;
         }
@@ -689,9 +677,8 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
     return writeCurrent();
 
     function picListConv(picList: GetThreadImagesResponse["data"]["pic_list"]): ThreadPicture[] {
-        return _(picList)
-            .keys()
-            .sortBy(key => parseInt(key.slice(1)))
+        return Object.keys(picList)
+            .sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
             .map(key => {
                 const value = picList[key];
                 return {
@@ -700,8 +687,7 @@ export async function getAllThreadImages(opts: GetAllThreadImagesOpts): Promise<
                     pictureId: value.img.original.id,
                     postId: value.post_id,
                 };
-            })
-            .value();
+            });
     }
 
     function writeCurrent() {

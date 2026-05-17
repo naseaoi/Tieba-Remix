@@ -1,5 +1,5 @@
 import { GM_addStyle } from "$";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { waitUntil } from "../utils";
 
 export type CSSRule = Partial<CSSStyleDeclaration> | Record<string, string>;
@@ -13,7 +13,7 @@ export function parseMultiCSS(cssObject: CSSObject) {
     return _.flatMapDeep(cssObject, (value, key) => {
         return [
             `${key} {`,
-            ..._.flatMapDeep(value, (v, k) => `${_.startsWith(k, "--") ? k : _.kebabCase(k)}: ${v};`),
+            ..._.flatMapDeep(value, (v, k) => `${k.startsWith("--") ? k : _.kebabCase(k)}: ${v};`),
             "}",
             "",
         ];
@@ -44,7 +44,7 @@ export function injectCSSRule(selector: string, cssRule: CSSRule) {
  * @param cssRule CSS 规则
  */
 export function assignCSSRule(el: Element, cssRule: CSSRule) {
-    _.assign((el as HTMLElement).style, cssRule);
+    Object.assign((el as HTMLElement).style, cssRule);
 }
 
 /**
@@ -63,11 +63,11 @@ export function insertCSS(style: string) {
  */
 export function overwriteCSS(...style: string[]) {
     const styles: HTMLStyleElement[] = [];
-    _.forEach(style, styleElement => {
+    style.forEach(styleElement => {
         styles.push(insertCSS(styleElement));
     });
-    waitUntil(() => !_.isNil(document.body)).then(() => {
-        _.forEach(styles, styleElement => {
+    waitUntil(() => !(document.body == null)).then(() => {
+        styles.forEach(styleElement => {
             document.head.appendChild(styleElement);
         });
     });

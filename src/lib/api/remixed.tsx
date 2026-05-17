@@ -1,8 +1,8 @@
 import { GM_getValue, GM_info, GM_openInTab, GM_setValue } from "$";
 import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
-import _ from "lodash";
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/utils/markdown";
+import _ from "@/lib/utils/_";
 import { messageBox, toast } from "user-view";
 import { parseCSSRule } from "../elemental/styles";
 import { userDialog } from "../render";
@@ -10,35 +10,16 @@ import { darkPrefers } from "../theme";
 
 export type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
 
-marked.setOptions({});
-
-// function dt2PageType(s: string): PageType {
-//     switch (s) {
-//         case "index":
-//             return "index";
-//         case "pb_bright":
-//             return "thread";
-//         case "frs":
-//             return "forum";
-//         case "main":
-//             return "user";
-//         default:
-//             return "unhandled";
-//     }
-// }
-
 /**
  * 获取当前页面的类型
  * @returns 当前页面的类型
  */
 export function currentPageType(): PageType {
-    // if (PageData) return dt2PageType(PageData.page);
-
     if (location.hostname.toLowerCase() !== "tieba.baidu.com") return "unhandled";
 
     const pathname = location.pathname.toLocaleLowerCase();
 
-    if (_.includes(["/", "/index.html"], pathname)) return "index";
+    if ((["/", "/index.html"]).includes(pathname)) return "index";
     if (/\/p\/\d+/.test(pathname)) return "thread";
     if (pathname === "/f") return "forum";
     if (pathname === "/home/main") return "user";
@@ -128,14 +109,16 @@ export function checkUpdateAndNotify(showLatest = false) {
     // 开发者专用
     if (GM_info.script.version === "developer-only") return;
 
-    getLatestReleaseFromGitee().then(({ release: latestRelease }) => {
+    getLatestReleaseFromGitee().then(async ({ release: latestRelease }) => {
         if (latestRelease && latestRelease.tag_name > `v${GM_info.script.version}`) {
             // 忽略当前版本
             if (ignoredTag.get() === latestRelease.tag_name) return;
 
+            const releaseHtml = await renderMarkdown(latestRelease.body);
+
             userDialog(
                 <div class="markdown"
-                    v-html={marked(latestRelease.body)}
+                    v-html={releaseHtml}
                     style={parseCSSRule({ maxWidth: "600px" })} />,
                 {
                     title: latestRelease.name,
@@ -237,7 +220,7 @@ export function setTheme(theme: ReturnType<typeof themeType.get>) {
         document.documentElement.classList.remove("dark-theme");
         document.documentElement.classList.remove("dark");
 
-        waitUntil(() => !_.isNil(document.body)).then(function () {
+        waitUntil(() => !(document.body == null)).then(function () {
             document.body.classList.remove("dark-theme");
         });
     }
@@ -247,7 +230,7 @@ export function setTheme(theme: ReturnType<typeof themeType.get>) {
         document.documentElement.classList.remove("light-theme");
         document.documentElement.classList.add("dark");
 
-        waitUntil(() => !_.isNil(document.body)).then(function () {
+        waitUntil(() => !(document.body == null)).then(function () {
             document.body.classList.add("dark-theme");
         });
     }

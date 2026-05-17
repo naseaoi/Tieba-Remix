@@ -14,7 +14,7 @@
                 <UserButton class="zoom-out head-btn icon" title="放大" @click="zoomImage(-0.5)">
                     zoom_out
                 </UserButton>
-                <span class="zoom-size">{{ _.round(scale * 100) + "%" }}</span>
+                <span class="zoom-size">{{ Math.round(scale * 100) + "%" }}</span>
                 <span class="head-sep">|</span>
                 <UserButton class="turn-left head-btn icon" title="逆时针旋转" @click="rotateImage(-90)">
                     undo
@@ -61,7 +61,7 @@ import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
 import { styleTheme } from "@/lib/user-values";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -96,13 +96,13 @@ if (typeof props.content === "string") {
         imageArray.push(...props.content as string[]);
         thumbArray.push(...props.content as string[]);
     } else {
-        _.forEach(props.content as ThreadPicture[], (value) => {
+        (props.content as ThreadPicture[]).forEach((value) => {
             imageArray.push(value.original);
             thumbArray.push(value.thumbnail);
         });
     }
 } else {
-    _.forEach((props.content as TiebaPost).images, (value) => {
+    ((props.content as TiebaPost).images).forEach((value) => {
         imageArray.push(value.original);
         thumbArray.push(value.thumb);
     });
@@ -364,7 +364,7 @@ function zoomImage(delta: number, anchor = getDefaultZoomAnchor()) {
 
     suspendImageTransition();
 
-    const nextScale = _.clamp(scale.value + delta, MIN_SIZE, MAX_SIZE);
+    const nextScale = Math.min(MAX_SIZE, Math.max(MIN_SIZE, scale.value + delta));
     if (nextScale === scale.value) return;
 
     const currentMetrics = getImageMetrics();
@@ -384,10 +384,10 @@ function zoomImage(delta: number, anchor = getDefaultZoomAnchor()) {
 
     const imageLeftPx = containerRect.left + currentMetrics.left;
     const imageTopPx = containerRect.top + currentMetrics.top;
-    const anchorX = _.clamp(anchor.x, imageLeftPx, imageLeftPx + currentMetrics.width);
-    const anchorY = _.clamp(anchor.y, imageTopPx, imageTopPx + currentMetrics.height);
-    const zoomRatioX = _.clamp((anchorX - imageLeftPx) / currentMetrics.width, 0, 1);
-    const zoomRatioY = _.clamp((anchorY - imageTopPx) / currentMetrics.height, 0, 1);
+    const anchorX = Math.min(imageLeftPx + currentMetrics.width, Math.max(imageLeftPx, anchor.x));
+    const anchorY = Math.min(imageTopPx + currentMetrics.height, Math.max(imageTopPx, anchor.y));
+    const zoomRatioX = Math.min(1, Math.max(0, (anchorX - imageLeftPx) / currentMetrics.width));
+    const zoomRatioY = Math.min(1, Math.max(0, (anchorY - imageTopPx) / currentMetrics.height));
     const nextWidth = naturalSize.value.width * nextScale;
     const nextHeight = naturalSize.value.height * nextScale;
 
@@ -500,7 +500,7 @@ function onScrollBarMouseDown(e: MouseEvent) {
         if (!container || !bar) return;
         const trackWidth = wrapperRect.width - bar.offsetWidth;
         if (trackWidth <= 0) return;
-        const x = _.clamp(clientX - wrapperRect.left - grabOffset, 0, trackWidth);
+        const x = Math.min(trackWidth, Math.max(0, clientX - wrapperRect.left - grabOffset));
         const progress = x / trackWidth;
         const maxScroll = container.scrollWidth - container.clientWidth;
         container.scrollLeft = progress * maxScroll;

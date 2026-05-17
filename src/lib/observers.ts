@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { dom } from "./elemental";
 
 export class TbObserver {
@@ -33,7 +32,7 @@ export class TbObserver {
     }
 
     public addEvent(...events: (() => void)[]) {
-        _.forEach(events, event => {
+        events.forEach(event => {
             if (this.events.includes(event)) return;
             if (typeof this.initEvent === "undefined") {
                 event();
@@ -44,18 +43,6 @@ export class TbObserver {
         });
     }
 }
-
-/** 贴吧监控 */
-// export const remixedObservers = Object.freeze({
-//     /** 楼层监控 */
-//     postsObserver: new TbObserver("#j_p_postlist", { childList: true }),
-//     /** 楼中楼监控 */
-//     commentsObserver: new TbObserver("#j_p_postlist", { childList: true, subtree: true }),
-//     /** 首页动态监控 */
-//     newListObserver: new TbObserver("#new_list", { childList: true }),
-//     /** 进吧页面贴子监控 */
-//     threadListObserver: new TbObserver("#pagelet_frs-list\\/pagelet\\/thread", { attributes: true }, "load"),
-// });
 
 /** 帖子页面 楼层监控 */
 export const threadFloorsObserver = new TbObserver("#j_p_postlist", { childList: true });

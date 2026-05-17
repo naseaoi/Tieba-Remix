@@ -3,7 +3,7 @@ import { injectCSSRule, overwriteCSS } from "@/lib/elemental/styles";
 import { threadFloorsObserver } from "@/lib/observers";
 import { setCustomBackground } from "@/lib/theme";
 import "@/stylesheets/components/user-button.scss";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import floatBarStyle from "./tieba-components/float-bar.scss?inline";
 import _navBar from "./tieba-components/nav-bar";
 

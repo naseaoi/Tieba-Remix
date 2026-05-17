@@ -43,7 +43,7 @@
 
 <script lang="ts" setup>
 import { PagerType } from "@/lib/tieba-components/pager";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { UserButton, UserTextbox } from "user-view";
 import { computed, ref } from "vue";
 

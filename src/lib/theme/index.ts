@@ -17,7 +17,7 @@ import vercelHomeStyle from "@/stylesheets/tieba-vercel/tieba-home.scss?inline";
 import vercelMainStyle from "@/stylesheets/tieba-vercel/tieba-main.scss?inline";
 import vercelSettingsStyle from "@/stylesheets/tieba-vercel/settings.scss?inline";
 import vercelThreadStyle from "@/stylesheets/tieba-vercel/tieba-thread.scss?inline";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { getResource } from "../api/remixed";
 import { domrd } from "../elemental";
 import { injectCSSRule, overwriteCSS, parseMultiCSS } from "../elemental/styles";
@@ -101,8 +101,8 @@ export function applyDynamicFonts() {
     const css = parseMultiCSS({
         ":root": {
             "--content-max": "982px",
-            "--code-zh": `${_.join(userFonts.get(), ",")}`,
-            "--code-monospace": `${_.join(monospaceFonts.get(), ",")}`,
+            "--code-zh": `${userFonts.get().join(",")}`,
+            "--code-monospace": `${monospaceFonts.get().join(",")}`,
             "--font-weight-normal": `${fontWeights.get().normal}`,
             "--font-weight-bold": `${fontWeights.get().bold}`,
         },
@@ -197,7 +197,7 @@ export async function setCustomBackground() {
         backgroundSize: "cover !important",
     });
 
-    waitUntil(() => !_.isNil(document.body)).then(function () {
+    waitUntil(() => !(document.body == null)).then(function () {
         if (customBackground.get()) {
             document.body.classList.add("custom-background");
         } else {

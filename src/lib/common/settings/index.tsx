@@ -4,7 +4,7 @@ import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/c
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
 import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 import { UserSelectItem, messageBox } from "user-view";
 import { markRaw } from "vue";
 import AboutDetail from "./setting-widgets/about.detail.vue";
@@ -218,11 +218,11 @@ export const getUserSettings = _.once((): UserSettings => ({
                             type: "textarea",
                             placeHolder: "填入字体名，以换行分隔。若需要中英文混排，需将英文字体写在中文字体之前",
                             init() {
-                                return _.join(userFonts.get(), "\n");
+                                return userFonts.get().join("\n");
                             },
                             event(e) {
-                                userFonts.set(_.split((e.target as HTMLInputElement).value, "\n"));
-                                return _.join(userFonts.get(), "\n");
+                                userFonts.set(((e.target as HTMLInputElement).value).split("\n"));
+                                return userFonts.get().join("\n");
                             },
                         }],
                     },
@@ -234,11 +234,11 @@ export const getUserSettings = _.once((): UserSettings => ({
                             type: "textarea",
                             placeHolder: "填入字体名，以换行分隔。建议在此处写入等宽字体",
                             init() {
-                                return _.join(monospaceFonts.get(), "\n");
+                                return monospaceFonts.get().join("\n");
                             },
                             event(e) {
-                                monospaceFonts.set(_.split((e.target as HTMLInputElement).value, "\n"));
-                                return _.join(monospaceFonts.get(), "\n");
+                                monospaceFonts.set(((e.target as HTMLInputElement).value).split("\n"));
+                                return monospaceFonts.get().join("\n");
                             },
                         }],
                     },
@@ -289,7 +289,7 @@ export const getUserSettings = _.once((): UserSettings => ({
         name: "模块",
         icon: "deployed_code",
         description: "用户模块管理及部署",
-        sub: AllModules().filter(m => m.id !== "remixed-theme").reduce((accu, curr, index) => {
+        sub: AllModules().filter(m => m.id !== "remixed-theme").reduce<Record<string, SubSettingKey>>((accu, curr) => {
             function toSubSettingKey(module: UserModule): SubSettingKey {
                 return {
                     name: module.name,
@@ -303,10 +303,10 @@ export const getUserSettings = _.once((): UserSettings => ({
                                 type: "toggle",
                                 content: module.description,
                                 init() {
-                                    return _.includes(disabledModules.get(), module.id) ? false : true;
+                                    return disabledModules.get().includes(module.id) ? false : true;
                                 },
                                 event() {
-                                    if (_.includes(disabledModules.get(), module.id)) {
+                                    if (disabledModules.get().includes(module.id)) {
                                         const newSet = new Set(disabledModules.get());
                                         newSet.delete(module.id);
                                         disabledModules.set([...newSet]);
@@ -324,15 +324,9 @@ export const getUserSettings = _.once((): UserSettings => ({
                 };
             }
 
-            if (index === 1) {
-                const accuObject = toSubSettingKey(accu);
-                accu = {} as any;
-                accu[accuObject.name] = accuObject;
-            }
-
             accu[curr.name] = toSubSettingKey(curr);
             return accu;
-        }) as MainSettingKey["sub"],
+        }, {}) as MainSettingKey["sub"],
     },
 
     "enhanced": {
@@ -407,7 +401,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                                     content: "该操作是不可逆的，请做最后一次确认",
                                     type: "forceTrueFalse",
                                 }) === "positive") {
-                                    _.forEach(GM_listValues(), (key) => {
+                                    GM_listValues().forEach((key) => {
                                         GM_deleteValue(key);
                                     });
                                     location.reload();

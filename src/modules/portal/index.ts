@@ -1,6 +1,6 @@
 import { dom } from "@/lib/elemental";
 import { threadCommentsObserver } from "@/lib/observers";
-import _ from "lodash";
+import _ from "@/lib/utils/_";
 
 export default {
     id: "portal",
@@ -29,7 +29,7 @@ function main(): void {
         addBiliLinks(".lzl_cnt .lzl_content_main");
 
         function addBiliLinks(selector: string): void {
-            _.forEach(dom(selector, []), (elem) => {
+            (dom(selector, [])).forEach((elem) => {
                 if (elem.classList.contains(LINKED_CLASS)) return;
                 elem.classList.add(LINKED_CLASS);
 
@@ -52,7 +52,7 @@ function main(): void {
                     if (!array) return;
 
                     const hadHyperLink: string[] = [];
-                    _.forEach(array, (videoID) => {
+                    array.forEach((videoID) => {
                         if (hadHyperLink.indexOf(videoID) === -1) {
                             hadHyperLink.push(videoID);
                             const htmlArray = elem.innerHTML.split(
