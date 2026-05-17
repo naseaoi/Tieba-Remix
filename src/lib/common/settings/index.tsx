@@ -1,4 +1,4 @@
-import { GM_deleteValue, GM_listValues } from "$";
+import { GM_deleteValue, GM_listValues } from "@/lib/monkey";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import { MainSettingKey, SettingContent, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";

@@ -12,6 +12,7 @@ let bootstrapped = false;
 let redirectTriggered = false;
 let securityHandled = false;
 let cloakRemoved = false;
+let cloakApplied = false;
 
 export interface BootstrapSignal {
     onReady: () => void;
@@ -24,8 +25,10 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         return;
     }
 
-    applyCloak();
-    window.setTimeout(removeCloak, CLOAK_SAFETY_MS);
+    if (document.readyState === "loading") {
+        applyCloak();
+        window.setTimeout(removeCloak, CLOAK_SAFETY_MS);
+    }
 
     // 早期：仅处理「百度安全验证」拦截页
     waitForBody(() => { handleSecurityPage(); });
@@ -58,6 +61,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
 
 function applyCloak(): void {
     if (!document.documentElement) return;
+    cloakApplied = true;
     document.documentElement.style.setProperty("overflow-y", "scroll", "important");
     document.documentElement.style.setProperty("scrollbar-gutter", "stable", "important");
     document.documentElement.style.setProperty("visibility", "hidden", "important");
@@ -67,7 +71,7 @@ function applyCloak(): void {
 }
 
 function removeCloak(): void {
-    if (cloakRemoved) return;
+    if (cloakRemoved || !cloakApplied) return;
     cloakRemoved = true;
     document.documentElement?.style.removeProperty("visibility");
 }

@@ -1,4 +1,4 @@
-import { GM_addStyle } from "$";
+import { GM_addStyle } from "@/lib/monkey";
 import _ from "@/lib/utils/_";
 import { waitUntil } from "../utils";
 

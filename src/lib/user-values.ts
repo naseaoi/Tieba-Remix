@@ -1,4 +1,4 @@
-import { GM_deleteValue, GM_getValue, GM_setValue } from "$";
+import { GM_deleteValue, GM_getValue, GM_setValue } from "@/lib/monkey";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import _ from "@/lib/utils/_";
 import { setTheme } from "./api/remixed";

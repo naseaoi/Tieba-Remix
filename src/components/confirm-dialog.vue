@@ -74,7 +74,7 @@ const resolvedIcon = computed(() => {
 });
 
 const dialogOpts: UserDialogOpts = {
-    animation: true,
+    animation: false,
     force: props.type === "forceTrueFalse",
     clickModalToUnload: props.type !== "forceTrueFalse",
     pressEscapeToUnload: props.type !== "forceTrueFalse",
@@ -202,6 +202,7 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
 
 .confirm-btn {
     display: inline-flex;
+    box-sizing: border-box;
     min-width: 88px;
     height: 32px;
     align-items: center;
@@ -209,12 +210,16 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0 14px;
     border: 1px solid var(--border-color);
     border-radius: $radius-sm;
+    appearance: none;
     background-color: var(--default-background);
+    background-image: none;
+    box-shadow: none;
     color: var(--default-fore);
     cursor: pointer;
     font-family: inherit;
     font-size: 13px;
     font-weight: var(--font-weight-bold);
+    line-height: 1;
     outline: none;
     transition:
         background-color $trans-fast $ease,
@@ -276,5 +281,16 @@ html:not(.style-vercel) {
             }
         }
     }
+}
+</style>
+
+<style lang="scss">
+:is(.user-dialog-modal .user-dialog.default, .user-dialog-modal .user-dialog.default .dialog-content):has(.confirm-dialog) {
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 </style>

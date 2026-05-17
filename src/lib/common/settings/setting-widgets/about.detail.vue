@@ -24,11 +24,11 @@
 </template>
 
 <script lang="ts" setup>
-import { GM_info } from "$";
+import { getGMInfo } from "@/lib/monkey";
 import { GithubRepo, MainTitle, Owner } from "@/lib/user-values";
 import { UserButton } from "user-view";
 
-const scriptInfo = GM_info;
+const scriptInfo = getGMInfo();
 </script>
 
 <style lang="scss" scoped>

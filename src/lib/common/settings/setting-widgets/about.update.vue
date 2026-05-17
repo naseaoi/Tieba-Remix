@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup>
-import { GM_info } from "$";
+import { getGMInfo } from "@/lib/monkey";
 import { ReleaseFetchErrorKind, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
 import { renderMarkdown } from "@/lib/utils/markdown";
@@ -48,7 +48,7 @@ const loading = ref(true);
 const errorKind = ref<ReleaseFetchErrorKind>();
 const errorText = ref("");
 
-const scriptInfo = GM_info;
+const scriptInfo = getGMInfo();
 
 const errorIcon = computed(() => {
     switch (errorKind.value) {

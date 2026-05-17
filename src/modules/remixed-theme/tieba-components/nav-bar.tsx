@@ -3,7 +3,7 @@ import { asyncdom } from "@/lib/elemental";
 import { renderComponent } from "@/lib/render";
 import { insertJSX } from "@/lib/render/jsx-extension";
 
-import { GM_addStyle } from "$";
+import { GM_addStyle } from "@/lib/monkey";
 import navBarCSS from "./nav-bar.scss?inline";
 
 export default async function () {

@@ -1,4 +1,4 @@
-import { GM_info } from "$";
+import { getGMInfo } from "@/lib/monkey";
 import _ from "@/lib/utils/_";
 import { toast } from "user-view";
 
@@ -56,7 +56,8 @@ export function AllModules() {
  */
 export function errorMessage(error: Error) {
     const errBody = error.stack ? error.stack : error.message;
-    return `${GM_info.script.name} ${GM_info.script.version}\n${errBody}`;
+    const scriptInfo = getGMInfo();
+    return `${scriptInfo.script.name} ${scriptInfo.script.version}\n${errBody}`;
 }
 
 /**
@@ -126,7 +127,7 @@ export function waitUntil(pred: (() => boolean), timeout = Infinity) {
                 cancelAnimationFrame(id);
                 reject(new Error("等待超时"));
 
-                if (GM_info.script.version === "developer-only") {
+                if (getGMInfo().script.version === "developer-only") {
                     console.error(`等待超时，该函数未在指定时间内得到期望值：${pred}`);
                     console.trace("发生错误的调用者：");
                 }

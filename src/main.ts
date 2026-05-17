@@ -1,4 +1,4 @@
-import { GM_registerMenuCommand } from "$";
+import { GM_registerMenuCommand, waitForCoreMonkeyApis } from "@/lib/monkey";
 import _ from "@/lib/utils/_";
 import "user-view/build/index.css";
 import Settings from "./components/settings.vue";
@@ -24,7 +24,14 @@ import { AllModules, waitUntil } from "./lib/utils";
 // 新版页面下完全不注入任何 CSS / 属性，避免破坏 SPA 渲染，由 setupLegacyRedirect 自身负责切换 cookie + reload。
 setupLegacyRedirect(bootstrap);
 
-function bootstrap({ onReady }: BootstrapSignal) {
+function bootstrap(signal: BootstrapSignal) {
+    void waitForCoreMonkeyApis().then(() => {
+        GM_registerMenuCommand("设置", () => renderDialog(Settings));
+    });
+    startBootstrap(signal);
+}
+
+function startBootstrap({ onReady }: BootstrapSignal) {
     // 尽早完成主题设置，降低闪屏概率
     setTheme(themeType.get());
     setStyleTheme(styleTheme.get());
@@ -130,8 +137,6 @@ function bootstrap({ onReady }: BootstrapSignal) {
             decorateFloatBarTooltips();
         });
     });
-
-    GM_registerMenuCommand("设置", () => renderDialog(Settings));
 
     console.info(REMIXED);
 }

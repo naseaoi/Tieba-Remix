@@ -1,4 +1,4 @@
-import { GM_getValue, GM_info, GM_openInTab, GM_setValue } from "$";
+import { GM_getValue, GM_openInTab, GM_setValue, getGMInfo } from "@/lib/monkey";
 import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/utils/markdown";
@@ -107,20 +107,23 @@ export function checkUpdateAndNotify(showLatest = false) {
     if (!showUpdateToday.get()) return;
 
     // 开发者专用
-    if (GM_info.script.version === "developer-only") return;
+    if (getGMInfo().script.version === "developer-only") return;
 
     getLatestReleaseFromGitee().then(async ({ release: latestRelease }) => {
-        if (latestRelease && latestRelease.tag_name > `v${GM_info.script.version}`) {
+        if (latestRelease && latestRelease.tag_name > `v${getGMInfo().script.version}`) {
             // 忽略当前版本
             if (ignoredTag.get() === latestRelease.tag_name) return;
 
             const releaseHtml = await renderMarkdown(latestRelease.body);
+            const installUrl = resolveReleaseInstallUrl(latestRelease);
 
             const action = await updateNotifyDialog({
                 title: latestRelease.name,
                 bodyHtml: releaseHtml,
                 actions: [
-                    { text: "安装", value: "install", variant: "primary" },
+                    installUrl
+                        ? { text: "安装", value: "install-opened", variant: "primary", href: installUrl }
+                        : { text: "安装", value: "install", variant: "primary" },
                     { text: "今日不再提醒", value: "defer" },
                     { text: "跳过该版本", value: "skip" },
                 ],
@@ -241,7 +244,7 @@ export function backupUserConfigs() {
         __meta: {
             version: 1,
             createdAt: new Date().toISOString(),
-            scriptVersion: GM_info.script.version,
+            scriptVersion: getGMInfo().script.version,
         },
         configs,
     };

@@ -1,4 +1,4 @@
-import { GM_addStyle } from "$";
+import { GM_addStyle } from "@/lib/monkey";
 import { currentPageType } from "@/lib/api/remixed";
 import { asyncdom } from "@/lib/elemental";
 import { parseMultiCSS } from "@/lib/elemental/styles";

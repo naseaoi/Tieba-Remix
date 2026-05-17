@@ -1,4 +1,4 @@
-import { GM_addStyle } from "$";
+import { GM_addStyle } from "@/lib/monkey";
 import "@/stylesheets/main/animations.scss";
 import baseStyle from "@/stylesheets/main/base.scss?inline";
 import "@/stylesheets/main/material-symbols.css";
