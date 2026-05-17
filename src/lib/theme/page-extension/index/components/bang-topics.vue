@@ -80,7 +80,7 @@ function toggleTopicShowAll() {
 
 .topic-list {
     display: grid;
-    gap: 4px;
+    gap: 8px;
     grid-auto-rows: max-content;
     grid-template-columns: repeat(2, 1fr);
 

@@ -41,7 +41,7 @@ import { tiebaAPI } from "@/lib/api/tieba";
 import { threadImageQueueScope } from "@/lib/user-values";
 import { UserButton } from "user-view";
 import { onMounted, ref } from "vue";
-import { imagesViewer, openThreadImages } from "./images-viewer";
+import { fetchThreadImages, imagesViewer, openThreadImages } from "./images-viewer";
 
 interface Props {
     post: TiebaPost
@@ -80,17 +80,24 @@ onMounted(() => {
     iObs.observe(postContainer.value.$el);
 });
 
-function showImage(e: MouseEvent, index: number) {
+async function showImage(e: MouseEvent, index: number) {
     e.preventDefault();
+    e.stopPropagation();
     if (threadImageQueueScope.get() === "floor") {
+        const thumbCount = props.post.images.length;
+        if (thumbCount === 0) return;
+
+        const fetchedImages = await fetchThreadImages(+props.post.id);
+        const floorImages = fetchedImages.slice(0, Math.max(thumbCount, 1));
         const localImages: ThreadPicture[] = props.post.images.map(img => ({
             original: img.original || img.thumb,
             thumbnail: img.thumb || img.original,
         }));
-        if (localImages.length === 0) return;
+        const content = floorImages.length > 0 ? floorImages : localImages;
+
         imagesViewer({
-            content: localImages,
-            defaultIndex: Math.max(0, Math.min(index, localImages.length - 1)),
+            content,
+            defaultIndex: Math.max(0, Math.min(index, content.length - 1)),
         });
         return;
     }
@@ -138,6 +145,7 @@ img::before {
     box-sizing: border-box;
     flex-direction: column;
     padding: 16px;
+    border: 1px solid var(--card-border-color);
     border-radius: 16px;
     background-color: var(--default-background);
     cursor: pointer;

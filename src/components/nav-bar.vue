@@ -382,7 +382,7 @@ function loadNavMenuContent() {
 
 <style lang="scss" scoped>
 $nav-height: 48px;
-$hover-trigger-height: 16px;
+$hover-trigger-height: 28px;
 
 .nav-reveal-zone {
     position: fixed;
@@ -400,8 +400,8 @@ $hover-trigger-height: 16px;
     right: 0;
     left: 0;
     display: flex;
-    width: calc(100% - 44px);
-    max-width: 840px;
+    width: calc((100% - 44px) * 0.8);
+    max-width: 672px;
     height: $nav-height;
     align-items: center;
     justify-content: center;

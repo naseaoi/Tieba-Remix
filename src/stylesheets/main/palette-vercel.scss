@@ -27,6 +27,7 @@ html.style-vercel.light-theme {
     // 边框
     --border-color: rgb(234 234 234);
     --light-border-color: rgb(244 244 245);
+    --card-border-color: rgb(0 0 0 / 10%);
 
     // 等级牌：对齐贴吧官方语义色，整体偏淡（楼主蓝保持饱和度作为强调色，等级橙 / 层主绿 / 黄牌偏淡）
     --level-green-background: rgb(95 191 87 / 8%);
@@ -71,6 +72,7 @@ html.style-vercel.dark-theme {
     // 边框
     --border-color: rgb(31 31 31);
     --light-border-color: rgb(22 22 22);
+    --card-border-color: rgb(255 255 255 / 10%);
 
     // 等级牌：暗色背景下减弱饱和度（楼主蓝保持，等级橙 / 层主绿 / 黄牌偏淡灰）
     --level-green-background: rgb(89 191 75 / 9%);

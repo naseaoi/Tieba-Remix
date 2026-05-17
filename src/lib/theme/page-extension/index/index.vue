@@ -48,7 +48,6 @@
 <script setup lang="ts">
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
-import type { NavBarHideMode } from "@/components/nav-bar.vue";
 import {
     TopicList,
     TopicListResponse,
@@ -56,7 +55,7 @@ import {
     tiebaAPI,
 } from "@/lib/api/tieba";
 import { errorMessage, requestInstance } from "@/lib/utils";
-import { navBarHideMode, unreadFeeds } from "@/lib/user-values";
+import { unreadFeeds } from "@/lib/user-values";
 import { toast, UserButton } from "user-view";
 import { computed, onMounted, provide, ref } from "vue";
 
@@ -75,9 +74,7 @@ const masonryContainer = ref<HTMLDivElement>();
 const feedsHeader = ref<HTMLDivElement>();
 const feedsMasonry = ref<InstanceType<typeof FeedsMasonry> | null>(null);
 
-const navHideMode = ref<NavBarHideMode>(navBarHideMode.get());
-navBarHideMode.on("setter", (v) => { navHideMode.value = v; });
-const stickyTopPx = computed(() => navHideMode.value === "never" ? 64 : 16);
+const stickyTopPx = computed(() => 8);
 
 const { register } = useStickyHeaders(() => stickyTopPx.value);
 provide(StickyHeadersKey, register);
@@ -206,14 +203,12 @@ a {
         border-radius: 12px;
         transition: background-color var(--default-duration),
             box-shadow var(--default-duration),
-            backdrop-filter var(--default-duration),
-            transform var(--default-duration);
+            backdrop-filter var(--default-duration);
 
         &.stuck {
             background-color: var(--surface-glass);
             @include blur-effect(12px);
             box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
-            transform: translateY(calc(var(--sticky-top, 0px) / -2));
 
             html.dark-theme & {
                 box-shadow: 0 2px 12px rgb(0 0 0 / 40%);
