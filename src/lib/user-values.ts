@@ -165,18 +165,23 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
 export interface UpdateConfig {
     time: "1h" | "3h" | "6h" | "never";
     notify: boolean;
+    /** 更新通道：stable=正式版（GitHub /releases/latest），preview=预览版（含 prerelease） */
+    channel: "stable" | "preview";
 }
 
 /** 用户禁用的所有模块的 id */
 export const disabledModules = new UserKey<string[]>("disabledModules", []);
 /** 未读推送 */
 export const unreadFeeds = new UserKeyTS<TiebaPost[]>("unreadFeeds", []);
-/** 最新发行版相关信息 */
+/** 最新发行版相关信息（正式通道缓存） */
 export const latestRelease = new UserKeyTS<Maybe<GiteeRelease>>("latestRelease", undefined);
+/** 最新发行版相关信息（预览通道缓存，独立 key 以免与正式通道串味） */
+export const latestPreviewRelease = new UserKeyTS<Maybe<GiteeRelease>>("latestPreviewRelease", undefined);
 /** 更新配置 */
 export const updateConfig = new UserKey<UpdateConfig>("updateConfig", {
     time: "6h",
     notify: true,
+    channel: "stable",
 });
 /** 今日是否提醒用户更新 */
 export const showUpdateToday = new UserKeyTS("showUpdateToday", true, () => new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000);

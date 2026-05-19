@@ -1,5 +1,5 @@
 import { GM_getValue, GM_openInTab, GM_setValue, getGMInfo } from "@/lib/monkey";
-import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
+import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestPreviewRelease, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/utils/markdown";
 import _ from "@/lib/utils/_";
@@ -34,10 +34,57 @@ export interface ReleaseFetchOutcome {
     errorMessage?: string;
 }
 
-/** 拉取最新 Release，区分成功 / 禁用 / 速率限制 / 网络 / 服务器 / 未找到 */
+/**
+ * 语义化版本号比较，返回 -1 / 0 / 1。
+ * 支持 "v" 前缀与 "x.y.z[-prerelease[.n]]" 形式；按 semver 规则：带 prerelease 的版本 < 不带的同主版本。
+ * 示例：0.5.7-preview.1 < 0.5.7 < 0.5.8-preview.1 < 0.5.8
+ */
+export function compareSemver(a: string, b: string): number {
+    const parse = (v: string) => {
+        const stripped = v.replace(/^v/i, "");
+        const [core, pre] = stripped.split("-", 2);
+        const nums = core.split(".").map(n => parseInt(n, 10) || 0);
+        return { nums, pre: pre ?? "" };
+    };
+    const pa = parse(a);
+    const pb = parse(b);
+    const len = Math.max(pa.nums.length, pb.nums.length);
+    for (let i = 0; i < len; i++) {
+        const na = pa.nums[i] ?? 0;
+        const nb = pb.nums[i] ?? 0;
+        if (na !== nb) return na < nb ? -1 : 1;
+    }
+    // 核心版本号相等：无 prerelease > 有 prerelease
+    if (pa.pre === "" && pb.pre === "") return 0;
+    if (pa.pre === "") return 1;
+    if (pb.pre === "") return -1;
+    // 都是 prerelease：分段按数值/字典序比较
+    const sa = pa.pre.split(".");
+    const sb = pb.pre.split(".");
+    const slen = Math.max(sa.length, sb.length);
+    for (let i = 0; i < slen; i++) {
+        const xa = sa[i];
+        const xb = sb[i];
+        if (xa === xb) continue;
+        if (xa === undefined) return -1;
+        if (xb === undefined) return 1;
+        const ia = /^\d+$/.test(xa) ? parseInt(xa, 10) : null;
+        const ib = /^\d+$/.test(xb) ? parseInt(xb, 10) : null;
+        if (ia !== null && ib !== null) return ia < ib ? -1 : 1;
+        if (ia !== null) return -1; // 数字段排前
+        if (ib !== null) return 1;
+        return xa < xb ? -1 : 1;
+    }
+    return 0;
+}
+
+/** 拉取最新 Release，区分成功 / 禁用 / 速率限制 / 网络 / 服务器 / 未找到。按当前 channel 走不同接口，缓存按 channel 隔离。 */
 export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<ReleaseFetchOutcome> {
-    if (latestRelease.get() && !forceUpdate) {
-        return { release: latestRelease.get() };
+    const channel = updateConfig.get().channel ?? "stable";
+    const cache = channel === "preview" ? latestPreviewRelease : latestRelease;
+
+    if (cache.get() && !forceUpdate) {
+        return { release: cache.get() };
     }
 
     const TTL = (function () {
@@ -53,7 +100,10 @@ export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<Re
         return { errorKind: "disabled", errorMessage: "自动检查更新已关闭，请前往「检查更新设置」开启" };
     }
 
-    const updateUrl = `https://api.github.com/repos/${Owner}/${RepoName}/releases/latest`;
+    // preview 通道拉全部 release（含 prerelease），按 created_at desc 由 GitHub 返回首个即最新
+    const updateUrl = channel === "preview"
+        ? `https://api.github.com/repos/${Owner}/${RepoName}/releases?per_page=10`
+        : `https://api.github.com/repos/${Owner}/${RepoName}/releases/latest`;
 
     let response: Response;
     try {
@@ -86,6 +136,16 @@ export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<Re
         return { errorKind: "server", errorMessage: "响应解析失败" };
     }
 
+    // preview 通道：从数组中选 tag_name 最大者，避免重发旧 release 把缓存拉回去
+    if (channel === "preview") {
+        if (!Array.isArray(result) || result.length === 0) {
+            return { errorKind: "notfound", errorMessage: "尚未发布任何预览版 Release" };
+        }
+        result = (result as GiteeRelease[]).reduce((acc, cur) =>
+            !acc || compareSemver(cur.tag_name, acc.tag_name) > 0 ? cur : acc
+        );
+    }
+
     if ((result as GiteeReleaseNotFound)?.message && !result?.tag_name) {
         return { errorKind: "server", errorMessage: (result as GiteeReleaseNotFound).message };
     }
@@ -94,7 +154,7 @@ export async function getLatestReleaseFromGitee(forceUpdate = false): Promise<Re
         result.author.name = result.author.login;
     }
 
-    latestRelease.set(result, spawnOffsetTS(0, 0, 0, TTL));
+    cache.set(result, spawnOffsetTS(0, 0, 0, TTL));
     return { release: result };
 }
 
@@ -110,7 +170,7 @@ export function checkUpdateAndNotify(showLatest = false) {
     if (getGMInfo().script.version === "developer-only") return;
 
     getLatestReleaseFromGitee().then(async ({ release: latestRelease }) => {
-        if (latestRelease && latestRelease.tag_name > `v${getGMInfo().script.version}`) {
+        if (latestRelease && compareSemver(latestRelease.tag_name, `v${getGMInfo().script.version}`) > 0) {
             // 忽略当前版本
             if (ignoredTag.get() === latestRelease.tag_name) return;
 

@@ -96,7 +96,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "紧凑布局",
                         widgets: [{
                             type: "toggle",
-                            content: `对部分页面应用更紧凑的布局以提高信息密度。当前会受到影响的页面有：新版看贴页面`,
+                            content: `对部分页面应用更紧凑的布局以提高信息密度。受到影响的页面有：新版看帖页面`,
                             init() {
                                 return compactLayout.get();
                             },
@@ -158,10 +158,10 @@ export const getUserSettings = _.once((): UserSettings => ({
                 name: "页面扩展",
                 content: {
                     "index": {
-                        title: "首页扩展",
+                        title: "全新首页",
                         widgets: [{
                             type: "toggle",
-                            content: `首页扩展旨在提供更纯粹的浏览体验，提供管理关注的吧、贴吧热议、瀑布流推送等功能`,
+                            content: `旨在提供更纯粹的浏览体验，提供管理关注的吧、贴吧热议、瀑布流推送等功能`,
                             init() {
                                 return pageExtension.get().index;
                             },
@@ -173,7 +173,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
 
                     "thread": {
-                        title: "帖子浏览页面扩展",
+                        title: "新版看帖页面",
                         widgets: [{
                             type: "toggle",
                             content: `使用全新的 UI 简化帖子浏览，并改进屏幕空间利用率`,
@@ -386,10 +386,10 @@ export const getUserSettings = _.once((): UserSettings => ({
             },
 
             "factory-reset": {
-                name: "重置所有配置",
+                name: "重置配置",
                 content: {
                     "reset": {
-                        title: "重置所有配置",
+                        title: "重置配置",
                         description:
                             `如果你需要将脚本的一切配置恢复默认，请使用此功能`,
                         widgets: [{
@@ -415,6 +415,26 @@ export const getUserSettings = _.once((): UserSettings => ({
             "update": {
                 name: "检查更新",
                 content: {
+                    "update-channel": {
+                        title: "更新通道",
+                        description:
+                            `稳定版提供较为稳定的体验；预览版及时跟进新体验，可能不稳定`,
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "stable", text: "稳定版" },
+                                { value: "preview", text: "预览版" },
+                            ] as UserSelectItem<UpdateConfig["channel"]>[],
+                            init() {
+                                return updateConfig.get().channel ?? "stable";
+                            },
+                            event(channel: UpdateConfig["channel"]) {
+                                updateConfig.merge({ channel });
+                                // 切换通道后旧通道的缓存仍在另一个 key，下一次检查会拿对应通道的数据
+                            },
+                        }],
+                    },
+
                     "update-time": {
                         title: "检查更新设置",
                         description:

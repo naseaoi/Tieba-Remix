@@ -35,7 +35,7 @@
 
 <script lang="ts" setup>
 import { getGMInfo } from "@/lib/monkey";
-import { ReleaseFetchErrorKind, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
+import { ReleaseFetchErrorKind, compareSemver, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
 import { renderMarkdown } from "@/lib/utils/markdown";
 import { UserButton } from "user-view";
@@ -79,7 +79,7 @@ async function loadRelease() {
 
     if (outcome.release) {
         release.value = outcome.release;
-        isLatest.value = `v${scriptInfo.script.version}` >= outcome.release.tag_name;
+        isLatest.value = compareSemver(`v${scriptInfo.script.version}`, outcome.release.tag_name) >= 0;
         if (!isLatest.value && outcome.release.body) {
             releaseHtml.value = await renderMarkdown(outcome.release.body);
         }

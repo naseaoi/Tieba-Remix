@@ -5,8 +5,9 @@ let installed = false;
 
 /**
  * 还原吧首页帖子列表中被贴吧后端截断的发帖人 ID。
- * 原版 HTML 里 .frs-author-name 的文字本身就是截断后的（如 "肉食主义b..."），CSS 拿不回丢失字符，
- * 必须从 href?un=<encoded> 解码完整 ID，兜底从 .tb_icon_author 的 title 提取。
+ * 关键观察：服务端渲染的 textContent 才是真正的"最新显示名"；data-field.un 在用户改名后可能滞后。
+ * 因此只在 textContent 尾部有省略号（"..." / "…"）时才视为被截断、需要补全；
+ * 补全时还要求候选源以"截断前缀"开头，避免拿到滞后的旧昵称覆盖最新昵称。
  * 仅在 vercel 主题下启用 —— 其它主题未解开 CSS 截断，强行回填会撑破布局。
  */
 export function installForumAuthorFullId(): void {
@@ -51,27 +52,39 @@ export function installForumAuthorFullId(): void {
 }
 
 function extractFullName(a: HTMLAnchorElement): string | null {
+    const current = (a.textContent ?? "").trim();
+    if (!current) return null;
+
+    // 只处理服务端做了截断的情况：尾部 "..." (三个 ASCII 点) 或 "…"（单字符省略号）
+    const trunc = current.match(/^(.+?)(\.{3}|…)$/);
+    if (!trunc) return null;
+    const prefix = trunc[1];
+    if (!prefix) return null;
+
+    // 候选源以截断前缀开头时才采用，避免 data-field.un 滞后于改名时覆盖出旧昵称
+    const dataField = a.getAttribute("data-field");
+    if (dataField) {
+        try {
+            const parsed = JSON.parse(dataField) as { un?: unknown };
+            if (typeof parsed.un === "string") {
+                const un = parsed.un.trim();
+                if (un && un.startsWith(prefix)) return un;
+            }
+        } catch {
+            // JSON 异常，落到下一兜底
+        }
+    }
+
     const href = a.getAttribute("href");
     if (href) {
         const match = href.match(/[?&]un=([^&#]+)/);
         if (match) {
             try {
-                const decoded = decodeURIComponent(match[1]);
-                if (decoded) return decoded;
+                const decoded = decodeURIComponent(match[1]).trim();
+                if (decoded && decoded.startsWith(prefix)) return decoded;
             } catch {
-                // 编码异常，落到下一兜底
+                // 编码异常，无可用兜底
             }
-        }
-    }
-
-    const wrap = a.closest<HTMLElement>(".tb_icon_author");
-    const title = wrap?.getAttribute("title");
-    if (title) {
-        // 形如 "主题作者: xxx" / "主题作者:xxx"，中英文冒号都兜
-        const m = title.match(/[:：]\s*(.+)$/);
-        if (m) {
-            const name = m[1].trim();
-            if (name) return name;
         }
     }
 
