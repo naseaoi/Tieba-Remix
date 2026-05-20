@@ -5,14 +5,6 @@
 // 作用域：html.style-vercel 下的 .settings-wrapper 及对话框外壳
 
 html.style-vercel {
-    // UserDialog 外壳
-    .user-dialog-modal .user-dialog.default {
-        border: 1px solid var(--border-color) !important;
-        border-radius: $vercel-radius-md !important;
-        box-shadow: $vercel-shadow-md !important;
-        transition: border-color $vercel-trans-normal $vercel-ease !important;
-    }
-
     &.dark-theme .user-dialog-modal .user-dialog.default {
         box-shadow: 0 4px 16px rgb(0 0 0 / 24%) !important;
     }

@@ -55,9 +55,7 @@ function shieldBySelector(
                 }
             }
 
-            if (isMatch) {
-                (elem as HTMLElement).style.display = "none";
-            }
+            (elem as HTMLElement).style.display = isMatch ? "none" : "";
         });
     });
 }
@@ -74,4 +72,12 @@ function main() {
     // 进吧页面
     shieldBySelector(forumThreadsObserver, "content", ".j_thread_list", ".threadlist_title a");
     shieldBySelector(forumThreadsObserver, "username", ".j_thread_list", ".frs-author-name-wrap");
+
+    // 规则变更时实时生效
+    shieldList.on("setter", () => {
+        threadFloorsObserver.emit();
+        threadCommentsObserver.emit();
+        legacyIndexFeedsObserver.emit();
+        forumThreadsObserver.emit();
+    });
 }

@@ -19,7 +19,7 @@ export const getUserSettings = _.once((): UserSettings => ({
         description: "主题、显示设置",
         sub: {
             "theme": {
-                name: "主题",
+                name: "主题样式",
                 content: {
                     "switch-theme": {
                         title: "主题偏好",
@@ -77,6 +77,13 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
+                    "custom-background": {
+                        widgets: [{
+                            type: "component",
+                            component: markRaw(LayoutCustomBack),
+                        }],
+                    },
+
                     "color": {
                         title: "主题颜色",
                         description:
@@ -91,71 +98,6 @@ export const getUserSettings = _.once((): UserSettings => ({
 
             "layout": {
                 name: "页面布局",
-                content: {
-                    "compact-layout": {
-                        title: "紧凑布局",
-                        widgets: [{
-                            type: "toggle",
-                            content: `对部分页面应用更紧凑的布局以提高信息密度。受到影响的页面有：新版看帖页面`,
-                            init() {
-                                return compactLayout.get();
-                            },
-                            event() {
-                                compactLayout.set(!compactLayout.get());
-                                document.body.toggleAttribute("compact-layout");
-                                return compactLayout.get();
-                            },
-                        }],
-                    },
-
-                    "forum-bottom-editor": {
-                        title: "显示吧首页底部发帖模块",
-                        widgets: [{
-                            type: "toggle",
-                            content: `开启后会在吧首页底部显示贴吧原生的发帖编辑器`,
-                            init() {
-                                return showBottomEditor.get();
-                            },
-                            event() {
-                                const next = !showBottomEditor.get();
-                                showBottomEditor.set(next);
-                                document.body.toggleAttribute("hide-bottom-editor", !next);
-                                return next;
-                            },
-                        }],
-                    },
-
-                    "custom-background": {
-                        widgets: [{
-                            type: "component",
-                            component: markRaw(LayoutCustomBack),
-                        }],
-                    },
-
-                    "nav-bar-mode": {
-                        title: "导航栏隐藏模式",
-                        description:
-                            `设置导航栏的隐藏模式`,
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
-                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
-                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
-                            ] as UserSelectItem<NavBarHideMode>[],
-                            init() {
-                                return navBarHideMode.get();
-                            },
-                            event(hideMode: NavBarHideMode) {
-                                navBarHideMode.set(hideMode);
-                            },
-                        }],
-                    },
-                },
-            },
-
-            "page-extension": {
-                name: "页面扩展",
                 content: {
                     "index": {
                         title: "全新首页",
@@ -204,11 +146,64 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                         }],
                     },
-                } as Record<string, SettingContent>,
+
+                    "compact-layout": {
+                        title: "紧凑布局",
+                        widgets: [{
+                            type: "toggle",
+                            content: `对部分页面应用更紧凑的布局以提高信息密度。受到影响的页面有：新版看帖页面`,
+                            init() {
+                                return compactLayout.get();
+                            },
+                            event() {
+                                compactLayout.set(!compactLayout.get());
+                                document.body.toggleAttribute("compact-layout");
+                                return compactLayout.get();
+                            },
+                        }],
+                    },
+
+                    "forum-bottom-editor": {
+                        title: "显示吧首页底部发帖模块",
+                        widgets: [{
+                            type: "toggle",
+                            content: `开启后会在吧首页底部显示贴吧原生的发帖编辑器`,
+                            init() {
+                                return showBottomEditor.get();
+                            },
+                            event() {
+                                const next = !showBottomEditor.get();
+                                showBottomEditor.set(next);
+                                document.body.toggleAttribute("hide-bottom-editor", !next);
+                                return next;
+                            },
+                        }],
+                    },
+
+                    "nav-bar-mode": {
+                        title: "导航栏隐藏模式",
+                        description:
+                            `设置导航栏的隐藏模式`,
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
+                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
+                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
+                            ] as UserSelectItem<NavBarHideMode>[],
+                            init() {
+                                return navBarHideMode.get();
+                            },
+                            event(hideMode: NavBarHideMode) {
+                                navBarHideMode.set(hideMode);
+                            },
+                        }],
+                    },
+                },
             },
 
             "fonts": {
-                name: "字体",
+                name: "字体控制",
                 content: {
                     "code-zh": {
                         title: "主要字体组合",

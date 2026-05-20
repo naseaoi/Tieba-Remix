@@ -390,6 +390,10 @@
         .threadlist_title,
         .threadlist_lz > .threadlist_title {
             grid-area: title !important;
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
             min-width: 0 !important;
             max-width: none !important;
             float: none !important;
@@ -397,9 +401,33 @@
             padding: 0 !important;
         }
 
+        .threadlist_title .icon-good {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 1px 6px !important;
+            margin-right: 6px !important;
+            border-radius: 3px !important;
+            font-size: 11px !important;
+            font-style: normal !important;
+            color: #fff !important;
+            background: var(--warning-color) !important;
+            text-indent: 0 !important;
+            overflow: visible !important;
+
+            &::before {
+                content: "精";
+            }
+        }
+
         .threadlist_title a,
         a.j_th_tit {
             display: -webkit-box !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
             color: var(--default-fore) !important;
             font-size: $vercel-fs-lg !important;
             font-weight: var(--font-weight-bold) !important;

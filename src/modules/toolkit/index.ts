@@ -20,14 +20,14 @@ export default {
             title: "重新加载错误头像",
             widgets: [{
                 type: "toggle",
-                content: `原版贴吧的帖子页面时常会出现加载失败的头像，本功能可以将这些无法正常显示的头像资源链接到正常的 URL`,
+                content: `将偶尔无法正常显示的头像资源链接到正常的 URL`,
                 init: () => toolkitToggles.get().reloadAvatars,
                 event() {
                     toolkitToggles.merge({ reloadAvatars: !toolkitToggles.get().reloadAvatars });
                 },
             }],
         },
-    } as Record<keyof typeof toolkitFeatures, SettingContent>,
+    } as Record<string, SettingContent>,
     entry: function () {
         for (const key in toolkitFeatures) {
             const k = key as keyof typeof toolkitFeatures;

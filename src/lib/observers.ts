@@ -13,6 +13,11 @@ export class TbObserver {
 
     readonly events: (() => void)[] = [];
 
+    /** 手动触发所有已注册的事件 */
+    public emit() {
+        this.events.forEach(func => func());
+    }
+
     public observe() {
         const eventFuncs = () => {
             this.events.forEach(func => {
@@ -51,4 +56,4 @@ export const threadCommentsObserver = new TbObserver("#j_p_postlist", { childLis
 /** 旧版主页 推送监控 */
 export const legacyIndexFeedsObserver = new TbObserver("#new_list", { childList: true });
 /** 进吧页面 贴子监控 */
-export const forumThreadsObserver = new TbObserver("#pagelet_frs-list\\/pagelet\\/thread", { attributes: true }, "load");
+export const forumThreadsObserver = new TbObserver("#pagelet_frs-list\\/pagelet\\/thread", { childList: true, subtree: true });
