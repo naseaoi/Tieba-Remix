@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tieba Remix Dev
 // @namespace    https://github.com/naseaoi/Tieba-Remix
-// @version      0.5.7-preview.2
+// @version      0.5.7
 // @author       naseaoi
 // @description  贴吧网页端重塑
 // @license      MIT
@@ -35,9 +35,9 @@
 // @run-at       document-start
 // ==/UserScript==
 
-System.addImportMap({ imports: {"vue":"user:vue","user-view":"user:user-view","libelemental":"user:libelemental"} });
-System.set("user:vue", (()=>{const _=Vue;('default' in _)||(_.default=_);return _})());
+System.addImportMap({ imports: {"user-view":"user:user-view","vue":"user:vue","libelemental":"user:libelemental"} });
 System.set("user:user-view", (()=>{const _=UserView;('default' in _)||(_.default=_);return _})());
+System.set("user:vue", (()=>{const _=Vue;('default' in _)||(_.default=_);return _})());
 System.set("user:libelemental", (()=>{const _=libelemental;('default' in _)||(_.default=_);return _})());
 
 System.register("./__entry.js", ['./__monkey.entry-vEWe2J_x.js'], (function (exports, module) {
