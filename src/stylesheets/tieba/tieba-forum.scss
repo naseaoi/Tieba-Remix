@@ -1,5 +1,17 @@
 @use "@/stylesheets/components/user-button" as *;
 
+// 覆盖贴吧原生吧皮肤 background 短写属性对 body 阵列背景的干扰
+body {
+    background-color: var(--page-background) !important;
+}
+
+// 使 .wrap1/.wrap2 透明，让 body 阵列背景透出
+.wrap1,
+.wrap2 {
+    background: none !important;
+    background-color: transparent !important;
+}
+
 // 隐藏吧首页底部贴吧原生发帖模块
 body[hide-bottom-editor] .editor_wrap_bright {
     display: none !important;
