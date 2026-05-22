@@ -11,7 +11,7 @@ const scriptOptions: MonkeyOption = {
     userscript: {
         name: "Tieba Remix Dev",
         namespace: "https://github.com/naseaoi/Tieba-Remix",
-        version: "0.5.7",
+        version: "0.5.8-preview.1",
         description: "贴吧网页端重塑",
         author: "naseaoi",
         license: "MIT",
@@ -27,6 +27,9 @@ const scriptOptions: MonkeyOption = {
             "*://tieba.baidu.com/f?*",
             "*://jump.bdimg.com/safecheck/*",
             "*://jump2.bdimg.com/safecheck/*",
+        ],
+        connect: [
+            "tiebac.baidu.com",
         ],
         require: [
             "https://fastly.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",

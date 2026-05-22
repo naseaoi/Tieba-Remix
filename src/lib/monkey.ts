@@ -7,6 +7,10 @@ import {
     GM_openInTab as importedGMOpenInTab,
     GM_registerMenuCommand as importedGMRegisterMenuCommand,
     GM_setValue as importedGMSetValue,
+    GM_xmlhttpRequest as importedGMXmlhttpRequest,
+    type GmResponseEvent,
+    type GmResponseType,
+    type GmXmlhttpRequestOption,
 } from "$";
 
 interface MonkeyScriptInfo {
@@ -27,6 +31,9 @@ interface MonkeyGlobal {
     GM_openInTab?: (url: string, options?: { active?: boolean }) => unknown;
     GM_registerMenuCommand?: (name: string, fn: () => void) => unknown;
     GM_setValue?: (key: string, value: unknown) => void;
+    GM_xmlhttpRequest?: <R extends GmResponseType = "text", C = unknown>(
+        details: GmXmlhttpRequestOption<R, C>,
+    ) => { abort(): void };
 }
 
 const fallbackInfo: MonkeyScriptInfo = {
@@ -53,6 +60,9 @@ function importedMonkeyGlobal(): MonkeyGlobal | undefined {
         GM_openInTab: importedGMOpenInTab,
         GM_registerMenuCommand: importedGMRegisterMenuCommand,
         GM_setValue: importedGMSetValue,
+        GM_xmlhttpRequest: typeof importedGMXmlhttpRequest === "function"
+            ? importedGMXmlhttpRequest
+            : undefined,
     };
 }
 
@@ -177,4 +187,68 @@ export function GM_openInTab(url: string, options?: { active?: boolean }) {
     const fn = monkeyGlobal().GM_openInTab;
     if (typeof fn === "function") return fn(url, options);
     return window.open(url, options?.active === false ? "_blank" : "_blank", "noopener,noreferrer");
+}
+
+export interface GMRequestOptions<R extends GmResponseType = "text"> {
+    method?: "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "OPTIONS";
+    url: string;
+    headers?: Record<string, string>;
+    data?: string;
+    responseType?: R;
+    timeout?: number;
+    anonymous?: boolean;
+}
+
+export interface GMRequestResult<R extends GmResponseType = "text"> {
+    status: number;
+    statusText: string;
+    responseText: string;
+    response: GmResponseEvent<R>["response"];
+    finalUrl: string;
+    headers: string;
+}
+
+/**
+ * GM_xmlhttpRequest 的 Promise 包装。
+ * 用于油猴环境下发起跨域请求（贴吧 App 接口 tiebac.baidu.com 需要走这里，否则会被 CORS 拦截）。
+ * 须在 vite.config.ts 的 userscript.connect 中预先声明目标域名。
+ */
+export function gmRequest<R extends GmResponseType = "text">(
+    options: GMRequestOptions<R>,
+): Promise<GMRequestResult<R>> {
+    const fn = monkeyGlobal().GM_xmlhttpRequest;
+    if (typeof fn !== "function") {
+        return Promise.reject(new Error("GM_xmlhttpRequest is not available"));
+    }
+    return new Promise<GMRequestResult<R>>((resolve, reject) => {
+        try {
+            fn<R>({
+                method: options.method ?? "GET",
+                url: options.url,
+                headers: options.headers,
+                data: options.data,
+                responseType: options.responseType,
+                timeout: options.timeout,
+                anonymous: options.anonymous,
+                onload(ev) {
+                    resolve({
+                        status: ev.status,
+                        statusText: ev.statusText,
+                        responseText: ev.responseText,
+                        response: ev.response,
+                        finalUrl: ev.finalUrl,
+                        headers: ev.responseHeaders,
+                    });
+                },
+                onerror(ev) {
+                    reject(new Error(`GM_xmlhttpRequest error: ${ev.error || ev.statusText}`));
+                },
+                ontimeout() {
+                    reject(new Error("GM_xmlhttpRequest timeout"));
+                },
+            });
+        } catch (e) {
+            reject(e instanceof Error ? e : new Error(String(e)));
+        }
+    });
 }
