@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build with tag-injected version
+        env:
+          USERSCRIPT_VERSION: ${{ github.ref_name }}
+        run: pnpm build
+
+      - name: Decide release channel from tag
+        id: meta
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # 带 - 后缀的 SemVer prerelease（v0.5.8-preview.1 / -rc.1 等）走 preview 通道
+          if [[ "$TAG" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "target=preview" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "target=master" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          TARGET: ${{ steps.meta.outputs.target }}
+          PRERELEASE_FLAG: ${{ steps.meta.outputs.prerelease == 'true' && '--prerelease' || '' }}
+        run: |
+          # release 已存在则只补/覆盖 asset，否则创建
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" build/tieba-remix.user.js --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --target "$TARGET" \
+              --generate-notes \
+              $PRERELEASE_FLAG \
+              build/tieba-remix.user.js
+          fi
