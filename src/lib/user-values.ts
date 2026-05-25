@@ -215,6 +215,10 @@ export const glassEffect = new UserKey("glassEffect", false, {
 });
 /** 首页「贴吧热议」折叠状态记忆 */
 export const indexTopicCollapsed = new UserKey<boolean>("indexTopicCollapsed", false);
+/** 吧首页置顶帖折叠状态记忆 */
+export const forumPinnedCollapsed = new UserKey<Record<string, boolean>>("forumPinnedCollapsed", {});
+/** 吧首页置顶帖最后访问时间 */
+export const forumPinnedVisitedAt = new UserKey<Record<string, number>>("forumPinnedVisitedAt", {});
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",

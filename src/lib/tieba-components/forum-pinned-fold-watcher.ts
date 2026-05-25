@@ -1,7 +1,78 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { asyncdom } from "@/lib/elemental";
+import { forumPinnedCollapsed, forumPinnedVisitedAt } from "@/lib/user-values";
 
 let installed = false;
+const EXPIRE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function getForumPinnedKey(): string {
+    return PageData.forum.forum_id || PageData.forum.forum_name;
+}
+
+function syncForumPinnedStorage(currentKey: string): void {
+    const now = Date.now();
+    const expireBefore = now - EXPIRE_MS;
+    const currentCollapsed = forumPinnedCollapsed.get();
+    const nextCollapsed = { ...currentCollapsed };
+    const currentVisited = forumPinnedVisitedAt.get();
+    const nextVisited = { ...currentVisited };
+    let collapsedChanged = false;
+    let visitedChanged = false;
+
+    for (const key of Object.keys(nextCollapsed)) {
+        if (!(key in nextVisited)) {
+            nextVisited[key] = now;
+            visitedChanged = true;
+        }
+    }
+
+    for (const [key, visitedAt] of Object.entries(nextVisited)) {
+        if (key === currentKey) continue;
+        if (Number.isFinite(visitedAt) && visitedAt >= expireBefore) continue;
+        delete nextVisited[key];
+        visitedChanged = true;
+        if (key in nextCollapsed) {
+            delete nextCollapsed[key];
+            collapsedChanged = true;
+        }
+    }
+
+    if (nextVisited[currentKey] !== now) {
+        nextVisited[currentKey] = now;
+        visitedChanged = true;
+    }
+
+    if (collapsedChanged) {
+        forumPinnedCollapsed.set(nextCollapsed);
+    }
+    if (visitedChanged) {
+        forumPinnedVisitedAt.set(nextVisited);
+    }
+}
+
+function isPinnedCollapsed(key: string): boolean {
+    return forumPinnedCollapsed.get()[key] === true;
+}
+
+function setPinnedCollapsed(key: string, collapsed: boolean): void {
+    const current = forumPinnedCollapsed.get();
+    if (current[key] === true && collapsed) return;
+    if (!(key in current) && !collapsed) return;
+    const next = { ...current };
+    if (collapsed) {
+        next[key] = true;
+    } else {
+        delete next[key];
+    }
+    forumPinnedCollapsed.set(next);
+}
+
+function foldPinnedThreads(folderLi: HTMLLIElement, innerThreads: NodeListOf<HTMLLIElement>): void {
+    innerThreads.forEach(thread => {
+        thread.style.display = "none";
+    });
+    folderLi.querySelector<HTMLElement>("#thread_top_folder")?.style.setProperty("display", "block");
+}
 
 /**
  * 吧首页：监听置顶帖折叠状态，同步 CSS class
@@ -24,6 +95,9 @@ export function installForumPinnedFoldWatcher(): void {
     installed = true;
 
     void (async () => {
+        const forumKey = getForumPinnedKey();
+        syncForumPinnedStorage(forumKey);
+
         if (!document.documentElement.classList.contains("style-vercel")) return;
 
         // 先等 .threadlist_bright 出现（pagelet 异步注入）
@@ -39,15 +113,24 @@ export function installForumPinnedFoldWatcher(): void {
             // 用户通过每条帖子的 X 按钮逐条关闭时它不会被重新激活，所以不能只看 folder 锚点。
             const innerThreads = folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li");
 
+            if (isPinnedCollapsed(forumKey) && innerThreads.length > 0) {
+                const allHidden = Array.from(innerThreads).every(t => t.style.display === "none");
+                if (!allHidden) {
+                    foldPinnedThreads(folderLi, innerThreads);
+                }
+            }
+
             // 没有任何置顶帖：直接当折叠态（小按钮可作为视觉占位，点击不做事亦无害）
             if (innerThreads.length === 0) {
                 folderLi.classList.add("pinned-folded");
+                setPinnedCollapsed(forumKey, true);
                 return;
             }
 
             // 全部置顶帖都被 inline display:none → 折叠态
             const allHidden = Array.from(innerThreads).every(t => t.style.display === "none");
             folderLi.classList.toggle("pinned-folded", allHidden);
+            setPinnedCollapsed(forumKey, allHidden);
         };
 
         sync();
