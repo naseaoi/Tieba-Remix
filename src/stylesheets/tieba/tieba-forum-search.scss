@@ -1,0 +1,205 @@
+// 吧首页：顶部搜索框 → 右下角浮动按钮
+// 隐藏顶部 #head 全部内容（站点导航 + 原生搜索区）
+
+html[data-page-type="forum"] #head,
+html.style-vercel[data-page-type="forum"] #head,
+html.style-remixed[data-page-type="forum"] #head {
+    display: none !important;
+}
+
+html[data-page-type="forum"] .head_content {
+    padding-top: 24px;
+}
+
+.tbui_aside_float_bar .trex-search-floating {
+    position: relative;
+    overflow: visible !important;
+
+    .trex-search-floating-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px !important;
+        height: 40px !important;
+        color: var(--minimal-fore);
+        transition: color 0.18s ease;
+
+        &::after {
+            content: none !important;
+        }
+
+        svg {
+            display: block;
+        }
+
+        &:hover {
+            color: var(--default-fore);
+        }
+    }
+
+    .trex-search-floating-wrap {
+        position: absolute;
+        bottom: 0;
+        right: calc(100% + 8px);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+        pointer-events: none;
+    }
+
+    .trex-search-floating-panel {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--default-background);
+        box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+        white-space: nowrap;
+        width: 0;
+        min-width: 0;
+        transition:
+            width 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .trex-search-floating-suggestions {
+        box-sizing: border-box;
+        padding: 4px;
+        width: 300px;
+        max-height: 280px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--default-background);
+        box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(4px);
+        transition:
+            opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        display: none;
+    }
+
+    &.expanded .trex-search-floating-panel {
+        width: 300px;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    &.expanded.has-suggestions .trex-search-floating-suggestions {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+
+    .trex-search-floating-sugg-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--default-fore);
+        transition: background-color 0.18s ease;
+
+        &:hover {
+            background-color: var(--default-hover);
+        }
+    }
+
+    .trex-search-floating-sugg-img {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        object-fit: cover;
+        background-color: var(--light-background);
+    }
+
+    .trex-search-floating-sugg-text {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .trex-search-floating-sugg-title {
+        font-size: 13px;
+        color: var(--default-fore);
+        font-weight: var(--font-weight-bold);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .trex-search-floating-sugg-desc {
+        font-size: 11px;
+        color: var(--light-fore);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .trex-search-floating-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        box-sizing: border-box;
+        height: 32px;
+        padding: 0 8px;
+        border: none;
+        background: transparent;
+        color: var(--default-fore);
+        font-size: 13px;
+        line-height: 1;
+        outline: none;
+
+        &::placeholder {
+            color: var(--minimal-fore);
+        }
+    }
+
+    .trex-search-floating-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background-color: transparent;
+        color: var(--default-fore);
+        cursor: pointer;
+        transition:
+            border-color 0.18s ease,
+            background-color 0.18s ease;
+
+        svg {
+            display: block;
+        }
+
+        &:hover {
+            border-color: var(--default-fore);
+            background-color: var(--default-hover);
+        }
+    }
+}
+
+.tbui_aside_float_bar .trex-search-floating.expanded {
+    transform: none !important;
+
+    &:hover {
+        transform: none !important;
+    }
+}

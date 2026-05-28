@@ -12,6 +12,7 @@ import index from "./lib/theme/page-extension/index";
 import thread from "./lib/theme/page-extension/thread";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
+import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
@@ -63,6 +64,9 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     // 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
     installForumAuthorFullId();
+
+    // 吧首页：隐藏顶部搜索栏 → 右下角悬浮按钮承接搜索（进入贴吧 / 全吧搜索）
+    installForumFloatingSearch();
 
     // 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
     installThreadFloorTag();
