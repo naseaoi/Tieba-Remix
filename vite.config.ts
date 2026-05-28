@@ -13,7 +13,7 @@ const USERSCRIPT_VERSION = process.env.USERSCRIPT_VERSION?.replace(/^v/, "") || 
 const scriptOptions: MonkeyOption = {
     entry: "src/main.ts",
     userscript: {
-        name: "Tieba Remix Dev",
+        name: "Tieba RemixFork",
         namespace: "https://github.com/naseaoi/Tieba-Remix",
         version: USERSCRIPT_VERSION,
         description: "贴吧网页端重塑",

@@ -129,6 +129,26 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
+                    "nav-bar-mode": {
+                        title: "导航栏隐藏模式",
+                        description:
+                            `设置导航栏的隐藏模式`,
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
+                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
+                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
+                            ] as UserSelectItem<NavBarHideMode>[],
+                            init() {
+                                return navBarHideMode.get();
+                            },
+                            event(hideMode: NavBarHideMode) {
+                                navBarHideMode.set(hideMode);
+                            },
+                        }],
+                    },
+
                     "thread-image-queue": {
                         title: "看图模式加载全帖图片",
                         description:
@@ -176,26 +196,6 @@ export const getUserSettings = _.once((): UserSettings => ({
                                 showBottomEditor.set(next);
                                 document.body.toggleAttribute("hide-bottom-editor", !next);
                                 return next;
-                            },
-                        }],
-                    },
-
-                    "nav-bar-mode": {
-                        title: "导航栏隐藏模式",
-                        description:
-                            `设置导航栏的隐藏模式`,
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
-                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
-                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
-                            ] as UserSelectItem<NavBarHideMode>[],
-                            init() {
-                                return navBarHideMode.get();
-                            },
-                            event(hideMode: NavBarHideMode) {
-                                navBarHideMode.set(hideMode);
                             },
                         }],
                     },

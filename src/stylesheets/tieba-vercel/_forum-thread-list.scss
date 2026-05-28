@@ -1,6 +1,69 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
+// 折叠态外壳样式：紧贴 .forum_content 左外侧的小展开按钮
+@mixin pinned-folded-state {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -24px !important;
+    right: auto !important;
+    width: 28px !important;
+    min-height: 0 !important;
+    height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    z-index: 100 !important;
+    grid-template-areas: none !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    overflow: visible !important;
+
+    > ul,
+    > ul.thread_top_list,
+    > .thread_top_list {
+        display: none !important;
+    }
+
+    #thread_top_folder {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: $vercel-radius-sm;
+        background: var(--default-background);
+        cursor: pointer;
+        transition: border-color $vercel-trans-normal $vercel-ease;
+
+        &::before {
+            content: "";
+            display: block;
+            width: 14px;
+            height: 14px;
+            background-color: var(--light-fore);
+            transition: background-color $vercel-trans-normal $vercel-ease;
+            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
+        }
+
+        &:hover {
+            border-color: var(--minimal-fore);
+
+            &::before {
+                background-color: var(--default-fore);
+            }
+        }
+    }
+}
+
 /// 帖子列表 - 单列卡片
 @mixin forum-thread-list {
     .threadlist_bright {
@@ -258,65 +321,7 @@
         // CSS 用 class 选择器直接匹配（替代 :has()，更稳定）
         // 置顶折叠态：外壳改造为紧贴 .forum_content 左外侧的小展开按钮
         > li.thread_top_list_folder.pinned-folded {
-            display: block !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: -24px !important;
-            right: auto !important;
-            width: 28px !important;
-            min-height: 0 !important;
-            height: 28px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: none !important;
-            background: none !important;
-            box-shadow: none !important;
-            transform: none !important;
-            z-index: 100 !important;
-            grid-template-areas: none !important;
-            grid-template-columns: none !important;
-            grid-template-rows: none !important;
-            overflow: visible !important;
-
-            > ul,
-            > .thread_top_list {
-                display: none !important;
-            }
-
-            #thread_top_folder {
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-                width: 28px;
-                height: 28px;
-                margin: 0;
-                padding: 0;
-                border: 1px solid var(--border-color);
-                border-radius: $vercel-radius-sm;
-                background: var(--default-background);
-                cursor: pointer;
-                transition: border-color $vercel-trans-normal $vercel-ease;
-
-                // SVG 向下箭头（mask 后用背景色着色，跟随主题 token）
-                &::before {
-                    content: "";
-                    display: block;
-                    width: 14px;
-                    height: 14px;
-                    background-color: var(--light-fore);
-                    transition: background-color $vercel-trans-normal $vercel-ease;
-                    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
-                    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
-                }
-
-                &:hover {
-                    border-color: var(--minimal-fore);
-
-                    &::before {
-                        background-color: var(--default-fore);
-                    }
-                }
-            }
+            @include pinned-folded-state;
         }
 
         // ---------------------------
