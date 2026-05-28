@@ -103,7 +103,7 @@ setupLegacyRedirect(bootstrap)     ← 新版 SPA 通过 cookie 切回旧版才�
 
 ## 陷阱
 
-1. **预览版改动不要进 master 分支**。master = 正式版的 updateURL 目标，被污染会推送给所有正式用户
+1. **预览版改动只进 preview 分支**。正式版通过 PR 合并到 main
 2. **`PageData.pager.cur_page > 1` 时帖子页没有首楼**。改首楼的模块必先判 `=== 1`
 3. **跨贴吧 App 域不能用 `fetch`**。CORS 必拦
 4. **新版 SPA 上 `PageData` 不存在**。`setupLegacyRedirect` 会拦截，新版页面不应注入任何东西

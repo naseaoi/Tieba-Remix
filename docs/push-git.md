@@ -7,26 +7,44 @@
 ```bash
 git switch preview                            # 改动只在 preview 分支提交
 git push
-git tag v0.5.8-preview.1 && git push --tags   # 含 - 后缀 → prerelease
+git tag v0.5.8-preview.1 && git push origin v0.5.8-preview.1   # 含 - 后缀 → prerelease
 ```
 
 ## 正式版（预览验证通过后）
 
 ```bash
-git switch master
-git merge --ff-only preview && git push       # preview → master
-git tag v0.5.8 && git push --tags             # 无 - 后缀 → 正式
+git switch preview
+git pull --ff-only
+pnpm lint
+pnpm build
+git push
+gh pr create --base main --head preview --title "Release v0.5.8" --body "preview → main"
+gh pr merge --merge
+git switch main
+git pull --ff-only
+git tag v0.5.8 && git push origin v0.5.8      # 无 - 后缀 → 正式
 ```
 
 ## 规则
 
-- tag 形如 `v<semver>`。**含 `-`** → prerelease + 挂在 `preview` 分支；否则 → 挂在 `master` 分支
+- tag 形如 `v<semver>`。**含 `-`** → prerelease + 挂在 `preview` 分支；否则 → 挂在 `main` 分支
 - 版本号由 CI 从 tag 注入到 `vite.config.ts`，**不要手改**
-- 预览改动只走 `preview` 分支，禁止直推 `master`（正式版用户的 updateURL 指向 master）
+- 预览改动只走 `preview` 分支，正式版通过 PR 合并到 `main`
+
+## 一次性分支改名
+
+```bash
+git switch master
+git branch -m master main
+git push -u origin main
+gh repo edit --default-branch main
+```
+
+旧远端 `master` 保留到确认无引用后再删。
 
 ## CI 在做什么
 
-[`.github/workflows/release.yml`](../.github/workflows/release.yml)：tag push → `pnpm install` → `USERSCRIPT_VERSION=<tag> pnpm build` → `gh release create/upload` 上传 `build/tieba-remix.user.js`。
+[`.github/workflows/release.yml`](../.github/workflows/release.yml)：tag push → `pnpm install --frozen-lockfile` → `USERSCRIPT_VERSION=<tag> pnpm build` → `gh release create/upload` 上传 `build/tieba-remix.user.js`。
 
 ## 本地手动 build（极少用到）
 

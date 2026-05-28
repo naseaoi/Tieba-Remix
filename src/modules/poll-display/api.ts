@@ -69,7 +69,7 @@ function buildFormBody(form: Record<string, string>): string {
 
 /** 随机生成一个客户端 id，模仿 App 行为，无需稳定 */
 function genClientId(): string {
-    return "wappc_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    return `wappc_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 }
 
 /**

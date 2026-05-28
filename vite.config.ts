@@ -6,8 +6,7 @@ import postcssPresetEnv from "postcss-preset-env";
 import { UserConfig, defineConfig } from "vite";
 import monkey, { MonkeyOption, cdn, util } from "vite-plugin-monkey";
 
-// 版本号来源：CI 从 tag 名（如 v0.5.8-preview.1）通过 USERSCRIPT_VERSION 注入；
-// 本地未设环境变量时回落到 0.0.0-dev，避免误推线上版本号。
+// 版本号来源：CI 从 tag 名通过 USERSCRIPT_VERSION 注入
 const USERSCRIPT_VERSION = process.env.USERSCRIPT_VERSION?.replace(/^v/, "") || "0.0.0-dev";
 
 const scriptOptions: MonkeyOption = {
@@ -21,8 +20,8 @@ const scriptOptions: MonkeyOption = {
         license: "MIT",
         updateURL: "https://github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js",
         downloadURL: "https://github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js",
-        icon: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon16.png",
-        icon64: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon64.png",
+        icon: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/main/assets/images/main/icon16.png",
+        icon64: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/main/assets/images/main/icon64.png",
         match: [
             "*://tieba.baidu.com/",
             "*://tieba.baidu.com/index.*",

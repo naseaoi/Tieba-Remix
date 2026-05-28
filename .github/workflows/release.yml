@@ -34,13 +34,13 @@ jobs:
         id: meta
         run: |
           TAG="${GITHUB_REF_NAME}"
-          # 带 - 后缀的 SemVer prerelease（v0.5.8-preview.1 / -rc.1 等）走 preview 通道
+          # 带 - 后缀的 SemVer prerelease 走 preview 通道
           if [[ "$TAG" == *-* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
             echo "target=preview" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "target=master" >> "$GITHUB_OUTPUT"
+            echo "target=main" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create or update GitHub Release
@@ -50,7 +50,7 @@ jobs:
           TARGET: ${{ steps.meta.outputs.target }}
           PRERELEASE_FLAG: ${{ steps.meta.outputs.prerelease == 'true' && '--prerelease' || '' }}
         run: |
-          # release 已存在则只补/覆盖 asset，否则创建
+          # release 已存在则补充 asset
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" build/tieba-remix.user.js --clobber
           else
