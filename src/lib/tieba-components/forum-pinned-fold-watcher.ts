@@ -1,61 +1,189 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { asyncdom } from "@/lib/elemental";
+import { forumPinnedCollapsed, forumPinnedVisitedAt } from "@/lib/user-values";
 
 let installed = false;
+const EXPIRE_MS = 30 * 24 * 60 * 60 * 1000;
 
-/**
- * 吧首页：监听置顶帖折叠状态，同步 CSS class
- *
- * 贴吧原生「关闭置顶帖」会把内部 .j_thread_list 全部加 inline display:none，
- * 同时把 `<a id="thread_top_folder">` 的 inline display 从 none 切到 block。
- * 我们以此为依据，在外壳 `.thread_top_list_folder` 上加/去 class `pinned-folded`，
- * 让 CSS 直接通过 class 选择器匹配（替代不稳定的 :has() 方案），
- * 在折叠态把外壳改造为一个紧贴 .forum_content 左外侧的小展开按钮。
- *
- * 关键点：
- * - .thread_top_list_folder 由 #pagelet_frs-list/pagelet/thread_list 异步注入，
- *   脚本启动时通常还不存在，必须 await 元素就位再访问
- * - 监听 .threadlist_bright 整体子树（而非仅 folderLi），覆盖 pagelet 重渲染导致
- *   原引用失效的情况
- */
+function purgeInvalidKeys(): void {
+    const invalid = ["undefined", "null", ""];
+    const collapsed = forumPinnedCollapsed.get();
+    const nextCollapsed = { ...collapsed };
+    let collapsedChanged = false;
+    for (const k of invalid) {
+        if (k in nextCollapsed) {
+            delete nextCollapsed[k];
+            collapsedChanged = true;
+        }
+    }
+    if (collapsedChanged) forumPinnedCollapsed.set(nextCollapsed);
+
+    const visited = forumPinnedVisitedAt.get();
+    const nextVisited = { ...visited };
+    let visitedChanged = false;
+    for (const k of invalid) {
+        if (k in nextVisited) {
+            delete nextVisited[k];
+            visitedChanged = true;
+        }
+    }
+    if (visitedChanged) forumPinnedVisitedAt.set(nextVisited);
+}
+
+function getForumPinnedKey(): string {
+    const fromUrl = new URLSearchParams(location.search).get("kw");
+    if (fromUrl) return fromUrl;
+    const fromPageData = PageData?.forum?.forum_name || PageData?.forum?.forum_id;
+    return fromPageData || "";
+}
+
+function syncForumPinnedStorage(currentKey: string): void {
+    const now = Date.now();
+    const expireBefore = now - EXPIRE_MS;
+    const currentCollapsed = forumPinnedCollapsed.get();
+    const nextCollapsed = { ...currentCollapsed };
+    const currentVisited = forumPinnedVisitedAt.get();
+    const nextVisited = { ...currentVisited };
+    let collapsedChanged = false;
+    let visitedChanged = false;
+
+    for (const key of Object.keys(nextCollapsed)) {
+        if (!(key in nextVisited)) {
+            nextVisited[key] = now;
+            visitedChanged = true;
+        }
+    }
+
+    for (const [key, visitedAt] of Object.entries(nextVisited)) {
+        if (key === currentKey) continue;
+        if (Number.isFinite(visitedAt) && visitedAt >= expireBefore) continue;
+        delete nextVisited[key];
+        visitedChanged = true;
+        if (key in nextCollapsed) {
+            delete nextCollapsed[key];
+            collapsedChanged = true;
+        }
+    }
+
+    if (nextVisited[currentKey] !== now) {
+        nextVisited[currentKey] = now;
+        visitedChanged = true;
+    }
+
+    if (collapsedChanged) {
+        forumPinnedCollapsed.set(nextCollapsed);
+    }
+    if (visitedChanged) {
+        forumPinnedVisitedAt.set(nextVisited);
+    }
+}
+
+function isPinnedCollapsed(key: string): boolean {
+    return forumPinnedCollapsed.get()[key] === true;
+}
+
+function setPinnedCollapsed(key: string, collapsed: boolean): void {
+    const current = forumPinnedCollapsed.get();
+    if (current[key] === true && collapsed) return;
+    if (!(key in current) && !collapsed) return;
+    const next = { ...current };
+    if (collapsed) {
+        next[key] = true;
+    } else {
+        delete next[key];
+    }
+    forumPinnedCollapsed.set(next);
+}
+
+function syncForumPinnedAttr(folded: boolean): void {
+    if (folded) {
+        document.documentElement.setAttribute("data-forum-pinned", "folded");
+    } else {
+        document.documentElement.removeAttribute("data-forum-pinned");
+    }
+}
+
 export function installForumPinnedFoldWatcher(): void {
     if (installed) return;
     if (currentPageType() !== "forum") return;
     installed = true;
 
+    const forumKey = getForumPinnedKey();
+    if (!forumKey) return;
+    purgeInvalidKeys();
+    syncForumPinnedStorage(forumKey);
+    syncForumPinnedAttr(isPinnedCollapsed(forumKey));
+
     void (async () => {
         if (!document.documentElement.classList.contains("style-vercel")) return;
 
-        // 先等 .threadlist_bright 出现（pagelet 异步注入）
         const threadlist = await asyncdom<"ul">(".threadlist_bright");
         if (!threadlist) return;
 
-        const sync = (): void => {
-            const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
-            if (!folderLi) return;
-
-            // 判定折叠态的依据：所有内部置顶帖都被隐藏（display:none）
-            // 注意：贴吧原生 #thread_top_folder.style.display 仅在"整体折叠"那条路径会切到 block，
-            // 用户通过每条帖子的 X 按钮逐条关闭时它不会被重新激活，所以不能只看 folder 锚点。
-            const innerThreads = folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li");
-
-            // 没有任何置顶帖：直接当折叠态（小按钮可作为视觉占位，点击不做事亦无害）
-            if (innerThreads.length === 0) {
-                folderLi.classList.add("pinned-folded");
-                return;
-            }
-
-            // 全部置顶帖都被 inline display:none → 折叠态
-            const allHidden = Array.from(innerThreads).every(t => t.style.display === "none");
-            folderLi.classList.toggle("pinned-folded", allHidden);
+        const allInnerHidden = (folderLi: HTMLLIElement): boolean => {
+            const inner = folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li");
+            if (inner.length === 0) return true;
+            return Array.from(inner).every(li =>
+                li.style.display === "none" || li.hasAttribute("hidden")
+            );
         };
 
-        sync();
+        const ensureFolded = (folderLi: HTMLLIElement) => {
+            folderLi.classList.add("pinned-folded");
+            syncForumPinnedAttr(true);
+        };
 
-        // 在 .threadlist_bright 整个子树上监听属性 + 节点变化
-        // attributes/style：贴吧通过 inline style 切换置顶帖显隐
-        // childList/subtree：覆盖 folderLi 被 pagelet 重渲染替换的情况
-        const obs = new MutationObserver(sync);
+        const ensureExpanded = (folderLi: HTMLLIElement) => {
+            folderLi.classList.remove("pinned-folded");
+            syncForumPinnedAttr(false);
+            folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
+                if (li.style.display === "none") li.style.display = "";
+            });
+            const anchor = folderLi.querySelector<HTMLElement>("#thread_top_folder");
+            if (anchor && anchor.style.display !== "none") anchor.style.display = "none";
+        };
+
+        let lastFoldedState = isPinnedCollapsed(forumKey);
+
+        const applyInitial = (folderLi: HTMLLIElement) => {
+            if (lastFoldedState) {
+                ensureFolded(folderLi);
+            } else if (allInnerHidden(folderLi)) {
+                lastFoldedState = true;
+                setPinnedCollapsed(forumKey, true);
+                ensureFolded(folderLi);
+            }
+        };
+
+        const initial = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
+        if (initial) applyInitial(initial);
+
+        threadlist.addEventListener("click", (e) => {
+            const target = e.target as Element | null;
+            if (!target?.closest) return;
+            if (!target.closest("#thread_top_folder")) return;
+            const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
+            if (!folderLi) return;
+            lastFoldedState = false;
+            setPinnedCollapsed(forumKey, false);
+            ensureExpanded(folderLi);
+        }, true);
+
+        const obs = new MutationObserver(() => {
+            const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
+            if (!folderLi) return;
+            if (lastFoldedState) {
+                if (!folderLi.classList.contains("pinned-folded")) {
+                    folderLi.classList.add("pinned-folded");
+                }
+                return;
+            }
+            if (allInnerHidden(folderLi)) {
+                lastFoldedState = true;
+                setPinnedCollapsed(forumKey, true);
+                ensureFolded(folderLi);
+            }
+        });
         obs.observe(threadlist, {
             attributes: true,
             attributeFilter: ["style"],

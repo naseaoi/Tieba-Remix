@@ -28,7 +28,7 @@
 
 > 需要浏览器安装用户脚本管理器，推荐 [Tampermonkey](https://www.tampermonkey.net/)
 
-👉 [点击安装](https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js)
+👉 [点击安装](https://github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js)
 
 ## 兼容性
 

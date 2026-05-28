@@ -13,6 +13,7 @@ import thread from "./lib/theme/page-extension/thread";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
+import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
@@ -56,6 +57,9 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     // 吧首页：监听置顶帖折叠状态，给 .thread_top_list_folder 同步 .pinned-folded class
     installForumPinnedFoldWatcher();
+
+    // 吧首页：检测帖子列表加载失败（广告拦截器误伤等），显示顶部提示横幅
+    installForumLoadFailureBanner();
 
     // 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
     installForumAuthorFullId();

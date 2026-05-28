@@ -215,6 +215,10 @@ export const glassEffect = new UserKey("glassEffect", false, {
 });
 /** 首页「贴吧热议」折叠状态记忆 */
 export const indexTopicCollapsed = new UserKey<boolean>("indexTopicCollapsed", false);
+/** 吧首页置顶帖折叠状态记忆 */
+export const forumPinnedCollapsed = new UserKey<Record<string, boolean>>("forumPinnedCollapsed", {});
+/** 吧首页置顶帖最后访问时间 */
+export const forumPinnedVisitedAt = new UserKey<Record<string, number>>("forumPinnedVisitedAt", {});
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",
@@ -248,7 +252,7 @@ export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
     setter() { applyDynamicFonts(); },
 });
 /** 导航栏模式 */
-export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "never", {
+export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "fold", {
     setter(value) {
         document.documentElement.dataset.navBarMode = value;
     },
@@ -265,7 +269,7 @@ export const fontWeights = new UserKey("fontWeights", {
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
 /** 看图模式队列范围：full = 全帖所有图片；floor = 仅当前楼层 */
-export const threadImageQueueScope = new UserKey<"full" | "floor">("threadImageQueueScope", "full");
+export const threadImageQueueScope = new UserKey<"full" | "floor">("threadImageQueueScope", "floor");
 
 export const SymbolFont = "Material Symbols";
 

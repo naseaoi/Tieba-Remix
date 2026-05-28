@@ -6,19 +6,22 @@ import postcssPresetEnv from "postcss-preset-env";
 import { UserConfig, defineConfig } from "vite";
 import monkey, { MonkeyOption, cdn, util } from "vite-plugin-monkey";
 
+// 版本号来源：CI 从 tag 名通过 USERSCRIPT_VERSION 注入
+const USERSCRIPT_VERSION = process.env.USERSCRIPT_VERSION?.replace(/^v/, "") || "0.0.0-dev";
+
 const scriptOptions: MonkeyOption = {
     entry: "src/main.ts",
     userscript: {
-        name: "Tieba Remix Dev",
+        name: "Tieba RemixFork",
         namespace: "https://github.com/naseaoi/Tieba-Remix",
-        version: "0.5.7",
+        version: USERSCRIPT_VERSION,
         description: "贴吧网页端重塑",
         author: "naseaoi",
         license: "MIT",
-        updateURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
-        downloadURL: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/build/tieba-remix.user.js",
-        icon: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon16.png",
-        icon64: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/master/assets/images/main/icon64.png",
+        updateURL: "https://github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js",
+        downloadURL: "https://github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js",
+        icon: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/main/assets/images/main/icon16.png",
+        icon64: "https://raw.githubusercontent.com/naseaoi/Tieba-Remix/main/assets/images/main/icon64.png",
         match: [
             "*://tieba.baidu.com/",
             "*://tieba.baidu.com/index.*",
@@ -27,6 +30,9 @@ const scriptOptions: MonkeyOption = {
             "*://tieba.baidu.com/f?*",
             "*://jump.bdimg.com/safecheck/*",
             "*://jump2.bdimg.com/safecheck/*",
+        ],
+        connect: [
+            "tiebac.baidu.com",
         ],
         require: [
             "https://fastly.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
