@@ -1,10 +1,11 @@
-import { UserModuleEx } from "@/ex";
+import type { UserModuleEx } from "@/ex";
 import { dom } from "@/lib/elemental";
 import { TbObserver, forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import _ from "@/lib/utils/_";
 import { markRaw } from "vue";
 import moduleShieldVue from "./module.shield.vue";
-import { ShieldRule, matchShield, shieldList } from "./shield";
+import { matchShield, shieldList } from "./shield";
+import type { ShieldRule } from "./shield";
 
 export default {
     id: "shield",

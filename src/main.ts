@@ -16,6 +16,7 @@ import { installForumFloatingSearch } from "./lib/tieba-components/forum-floatin
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
@@ -61,6 +62,9 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     // 吧首页：检测帖子列表加载失败（广告拦截器误伤等），显示顶部提示横幅
     installForumLoadFailureBanner();
+
+    // 吧首页：贴吧缩略图 lazy style 丢失时恢复可见状态
+    installForumThumbnailRecovery();
 
     // 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
     installForumAuthorFullId();

@@ -10,8 +10,15 @@ export async function parseUserModules(
 ): Promise<UserModule[]> {
     const modules: UserModule[] = [];
 
-    await Promise.all(_.map(glob, async moduleExport => {
-        const currentModule = (await moduleExport()).default as UserModule;
+    await Promise.all(_.map(glob, async (moduleExport, modulePath) => {
+        let currentModule: UserModule;
+        try {
+            currentModule = (await moduleExport()).default as UserModule;
+        } catch (error) {
+            console.error(`[Tieba Remix] 模块导入失败: ${modulePath}`, error);
+            return;
+        }
+
         const disabledSet = new Set(disabledModules.get());
 
         const runnable = (() => {
@@ -36,20 +43,34 @@ export async function parseUserModules(
             return false;
         })();
 
+        const runEntry = () => {
+            try {
+                const result = currentModule.entry() as unknown;
+                if (result instanceof Promise) {
+                    return result.catch(error => {
+                        console.error(`[Tieba Remix] 模块执行失败: ${currentModule.id}`, error);
+                    });
+                }
+                return result;
+            } catch (error) {
+                console.error(`[Tieba Remix] 模块执行失败: ${currentModule.id}`, error);
+            }
+        };
+
         const runModule = {
-            "immediately": () => currentModule.entry(),
-            "afterHead": () => { afterHead(() => currentModule.entry()); },
+            "immediately": () => runEntry(),
+            "afterHead": () => { afterHead(() => runEntry()); },
             "DOMLoaded": () => {
                 if (document.readyState !== "loading") {
-                    return currentModule.entry();
+                    return runEntry();
                 }
-                document.addEventListener("DOMContentLoaded", () => currentModule.entry(), { once: true });
+                document.addEventListener("DOMContentLoaded", () => runEntry(), { once: true });
             },
             "loaded": () => {
                 if (document.readyState === "complete") {
-                    return currentModule.entry();
+                    return runEntry();
                 }
-                window.addEventListener("load", () => currentModule.entry(), { once: true });
+                window.addEventListener("load", () => runEntry(), { once: true });
             },
         };
 
