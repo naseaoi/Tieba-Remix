@@ -20,6 +20,7 @@ import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thum
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
+import { installSymbolFontStatus } from "./lib/symbol-font-status";
 import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
@@ -35,6 +36,8 @@ function bootstrap(signal: BootstrapSignal) {
 }
 
 function startBootstrap({ onReady }: BootstrapSignal) {
+    installSymbolFontStatus();
+
     // 尽早完成主题设置，降低闪屏概率
     setTheme(themeType.get());
     setStyleTheme(styleTheme.get());
