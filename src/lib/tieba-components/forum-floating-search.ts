@@ -15,6 +15,8 @@ interface Suggestion {
     desc: string;
 }
 
+const buildForumUrl = (kw: string): string => `/f?ie=utf-8&kw=${encodeURIComponent(kw)}`;
+
 export function installForumFloatingSearch(): void {
     if (installed) return;
     if (currentPageType() !== "forum") return;
@@ -98,6 +100,8 @@ export function installForumFloatingSearch(): void {
             for (const item of items) {
                 const liItem = document.createElement("div");
                 liItem.className = "trex-search-floating-sugg-item";
+                liItem.setAttribute("role", "button");
+                liItem.tabIndex = 0;
                 liItem.dataset.fname = item.fname;
                 if (item.fpic) {
                     const img = document.createElement("img");
@@ -157,7 +161,7 @@ export function installForumFloatingSearch(): void {
         const submitEnterBa = (): void => {
             const kw = input.value.trim();
             if (!kw) { input.focus(); return; }
-            location.href = `/f?ie=utf-8&kw=${encodeURIComponent(kw)}`;
+            location.href = buildForumUrl(kw);
         };
 
         const submitSearchAll = (): void => {
@@ -195,12 +199,35 @@ export function installForumFloatingSearch(): void {
             }
         });
 
-        suggList.addEventListener("click", (e) => {
-            const target = (e.target as Element).closest<HTMLDivElement>(".trex-search-floating-sugg-item");
-            if (!target) return;
+        const goSuggestion = (target: HTMLElement): void => {
             const fname = target.dataset.fname;
             if (!fname) return;
-            location.href = `/f?ie=utf-8&kw=${encodeURIComponent(fname)}`;
+            location.href = buildForumUrl(fname);
+        };
+
+        suggList.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            const target = (e.target as Element).closest<HTMLElement>(".trex-search-floating-sugg-item");
+            if (!target) return;
+            e.preventDefault();
+            e.stopPropagation();
+            goSuggestion(target);
+        });
+
+        suggList.addEventListener("click", (e) => {
+            const target = (e.target as Element).closest<HTMLElement>(".trex-search-floating-sugg-item");
+            if (!target) return;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        suggList.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            const target = (e.target as Element).closest<HTMLElement>(".trex-search-floating-sugg-item");
+            if (!target) return;
+            e.preventDefault();
+            e.stopPropagation();
+            goSuggestion(target);
         });
 
         document.addEventListener("click", (e) => {

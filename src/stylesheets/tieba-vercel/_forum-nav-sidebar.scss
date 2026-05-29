@@ -135,6 +135,86 @@
         }
     }
 
+    #frs_good_nav,
+    .frs_good_nav_main_bright {
+        box-sizing: border-box !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 12px 16px 8px !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: $vercel-radius-md !important;
+        background: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    #frs_good_nav .frs_good_nav_wrap,
+    .frs_good_nav_main_bright .frs_good_nav_wrap {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+    }
+
+    #frs_good_nav .frs_good_nav_wrap > a,
+    #frs_good_nav .frs_good_nav_wrap > span,
+    .frs_good_nav_main_bright .frs_good_nav_wrap > a,
+    .frs_good_nav_main_bright .frs_good_nav_wrap > span {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        min-height: 30px !important;
+        margin: 0 !important;
+        padding: 0 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-background) !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1.4 !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        float: none !important;
+        transition: color $vercel-trans-normal $vercel-ease,
+                    border-color $vercel-trans-normal $vercel-ease,
+                    background-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    #frs_good_nav .frs_good_nav_wrap > a:hover,
+    .frs_good_nav_main_bright .frs_good_nav_wrap > a:hover {
+        border-color: var(--border-color) !important;
+        background-color: var(--default-hover) !important;
+        color: var(--default-fore) !important;
+    }
+
+    #frs_good_nav .frs_good_nav_wrap strong,
+    .frs_good_nav_main_bright .frs_good_nav_wrap strong {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: -1px -10px !important;
+        padding: 0 10px !important;
+        min-height: 30px !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-fore) !important;
+        color: var(--default-background) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-bold) !important;
+        line-height: 1.4 !important;
+        white-space: nowrap !important;
+    }
+
     // 右侧栏
     .aside {
         box-sizing: border-box !important;

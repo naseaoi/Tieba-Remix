@@ -203,6 +203,7 @@
         .thread_top_list > li.j_thread_list.thread_top[style*="display: none"],
         .thread_top_list > li.j_thread_list.thread_top[style*="display:none"],
         .thread_top_list > li.j_thread_list.thread_top[style*="overflow: hidden"],
+        .thread_top_list > li.j_thread_list.thread_top[data-tid="1"]:has(.threadlist_title a.j_th_tit[href*="/bawu2/errorPage"]),
         .thread_top_list > li.j_thread_list.thread_top[hidden] {
             display: none !important;
         }
