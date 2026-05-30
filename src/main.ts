@@ -18,6 +18,7 @@ import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
+import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { installSymbolFontStatus } from "./lib/symbol-font-status";
@@ -77,6 +78,9 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     // 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
     installThreadFloorTag();
+
+    // 帖子页：楼层尾部「回复 / 更多操作」按钮，常驻生效，不随"新版点赞数"模块开关
+    installThreadFloorActions();
 
     // 帖子页：一行多图智能排列（包成 grid，删除组内 <br>）
     installThreadImageGrid();
