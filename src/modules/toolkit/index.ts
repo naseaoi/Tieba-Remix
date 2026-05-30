@@ -1,5 +1,5 @@
-import { SettingContent } from "@/components/settings.vue";
-import { UserModuleEx } from "@/ex";
+import type { SettingContent } from "@/components/settings.vue";
+import type { UserModuleEx } from "@/ex";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom, findParent } from "@/lib/elemental";
 import { threadCommentsObserver } from "@/lib/observers";

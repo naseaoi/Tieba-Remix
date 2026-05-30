@@ -23,6 +23,7 @@ interface Toggle {
     defaultValue?: boolean;
     name?: string;
     event?: ((now: boolean) => void);
+    momentary?: boolean;
 }
 
 export interface TogglePanelProps {
@@ -40,9 +41,15 @@ function unload() {
 }
 
 function handleToggleClick(index: number) {
+    const toggle = props.toggles[index];
+    if (toggle?.momentary) {
+        toggle.event?.(true);
+        unload();
+        return;
+    }
     const nextState = !toggleStates.value[index];
     toggleStates.value[index] = nextState;
-    props.toggles[index]?.event?.(nextState);
+    toggle?.event?.(nextState);
 }
 
 defineExpose({ unload });

@@ -103,6 +103,27 @@ function syncForumPinnedAttr(folded: boolean): void {
     }
 }
 
+function isPinnedItemHidden(li: HTMLLIElement): boolean {
+    return li.style.display === "none" ||
+        li.hasAttribute("hidden") ||
+        li.style.overflow === "hidden";
+}
+
+function isPinnedPlaceholder(li: HTMLLIElement): boolean {
+    if (li.dataset.tid !== "1") return false;
+    const title = li.querySelector<HTMLAnchorElement>(".threadlist_title a.j_th_tit");
+    if (!title) return false;
+    return title.textContent?.trim() === "" && title.href.includes("/bawu2/errorPage");
+}
+
+function normalizePinnedItems(folderLi: HTMLLIElement): void {
+    folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
+        if (!isPinnedPlaceholder(li)) return;
+        li.hidden = true;
+        li.style.display = "none";
+    });
+}
+
 export function installForumPinnedFoldWatcher(): void {
     if (installed) return;
     if (currentPageType() !== "forum") return;
@@ -121,11 +142,10 @@ export function installForumPinnedFoldWatcher(): void {
         if (!threadlist) return;
 
         const allInnerHidden = (folderLi: HTMLLIElement): boolean => {
+            normalizePinnedItems(folderLi);
             const inner = folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li");
             if (inner.length === 0) return true;
-            return Array.from(inner).every(li =>
-                li.style.display === "none" || li.hasAttribute("hidden")
-            );
+            return Array.from(inner).every(isPinnedItemHidden);
         };
 
         const ensureFolded = (folderLi: HTMLLIElement) => {
@@ -138,6 +158,14 @@ export function installForumPinnedFoldWatcher(): void {
             syncForumPinnedAttr(false);
             folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
                 if (li.style.display === "none") li.style.display = "";
+                if (li.style.overflow === "hidden") {
+                    li.style.overflow = "";
+                    li.style.height = "";
+                    li.style.marginTop = "";
+                    li.style.marginBottom = "";
+                    li.style.paddingTop = "";
+                    li.style.paddingBottom = "";
+                }
             });
             const anchor = folderLi.querySelector<HTMLElement>("#thread_top_folder");
             if (anchor && anchor.style.display !== "none") anchor.style.display = "none";
@@ -146,6 +174,7 @@ export function installForumPinnedFoldWatcher(): void {
         let lastFoldedState = isPinnedCollapsed(forumKey);
 
         const applyInitial = (folderLi: HTMLLIElement) => {
+            normalizePinnedItems(folderLi);
             if (lastFoldedState) {
                 ensureFolded(folderLi);
             } else if (allInnerHidden(folderLi)) {
@@ -172,6 +201,7 @@ export function installForumPinnedFoldWatcher(): void {
         const obs = new MutationObserver(() => {
             const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
             if (!folderLi) return;
+            normalizePinnedItems(folderLi);
             if (lastFoldedState) {
                 if (!folderLi.classList.contains("pinned-folded")) {
                     folderLi.classList.add("pinned-folded");

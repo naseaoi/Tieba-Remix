@@ -8,6 +8,7 @@ import universalStyle from "@/stylesheets/main/universal.scss?inline";
 import "@/stylesheets/main/variables.scss";
 import tiebaErrorStyle from "@/stylesheets/tieba/tieba-error.scss?inline";
 import tiebaForumStyle from "@/stylesheets/tieba/tieba-forum.scss?inline";
+import tiebaForumSearchStyle from "@/stylesheets/tieba/tieba-forum-search.scss?inline";
 import tiebaHomeStyle from "@/stylesheets/tieba/tieba-home.scss?inline";
 import tiebaMainStyle from "@/stylesheets/tieba/tieba-main.scss?inline";
 import tiebaThreadStyle from "@/stylesheets/tieba/tieba-thread.scss?inline";
@@ -163,6 +164,8 @@ export async function loadMainCSS() {
         vercelHomeStyle,
         vercelErrorStyle,
         vercelSettingsStyle,
+        // 吧首页搜索栏改造（放在最后，覆盖前面所有主题对 #head / .search_top 的样式）
+        tiebaForumSearchStyle,
     );
 
     document.addEventListener("DOMContentLoaded", function () {

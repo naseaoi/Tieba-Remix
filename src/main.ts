@@ -12,12 +12,16 @@ import index from "./lib/theme/page-extension/index";
 import thread from "./lib/theme/page-extension/thread";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
+import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
+import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
+import { installSymbolFontStatus } from "./lib/symbol-font-status";
 import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 
@@ -33,6 +37,8 @@ function bootstrap(signal: BootstrapSignal) {
 }
 
 function startBootstrap({ onReady }: BootstrapSignal) {
+    installSymbolFontStatus();
+
     // 尽早完成主题设置，降低闪屏概率
     setTheme(themeType.get());
     setStyleTheme(styleTheme.get());
@@ -61,11 +67,20 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     // 吧首页：检测帖子列表加载失败（广告拦截器误伤等），显示顶部提示横幅
     installForumLoadFailureBanner();
 
+    // 吧首页：贴吧缩略图 lazy style 丢失时恢复可见状态
+    installForumThumbnailRecovery();
+
     // 吧首页：还原帖子列表中被贴吧后端截断的发帖人 ID（从 href?un= 解码）
     installForumAuthorFullId();
 
+    // 吧首页：隐藏顶部搜索栏 → 右下角悬浮按钮承接搜索（进入贴吧 / 全吧搜索）
+    installForumFloatingSearch();
+
     // 帖子页：给"X 楼"的 .tail-info 打 .vercel-floor-tag 标记，供 vercel 主题装饰胶囊
     installThreadFloorTag();
+
+    // 帖子页：楼层尾部「回复 / 更多操作」按钮，常驻生效，不随"新版点赞数"模块开关
+    installThreadFloorActions();
 
     // 帖子页：一行多图智能排列（包成 grid，删除组内 <br>）
     installThreadImageGrid();

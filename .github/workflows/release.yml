@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v6.0.8
         with:
@@ -43,21 +45,47 @@ jobs:
             echo "target=main" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Read annotated tag notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if git cat-file -e "$TAG^{tag}" 2>/dev/null; then
+            git tag -l "$TAG" --format='%(contents:body)' > release-notes.md
+          else
+            : > release-notes.md
+          fi
+
+          if [ -s release-notes.md ]; then
+            echo "has_notes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_notes=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           TARGET: ${{ steps.meta.outputs.target }}
           PRERELEASE_FLAG: ${{ steps.meta.outputs.prerelease == 'true' && '--prerelease' || '' }}
+          HAS_NOTES: ${{ steps.notes.outputs.has_notes }}
         run: |
+          if [ "$HAS_NOTES" = "true" ]; then
+            NOTES_ARGS=(--notes-file release-notes.md)
+          else
+            NOTES_ARGS=(--generate-notes)
+          fi
+
           # release 已存在则补充 asset
           if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ "$HAS_NOTES" = "true" ]; then
+              gh release edit "$TAG" --notes-file release-notes.md
+            fi
             gh release upload "$TAG" build/tieba-remix.user.js --clobber
           else
             gh release create "$TAG" \
               --title "$TAG" \
               --target "$TARGET" \
-              --generate-notes \
+              "${NOTES_ARGS[@]}" \
               $PRERELEASE_FLAG \
               build/tieba-remix.user.js
           fi

@@ -1,25 +1,65 @@
 // 图标
 %icon,
 %outline-icon {
-    font-family: "Material Symbols", monospace !important;
+    direction: ltr;
+    font-family: var(--symbol-font, "Material Symbols") !important;
+    font-feature-settings: "liga";
     font-variation-settings:
         "FILL" 0,
         "wght" 400,
         "GRAD" 0,
         "opsz" 40;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-style: normal;
     font-weight: normal;
+    letter-spacing: normal;
+    text-transform: none;
     user-select: none;
+    white-space: nowrap;
+    word-wrap: normal;
+
+    html[data-symbol-font="loading"] & {
+        color: transparent !important;
+    }
+
+    html[data-symbol-font="failed"] & {
+        content: "!" !important;
+        font-family: system-ui, sans-serif !important;
+        font-feature-settings: normal;
+        font-weight: 700;
+    }
 }
 
 %filled-icon {
-    font-family: "Material Symbols", monospace !important;
+    direction: ltr;
+    font-family: var(--symbol-font, "Material Symbols") !important;
+    font-feature-settings: "liga";
     font-variation-settings:
         "FILL" 1,
         "wght" 400,
         "GRAD" 0,
         "opsz" 40;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-style: normal;
     font-weight: normal;
+    letter-spacing: normal;
+    text-transform: none;
     user-select: none;
+    white-space: nowrap;
+    word-wrap: normal;
+
+    html[data-symbol-font="loading"] & {
+        color: transparent !important;
+    }
+
+    html[data-symbol-font="failed"] & {
+        content: "!" !important;
+        font-family: system-ui, sans-serif !important;
+        font-feature-settings: normal;
+        font-weight: 700;
+    }
 }
 
 // 超链接

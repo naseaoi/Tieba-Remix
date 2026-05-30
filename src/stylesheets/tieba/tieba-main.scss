@@ -155,8 +155,10 @@
 .p_tools .tb_icon_turnleft::before,
 .p_tools .tb_icon_turnright::before {
     margin-right: 4px;
-    font-family: "Material Symbols", system-ui;
+    font-family: var(--symbol-font, "Material Symbols");
+    font-feature-settings: "liga";
     font-size: 14px;
+    -webkit-font-feature-settings: "liga";
     vertical-align: bottom;
 }
 

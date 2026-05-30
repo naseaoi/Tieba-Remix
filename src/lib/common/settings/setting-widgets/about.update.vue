@@ -166,7 +166,7 @@ onMounted(loadRelease);
     text-align: center;
 
     .icon {
-        font-family: var(--symbol-font, "Material Symbols Outlined");
+        @extend %icon;
         font-size: 56px;
         color: var(--minimal-fore);
         line-height: 1;

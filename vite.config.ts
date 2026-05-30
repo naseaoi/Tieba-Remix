@@ -33,6 +33,8 @@ const scriptOptions: MonkeyOption = {
         ],
         connect: [
             "tiebac.baidu.com",
+            "tieba.baidu.com",
+            "uploadphotos.baidu.com",
         ],
         require: [
             "https://fastly.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",

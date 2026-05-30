@@ -19,7 +19,7 @@ import { FlexMasonry } from "@/lib/render/layout/flex-masonry";
 import { headerProgress } from "@/lib/render/universal";
 import { unreadFeeds } from "@/lib/user-values";
 import { requestInstance, spawnOffsetTS, waitUntil } from "@/lib/utils";
-import { matchShield, shieldList } from "@/modules/shield";
+import { matchShield, shieldList } from "@/modules/shield/shield";
 import _ from "@/lib/utils/_";
 import { useDebounce } from "@/lib/utils/composables";
 import { toast } from "user-view";
