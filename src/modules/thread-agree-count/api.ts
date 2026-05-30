@@ -122,14 +122,15 @@ export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promi
     };
 }
 
-const OP_AGREE_URL = "/c/c/agree/opAgree";
+const OP_AGREE_URL = "/mo/q/submit/opAgree";
 
 export const AGREE_OBJ_TYPE_THREAD = 3;
 export const AGREE_OBJ_TYPE_FLOOR = 1;
 
 export interface OpAgreeOptions {
     tid: number | string;
-    pid: number | string;
+    pid?: number | string;
+    fid: number | string;
     objType: number;
     cancel: boolean;
     tbs: string;
@@ -137,21 +138,15 @@ export interface OpAgreeOptions {
 
 export async function opAgree(opts: OpAgreeOptions): Promise<void> {
     const form: Record<string, string> = {
-        _client_type: "2",
-        _client_version: "12.50.1.0",
-        agree_type: "2",
-        cuid: "",
-        obj_type: String(opts.objType),
-        op_type: opts.cancel ? "1" : "0",
-        post_id: String(opts.pid),
-        stoken: "",
         tbs: opts.tbs,
         thread_id: String(opts.tid),
-        timestamp: String(Date.now()),
+        forum_id: String(opts.fid),
+        obj_type: String(opts.objType),
+        op_type: opts.cancel ? "1" : "0",
     };
-    form.sign = signForm(form);
+    if (opts.pid != null) form.post_id = String(opts.pid);
 
-    const res = await fetch(OP_AGREE_URL, {
+    const res = await fetch(`${OP_AGREE_URL}?${buildFormBody({ tbs: opts.tbs })}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -160,9 +155,18 @@ export async function opAgree(opts: OpAgreeOptions): Promise<void> {
         credentials: "include",
     });
 
-    const body = await res.json() as { error_code?: number | string; error_msg?: string };
-    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
-    if (errno !== 0) {
-        throw new Error(body.error_msg || `opAgree error ${errno}`);
+    if (!res.ok) {
+        throw new Error(`opAgree request failed (status=${res.status})`);
+    }
+
+    const body = await res.json() as { error_code?: number | string; errno?: number | string; no?: number | string; error_msg?: string; errmsg?: string; error?: string; msg?: string } | null;
+    if (!body) {
+        throw new Error(`opAgree returned empty body (status=${res.status})`);
+    }
+
+    const rawErrno = body.error_code ?? body.errno ?? body.no;
+    const errno = typeof rawErrno === "string" ? Number(rawErrno) : rawErrno;
+    if (errno != null && errno !== 0) {
+        throw new Error(body.error_msg || body.errmsg || body.error || body.msg || `opAgree error ${errno}`);
     }
 }

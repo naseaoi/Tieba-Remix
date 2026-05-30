@@ -1,13 +1,15 @@
 import { asyncdom, domrd } from "@/lib/elemental";
 import { threadFloorsObserver } from "@/lib/observers";
 import { AGREE_OBJ_TYPE_FLOOR, AGREE_OBJ_TYPE_THREAD, fetchAgreeSnapshot, type AgreeSnapshot } from "./api";
-import { setupAgreeAction } from "./agree-action";
+import { createAgreeActionState, setupAgreeAction, type AgreeActionServerState, type AgreeActionState } from "./agree-action";
 import { formatCount } from "./format";
+import { toast } from "user-view";
 import "./style.css";
 
 const FLOOR_FLAG = "data-thread-agree-count-rendered";
 const THREAD_BADGE_CLASS = "thread-agree-count-badge";
 const FLOOR_BADGE_CLASS = "floor-agree-count-badge";
+const CONFIRMED_STATE_TTL = 5 * 60 * 1000;
 
 export default {
     id: "thread-agree-count",
@@ -32,6 +34,7 @@ async function main(): Promise<void> {
     let snapshot: AgreeSnapshot | undefined;
     let loadedKey = "";
     let loadToken = 0;
+    const actionStateByKey = new Map<string, AgreeActionState>();
 
     await syncSnapshot();
     threadFloorsObserver.addEvent(() => void syncSnapshot());
@@ -39,7 +42,7 @@ async function main(): Promise<void> {
     async function syncSnapshot(): Promise<void> {
         const key = `${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
         if (key === loadedKey) {
-            if (snapshot) renderFloorAgree(threadList, snapshot);
+            if (snapshot) renderFloorAgree(threadList, snapshot, actionStateByKey);
             return;
         }
 
@@ -60,12 +63,12 @@ async function main(): Promise<void> {
 
         snapshot = next;
         loadedKey = key;
-        renderThreadAgree(snapshot, getFirstPostId(threadList));
-        renderFloorAgree(threadList, snapshot);
+        renderThreadAgree(snapshot, actionStateByKey);
+        renderFloorAgree(threadList, snapshot, actionStateByKey);
     }
 }
 
-function renderThreadAgree(snapshot: AgreeSnapshot, firstPid?: number): void {
+function renderThreadAgree(snapshot: AgreeSnapshot, actionStateByKey: Map<string, AgreeActionState>): void {
     const count = snapshot.threadAgree;
     if (count == null) return;
 
@@ -77,19 +80,22 @@ function renderThreadAgree(snapshot: AgreeSnapshot, firstPid?: number): void {
     setBadgeCount(badge, count);
     title.appendChild(badge);
 
-    if (firstPid != null && canAgree()) {
+    if (canAgree()) {
         setupAgreeAction(badge, {
             tid: PageData.thread.thread_id,
-            pid: firstPid,
+            fid: getForumId(),
             objType: AGREE_OBJ_TYPE_THREAD,
             tbs: PageData.tbs,
             liked: snapshot.threadHasAgree,
             count,
+            state: getAgreeActionState(actionStateByKey, threadAgreeKey(), snapshot.threadHasAgree, count),
+            refresh: refreshThreadAgreeState,
         });
     }
 }
 
-function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot): void {
+function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot, actionStateByKey: Map<string, AgreeActionState>): void {
+    const firstPostId = getFirstPostId(threadList);
     const floors = threadList.querySelectorAll<HTMLElement>(".l_post");
     floors.forEach(floor => {
         if (floor.hasAttribute(FLOOR_FLAG)) return;
@@ -97,7 +103,8 @@ function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot): voi
         const postId = getFloorPostId(floor);
         if (postId == null) return;
 
-        const count = snapshot.postAgreeById.get(postId);
+        const isThreadPost = postId === firstPostId;
+        const count = isThreadPost ? snapshot.threadAgree ?? snapshot.postAgreeById.get(postId) : snapshot.postAgreeById.get(postId);
         if (count == null) return;
 
         const tail = floor.querySelector<HTMLElement>(".post-tail-wrap, .core_reply_tail:not(.clearfix)");
@@ -109,16 +116,104 @@ function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot): voi
         floor.setAttribute(FLOOR_FLAG, "");
 
         if (canAgree()) {
+            const key = isThreadPost ? threadAgreeKey() : floorAgreeKey(postId);
+            const liked = isThreadPost ? snapshot.threadHasAgree : snapshot.postHasAgreeById.get(postId) ?? false;
             setupAgreeAction(badge, {
                 tid: PageData.thread.thread_id,
-                pid: postId,
-                objType: AGREE_OBJ_TYPE_FLOOR,
+                pid: isThreadPost ? undefined : postId,
+                fid: getForumId(),
+                objType: isThreadPost ? AGREE_OBJ_TYPE_THREAD : AGREE_OBJ_TYPE_FLOOR,
                 tbs: PageData.tbs,
-                liked: snapshot.postHasAgreeById.get(postId) ?? false,
+                liked,
                 count,
+                state: getAgreeActionState(actionStateByKey, key, liked, count),
+                refresh: isThreadPost ? refreshThreadAgreeState : () => refreshFloorAgreeState(postId),
             });
         }
     });
+}
+
+function getAgreeActionState(actionStateByKey: Map<string, AgreeActionState>, key: string, liked: boolean, count: number): AgreeActionState {
+    let state = actionStateByKey.get(key);
+    if (!state) {
+        state = createAgreeActionState(liked, count);
+        actionStateByKey.set(key, state);
+    } else if (!state.pending) {
+        applyServerState(state, liked, count);
+    }
+    return state;
+}
+
+function applyServerState(state: AgreeActionState, liked: boolean, count: number): void {
+    const recent = state.confirmedAt != null && Date.now() - state.confirmedAt <= CONFIRMED_STATE_TTL;
+    if (!recent) {
+        state.liked = liked;
+        state.count = count;
+        state.confirmedAt = undefined;
+        state.mismatchNotified = false;
+        return;
+    }
+
+    if (liked !== state.liked) {
+        notifyMismatch(state);
+        state.liked = liked;
+        state.count = count;
+        state.confirmedAt = undefined;
+        return;
+    }
+
+    state.count = liked ? Math.max(count, state.count) : Math.min(count, state.count);
+}
+
+function notifyMismatch(state: AgreeActionState): void {
+    if (state.mismatchNotified) return;
+    state.mismatchNotified = true;
+    toast({
+        message: `${state.liked ? "点赞" : "取消点赞"}未生效，请稍后重试`,
+        type: "warning",
+        duration: 5000,
+    });
+}
+
+async function refreshThreadAgreeState(): Promise<AgreeActionServerState | undefined> {
+    const snapshot = await fetchCurrentAgreeSnapshot();
+    const count = snapshot.threadAgree;
+    if (count == null) return undefined;
+    return {
+        liked: snapshot.threadHasAgree,
+        count,
+    };
+}
+
+async function refreshFloorAgreeState(postId: number): Promise<AgreeActionServerState | undefined> {
+    const snapshot = await fetchCurrentAgreeSnapshot();
+    const count = snapshot.postAgreeById.get(postId);
+    if (count == null) return undefined;
+    return {
+        liked: snapshot.postHasAgreeById.get(postId) ?? false,
+        count,
+    };
+}
+
+function fetchCurrentAgreeSnapshot(): Promise<AgreeSnapshot> {
+    return fetchAgreeSnapshot({
+        tid: PageData.thread.thread_id,
+        pn: PageData.pager.cur_page,
+        rn: PageData.pager.page_size ?? 30,
+        lzOnly: PageData.special.lz_only,
+    });
+}
+
+function getForumId(): string {
+    return PageData.forum.forum_id || PageData.forum.id;
+}
+
+function threadAgreeKey(): string {
+    return `thread:${PageData.thread.thread_id}`;
+}
+
+function floorAgreeKey(postId: number): string {
+    return `floor:${postId}`;
 }
 
 function getFloorPostId(floor: HTMLElement): number | undefined {
