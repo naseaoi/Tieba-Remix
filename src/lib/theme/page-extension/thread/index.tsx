@@ -13,8 +13,9 @@ import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-ba
 import { pager } from "@/lib/tieba-components/pager";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
+import { waitForReadyUEditor } from "@/lib/utils/use-ueditor";
 import _ from "@/lib/utils/_";
-import { UserButton } from "user-view";
+import { UserButton, toast } from "user-view";
 import { VNode } from "vue";
 import { setupCommentEmotionPanel } from "./comment-emotion-panel";
 import commentsStyle from "./comments.scss?inline";
@@ -406,21 +407,29 @@ export default async function () {
             </div>, pbContent);
 
         let editorDialog: RenderedComponent | undefined;
-        function showEditor() {
+        let openingEditor = false;
+        async function showEditor() {
             if (editorDialog) {
                 (editorDialog.instance as { unload?: () => void }).unload?.();
                 return;
             }
+            if (openingEditor) return;
+            openingEditor = true;
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
             }
-            const editorBody = dom("#ueditor_replace");
-            const ueditor = editorBody?.closest(".edui-container") ?? editorBody;
-            if (ueditor) {
+            try {
+                const ueditor = await waitForReadyUEditor();
+                if (!ueditor) {
+                    toast({ message: "编辑器加载中，请稍后再试", type: "warning" });
+                    return;
+                }
                 editorDialog = renderDialog(ThreadEditor, { ueditor, type: "reply" }, {
                     unloaded() { editorDialog = undefined; },
                     abnormalUnload() { editorDialog = undefined; },
                 });
+            } finally {
+                openingEditor = false;
             }
         }
 
@@ -429,7 +438,7 @@ export default async function () {
             if (!(target instanceof Element) || !target.closest(".p_reply_first")) return;
             event.preventDefault();
             event.stopImmediatePropagation();
-            showEditor();
+            void showEditor();
         }, true);
     }
 }

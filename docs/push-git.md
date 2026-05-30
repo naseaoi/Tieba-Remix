@@ -38,15 +38,6 @@ git push origin v0.5.8                       # 无 - 后缀 → 正式
 - 版本号由 CI 从 tag 注入到 `vite.config.ts`，**不要手改**
 - 预览改动只走 `preview` 分支，正式版通过 PR 合并到 `main`
 
-## 一次性分支改名
-
-```bash
-git switch master
-git branch -m master main
-git push -u origin main
-gh repo edit --default-branch main
-```
-
 ## CI 在做什么
 
 [`.github/workflows/release.yml`](../.github/workflows/release.yml)：tag push → `pnpm install --frozen-lockfile` → `USERSCRIPT_VERSION=<tag> pnpm build` → 读取 annotated tag 正文作为 Release 说明 → `gh release create/upload` 上传 `build/tieba-remix.user.js`。
@@ -57,10 +48,3 @@ gh repo edit --default-branch main
 USERSCRIPT_VERSION=v0.5.8-preview.1 pnpm build
 ```
 不设环境变量时 version 会落到 `0.0.0-dev`。
-
-## 一次性迁移提示
-
-历史上构建产物 `build/tieba-remix.user.js` 提交进 git，`updateURL` 指向 `raw.githubusercontent.com/.../master/build/...`。本次已切到：
-
-- 产物不再入 git（`.gitignore` 已加 `build/`），由 CI 在 release asset 提供
-- `updateURL` / `downloadURL` 改为 `github.com/naseaoi/Tieba-Remix/releases/latest/download/tieba-remix.user.js`（GitHub 自动 302 到最新非 prerelease release 的同名 asset）

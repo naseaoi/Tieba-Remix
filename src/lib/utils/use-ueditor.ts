@@ -1,7 +1,10 @@
 import { uploadTiebaImage, type UploadedImage } from "@/lib/api/upload-image";
 import { asyncdom } from "@/lib/elemental";
+import { waitUntil } from "@/lib/utils";
 import { toast } from "user-view";
 import { onBeforeUnmount, ref, type Ref } from "vue";
+
+export const UEDITOR_READY_TIMEOUT = 8000;
 
 export interface UEditorOptions {
     ueditor: Element;
@@ -33,6 +36,19 @@ function buildImageHTML(image: UploadedImage): string {
         ? ` width="${image.width}" height="${image.height}"`
         : "";
     return `<img class="BDE_Image" data-isupload="1" src="${image.displayUrl}"${size}>`;
+}
+
+export function resolveReadyUEditor(root: ParentNode = document): Element | undefined {
+    const editable = root.querySelector<HTMLElement>("#ueditor_replace");
+    const container = editable?.closest(".edui-container");
+    if (!container?.querySelector(".edui-body-container")) return undefined;
+    return container;
+}
+
+export async function waitForReadyUEditor(root: ParentNode = document, timeout = UEDITOR_READY_TIMEOUT): Promise<Element | undefined> {
+    return waitUntil(() => resolveReadyUEditor(root) != null, timeout)
+        .then(() => resolveReadyUEditor(root))
+        .catch(() => undefined);
 }
 
 async function uploadAndInsert(editor: UEditorInstance, file: File): Promise<void> {
@@ -85,11 +101,13 @@ export function useUEditor<T extends HTMLElement = HTMLElement>(
     }
 
     async function enableAutoScroll() {
-        if (!slot.value) return;
-        scrollTarget = await asyncdom<"div">(".edui-body-container", slot.value);
+        if (!slot.value) return false;
+        scrollTarget = await asyncdom<"div">(".edui-body-container", slot.value, UEDITOR_READY_TIMEOUT);
+        if (!scrollTarget) return false;
         scrollObserver = new MutationObserver(scrollToBottom);
         scrollObserver.observe(scrollTarget, { childList: true, subtree: true, characterData: true });
         scrollTarget.addEventListener("input", scrollToBottom);
+        return true;
     }
 
     function enablePasteUpload() {
@@ -104,11 +122,16 @@ export function useUEditor<T extends HTMLElement = HTMLElement>(
     }
 
     async function adopt() {
-        if (!slot.value) return;
+        if (!slot.value) return false;
+        if (!ueditor.querySelector(".edui-body-container")) return false;
         originParent.value = ueditor.parentElement;
         slot.value.appendChild(ueditor);
-        if (autoScroll) await enableAutoScroll();
+        if (autoScroll && !(await enableAutoScroll())) {
+            restore();
+            return false;
+        }
         if (pasteImage) enablePasteUpload();
+        return true;
     }
 
     function restore() {
@@ -124,8 +147,11 @@ export function useUEditor<T extends HTMLElement = HTMLElement>(
     }
 
     async function focus() {
-        if (!slot.value) return;
-        (await asyncdom<"div">(editable, slot.value)).focus({ preventScroll: true });
+        if (!slot.value) return false;
+        const editableElement = await asyncdom<"div">(editable, slot.value, UEDITOR_READY_TIMEOUT);
+        if (!editableElement) return false;
+        editableElement.focus({ preventScroll: true });
+        return true;
     }
 
     function normalizeImagesForSubmit() {

@@ -19,7 +19,7 @@
 <script lang="tsx" setup>
 import { imagesViewer } from "@/components/images-viewer";
 import { asyncdom } from "@/lib/elemental";
-import { useUEditor } from "@/lib/utils/use-ueditor";
+import { UEDITOR_READY_TIMEOUT, useUEditor } from "@/lib/utils/use-ueditor";
 import { UserButton, UserDialog, UserDialogOpts, UserTextbox } from "user-view";
 import { nextTick, onMounted, ref } from "vue";
 
@@ -72,12 +72,19 @@ const editor = useUEditor(editorSlot, {
 onMounted(async function () {
     await nextTick();
     const scrollY = window.scrollY;
-    await editor.adopt();
+    if (!(await editor.adopt())) {
+        unload();
+        return;
+    }
 
     if (!editorSlot.value) return;
     editorSlot.value.addEventListener("click", onImageClick, true);
-    const toolbar = await asyncdom(".edui-toolbar", editorSlot.value);
-    const editorBody = await asyncdom(".edui-editor-body", editorSlot.value);
+    const toolbar = await asyncdom(".edui-toolbar", editorSlot.value, UEDITOR_READY_TIMEOUT);
+    const editorBody = await asyncdom(".edui-editor-body", editorSlot.value, UEDITOR_READY_TIMEOUT);
+    if (!toolbar || !editorBody) {
+        unload();
+        return;
+    }
     if (toolbar.compareDocumentPosition(editorBody) & Node.DOCUMENT_POSITION_FOLLOWING) {
         toolbar.parentNode?.insertBefore(editorBody, toolbar);
     }
