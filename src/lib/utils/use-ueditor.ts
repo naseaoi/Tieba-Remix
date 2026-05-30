@@ -18,8 +18,17 @@ interface UEditorInstance {
     execCommand(command: string, ...args: unknown[]): unknown;
 }
 
+interface UEditorGlobal {
+    getActiveEditor?(): UEditorInstance | null;
+    getEditor?(id: string): UEditorInstance | null;
+}
+
+function getUEditorGlobal(): UEditorGlobal | undefined {
+    return (window as unknown as { UE?: UEditorGlobal }).UE;
+}
+
 function activeUEditor(): UEditorInstance | undefined {
-    const ue = (window as unknown as { UE?: { getActiveEditor?(): UEditorInstance | null } }).UE;
+    const ue = getUEditorGlobal();
     return ue?.getActiveEditor?.() ?? undefined;
 }
 
@@ -45,7 +54,19 @@ export function resolveReadyUEditor(root: ParentNode = document): Element | unde
     return container;
 }
 
+export function requestUEditorInit(): void {
+    try {
+        getUEditorGlobal()?.getEditor?.("ueditor_replace");
+    } catch (error) {
+        console.warn("[Tieba-Remix] 请求编辑器初始化失败:", error);
+    }
+    const editable = document.querySelector<HTMLElement>("#ueditor_replace");
+    editable?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    editable?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+}
+
 export async function waitForReadyUEditor(root: ParentNode = document, timeout = UEDITOR_READY_TIMEOUT): Promise<Element | undefined> {
+    requestUEditorInit();
     return waitUntil(() => resolveReadyUEditor(root) != null, timeout)
         .then(() => resolveReadyUEditor(root))
         .catch(() => undefined);
