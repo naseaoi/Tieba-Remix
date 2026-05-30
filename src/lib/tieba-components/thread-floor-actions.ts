@@ -21,6 +21,7 @@ export function installThreadFloorActions(): void {
         renderReplyControls();
         renderFloorMenus();
         normalizeLocationText();
+        renderPlatformIcons();
     };
     threadFloorsObserver.addEvent(run);
     run();
@@ -163,5 +164,18 @@ function normalizeLocationText(): void {
             const text = node.textContent ?? "";
             node.textContent = text.replace(/^(\s*)IP属地[:：]\s*/, "$1");
         });
+    });
+}
+
+function renderPlatformIcons(): void {
+    document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info").forEach(elem => {
+        if (elem.dataset.tbrPlatform === "mobile") return;
+        const text = (elem.textContent ?? "").trim();
+        if (!text.includes("客户端")) return;
+
+        if (!/Android|iPhone|iPad/i.test(text)) return;
+
+        elem.setAttribute("data-tbr-platform", "mobile");
+        elem.title = text;
     });
 }
