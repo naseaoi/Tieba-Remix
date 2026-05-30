@@ -25,25 +25,44 @@ async function main(): Promise<void> {
     const tid = PageData?.thread?.thread_id;
     if (!tid) return;
 
-    const threadList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
-    if (!threadList) return;
+    const postList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
+    if (!postList) return;
+    const threadList: HTMLDivElement = postList;
 
-    let snapshot: AgreeSnapshot;
-    try {
-        snapshot = await fetchAgreeSnapshot({
-            tid,
-            pn: PageData.pager.cur_page,
-            rn: PageData.pager.page_size ?? 30,
-            lzOnly: PageData.special.lz_only,
-        });
-    } catch (err) {
-        console.warn("[thread-agree-count] 拉取点赞数据失败:", err);
-        return;
+    let snapshot: AgreeSnapshot | undefined;
+    let loadedKey = "";
+    let loadToken = 0;
+
+    await syncSnapshot();
+    threadFloorsObserver.addEvent(() => void syncSnapshot());
+
+    async function syncSnapshot(): Promise<void> {
+        const key = `${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
+        if (key === loadedKey) {
+            if (snapshot) renderFloorAgree(threadList, snapshot);
+            return;
+        }
+
+        const token = ++loadToken;
+        let next: AgreeSnapshot;
+        try {
+            next = await fetchAgreeSnapshot({
+                tid,
+                pn: PageData.pager.cur_page,
+                rn: PageData.pager.page_size ?? 30,
+                lzOnly: PageData.special.lz_only,
+            });
+        } catch (err) {
+            console.warn("[thread-agree-count] 拉取点赞数据失败:", err);
+            return;
+        }
+        if (token !== loadToken) return;
+
+        snapshot = next;
+        loadedKey = key;
+        renderThreadAgree(snapshot, getFirstPostId(threadList));
+        renderFloorAgree(threadList, snapshot);
     }
-
-    renderThreadAgree(snapshot, getFirstPostId(threadList));
-    renderFloorAgree(threadList, snapshot);
-    threadFloorsObserver.addEvent(() => renderFloorAgree(threadList, snapshot));
 }
 
 function renderThreadAgree(snapshot: AgreeSnapshot, firstPid?: number): void {

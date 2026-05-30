@@ -193,7 +193,7 @@ export interface GMRequestOptions<R extends GmResponseType = "text"> {
     method?: "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "OPTIONS";
     url: string;
     headers?: Record<string, string>;
-    data?: string;
+    data?: BodyInit;
     responseType?: R;
     timeout?: number;
     anonymous?: boolean;

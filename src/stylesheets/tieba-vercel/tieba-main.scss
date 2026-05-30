@@ -48,7 +48,7 @@ html.style-vercel {
 
     // ---------------------------
     // 侧边浮动按钮栏（贴吧原生）
-    // 仅保留：发帖 / 回顶 / 反馈 三个；其余（客服、下载、刷新、分享、收藏）一律隐藏。
+    // 仅保留：发帖 / 回顶；反馈移入「更多」二级菜单，其余（客服、下载、刷新、分享、收藏）一律隐藏。
     // 当用户在设置面板关闭底部发帖模块（body[hide-bottom-editor]）时，"发帖"按钮也跟随隐藏，
     // 避免点击后无目标可滚定位。
     // ---------------------------
@@ -57,7 +57,8 @@ html.style-vercel {
         .tbui_fbar_down,
         .tbui_fbar_refresh,
         .tbui_fbar_share,
-        .tbui_fbar_favor {
+        .tbui_fbar_favor,
+        .tbui_fbar_feedback {
             display: none !important;
         }
 

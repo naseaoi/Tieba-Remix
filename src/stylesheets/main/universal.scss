@@ -218,6 +218,9 @@
         border-radius: 12px !important;
         background-color: var(--default-background) !important;
         box-shadow: 0 16px 48px rgb(0 0 0 / 24%) !important;
+    }
+
+    .user-dialog.default:not(:has(#thread-editor)) {
         animation: none !important;
     }
 

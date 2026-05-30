@@ -390,6 +390,26 @@ html.style-vercel {
         line-height: 1.4;
     }
 
+    // 楼中楼编辑器高度与滚动
+    .core_reply_content {
+        .edui-editor-body {
+            height: auto !important;
+            overflow: hidden !important;
+        }
+
+        .edui-body-container {
+            box-sizing: border-box !important;
+            min-height: 40px !important;
+            max-height: 60px !important;
+            overflow-y: auto !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        .edui-editor-body.body-container-focus .edui-body-container {
+            border-color: var(--tieba-theme-color) !important;
+        }
+    }
+
     // ---------------------------
     // 楼中楼标签（tieba-tags 模块）— vercel 主题专属配色
     // 模块默认使用 tieba-theme（紫色）/ cengzhu-theme（粉色），这两套变量在
@@ -497,13 +517,8 @@ html.style-vercel {
     }
 
     .edui-editor-body {
-        border: 1px solid var(--border-color) !important;
+        border: none !important;
         border-radius: $vercel-radius-sm !important;
-    }
-
-    .edui-container .edui-editor-body.body-container-focus,
-    .edui-container .edui-editor-body.body-container-focus .edui-body-container {
-        border-color: var(--default-fore) !important;
     }
 
     .old_style_wrapper {
@@ -512,6 +527,7 @@ html.style-vercel {
     }
 
     .edui-editor-body .edui-body-container {
+        padding: 6px 10px !important;
         border-radius: $vercel-radius-sm !important;
     }
 
@@ -688,15 +704,20 @@ html.style-vercel {
             background-color: var(--minimal-fore);
         }
 
-        #thread-editor-exit {
-            @include vercel-button;
-            padding: 4px 8px;
-            font-size: 16px;
-            line-height: 1;
+        #thread-editor-actions {
+            .editor-action {
+                @include vercel-button($vercel-radius-sm);
+                padding: 6px;
 
-            &:not(:hover, :active, :focus) {
-                box-shadow: none;
-                border-color: transparent;
+                svg {
+                    width: 18px;
+                    height: 18px;
+                    fill: currentColor;
+                }
+            }
+
+            #thread-editor-submit svg {
+                fill: var(--tieba-theme-color);
             }
         }
 
@@ -723,8 +744,8 @@ html.style-vercel {
                     }
 
                     &:focus-within {
-                        border-color: var(--default-fore) !important;
-                        box-shadow: 0 0 0 1px var(--default-fore) !important;
+                        border-color: var(--tieba-theme-color) !important;
+                        box-shadow: 0 0 0 1px var(--tieba-theme-color) !important;
                     }
                 }
 
@@ -751,6 +772,12 @@ html.style-vercel {
                     }
                 }
 
+                .edui-editor-bottom,
+                .edui-editor-msg,
+                .edui-toolbar {
+                    border: none !important;
+                }
+
                 .edui-toolbar .edui-btn-toolbar .edui-btn {
                     @include vercel-button;
                     padding: 2px 8px;
@@ -766,24 +793,6 @@ html.style-vercel {
                 }
             }
         }
-
-        #thread-editor-toolbar {
-            #thread-editor-submit {
-                @include vercel-button;
-                padding: 6px 16px;
-                border-color: var(--default-fore);
-                background-color: var(--default-fore);
-                color: var(--default-background);
-                font-size: $vercel-fs-sm;
-                font-weight: 500;
-
-                &:hover:not([disabled]) {
-                    border-color: var(--default-fore);
-                    background-color: var(--default-fore);
-                    opacity: 0.85;
-                }
-            }
-        }
     }
 
     // 回复弹窗外壳
@@ -791,7 +800,7 @@ html.style-vercel {
         border: 1px solid var(--border-color) !important;
         border-bottom: none !important;
         border-radius: $vercel-radius-lg $vercel-radius-lg 0 0 !important;
-        box-shadow: 0 0 24px var(--tieba-theme-color) !important;
+        box-shadow: 0 -2px 12px rgb(0 0 0 / 8%) !important;
 
         .dialog-content {
             scrollbar-width: thin;
@@ -813,7 +822,7 @@ html.style-vercel {
     }
 
     &.dark-theme .user-dialog-modal .user-dialog.default:has(#thread-editor) {
-        box-shadow: 0 0 24px var(--tieba-theme-color) !important;
+        box-shadow: 0 -2px 12px rgb(0 0 0 / 28%) !important;
     }
 
     // ---------------------------

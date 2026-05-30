@@ -1,35 +1,39 @@
 <template>
     <UserDialog ref="dialog" v-bind="dialogOpts" @unload="returnEditor">
         <div id="thread-editor">
-            <UserButton aria-label="关闭" id="thread-editor-exit" class="icon" shadow-border @click="unload">close
-            </UserButton>
+            <div id="thread-editor-actions">
+                <UserButton aria-label="发表" id="thread-editor-submit" class="editor-action" @click="submit">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+                </UserButton>
+                <UserButton aria-label="关闭" id="thread-editor-exit" class="editor-action" @click="unload">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>
+                </UserButton>
+            </div>
             <UserTextbox v-if="type === 'thread'" class="title-editor" placeholder="输入标题" lodash-style></UserTextbox>
 
             <div ref="editorSlot" id="thread-editor-slot"></div>
-
-            <div id="thread-editor-toolbar">
-                <UserButton id="thread-editor-submit" shadow-border theme-style @click="submit">发表</UserButton>
-            </div>
         </div>
     </UserDialog>
 </template>
 
 <script lang="tsx" setup>
+import { imagesViewer } from "@/components/images-viewer";
 import { asyncdom } from "@/lib/elemental";
+import { useUEditor } from "@/lib/utils/use-ueditor";
 import { UserButton, UserDialog, UserDialogOpts, UserTextbox } from "user-view";
 import { nextTick, onMounted, ref } from "vue";
 
 export interface ThreadEditorOpts {
     ueditor: Element;
     type?: "thread" | "reply";
+    editableSelector?: string;
+    submitSelector?: string;
 }
-
-// type ToolbarButtons = {
-//     [className: string]: { title: string, icon: string };
-// };
 
 const props = withDefaults(defineProps<ThreadEditorOpts>(), {
     type: "thread",
+    editableSelector: "#ueditor_replace",
+    submitSelector: ".j_submit",
 });
 
 const dialogOpts: UserDialogOpts = {
@@ -37,8 +41,8 @@ const dialogOpts: UserDialogOpts = {
     force: false,
     blurEffect: false,
     animation: true,
-    lockScroll: true,
-    clickModalToUnload: true,
+    lockScroll: false,
+    clickModalToUnload: false,
     modalStyle: {
         background: "none",
     },
@@ -58,76 +62,57 @@ const dialogOpts: UserDialogOpts = {
 
 const dialog = ref<InstanceType<typeof UserDialog>>();
 const editorSlot = ref<HTMLDivElement>();
-const originParent = ref<HTMLDivElement>();
-// const visibleButtons = ref<Element[]>([]);
 
-// const toolbarButtons: ToolbarButtons = {
-//     "edui-icon-medal": {
-//         title: "特权",
-//         icon: "diamond",
-//     },
-//     "edui-icon-image": {
-//         title: "插入图片",
-//         icon: "photo",
-//     },
-//     "edui-icon-emotion": {
-//         title: "插入表情",
-//         icon: "face",
-//     },
-//     "edui-icon-scrawl": {
-//         title: "涂鸦",
-//         icon: "format_paint",
-//     },
-//     "edui-icon-topic": {
-//         title: "话题",
-//         icon: "grid_3x3",
-//     },
-//     "edui-icon-quick-reply": {
-//         title: "快速回帖",
-//         icon: "rocket_launch",
-//     },
-// };
+const editor = useUEditor(editorSlot, {
+    ueditor: props.ueditor,
+    editable: props.editableSelector,
+    submit: props.submitSelector,
+});
 
 onMounted(async function () {
     await nextTick();
+    const scrollY = window.scrollY;
+    await editor.adopt();
 
     if (!editorSlot.value) return;
-    originParent.value = props.ueditor.parentElement as HTMLDivElement;
-    editorSlot.value.appendChild(props.ueditor);
-
+    editorSlot.value.addEventListener("click", onImageClick, true);
     const toolbar = await asyncdom(".edui-toolbar", editorSlot.value);
     const editorBody = await asyncdom(".edui-editor-body", editorSlot.value);
     if (toolbar.compareDocumentPosition(editorBody) & Node.DOCUMENT_POSITION_FOLLOWING) {
         toolbar.parentNode?.insertBefore(editorBody, toolbar);
     }
 
-    const container = await asyncdom<"div">(".edui-body-container", editorSlot.value);
-    const observer = new MutationObserver(() => {
-        container.scrollTop = container.scrollHeight;
-    });
-    observer.observe(container, { childList: true, subtree: true, characterData: true });
-    container.addEventListener("input", () => {
-        container.scrollTop = container.scrollHeight;
-    });
-
-    (await asyncdom<"div">("#ueditor_replace", editorSlot.value)).focus();
+    await editor.focus();
+    window.scrollTo({ top: scrollY });
 });
 
 async function submit() {
-    (await asyncdom<"a">(".j_submit")).click();
+    await editor.submit();
     unload();
 }
 
-async function unload() {
+function onImageClick(event: MouseEvent) {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement) || !target.classList.contains("BDE_Image")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    imagesViewer({ content: target.getAttribute("src") ?? target.src });
+}
+
+function unload() {
     dialog.value?.unload();
 }
 
-async function returnEditor() {
-    if (!originParent.value) return;
-    if (!editorSlot.value) return;
-    const container = editorSlot.value.querySelector(".edui-container");
-    if (container) originParent.value.appendChild(container);
+function returnEditor() {
+    const scrollY = window.scrollY;
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+    editor.restore();
+    window.scrollTo({ top: scrollY });
 }
+
+defineExpose({ unload });
 </script>
 
 <style lang="scss" scoped>
@@ -145,12 +130,25 @@ async function returnEditor() {
     gap: 8px;
     transition: 0.4s;
 
-    #thread-editor-exit {
-        margin-left: auto;
-        font-size: 18px;
+    #thread-editor-actions {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
 
-        &:not(:hover, :active, :focus) {
-            box-shadow: none;
+        .editor-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            line-height: 1;
+
+            svg {
+                width: 18px;
+                height: 18px;
+                fill: currentColor;
+            }
         }
     }
 
@@ -172,19 +170,6 @@ async function returnEditor() {
         width: 100%;
         flex-shrink: 2;
     }
-
-    #thread-editor-toolbar {
-        display: flex;
-        width: 100%;
-        align-items: center;
-
-        #thread-editor-submit {
-            padding: 4px 12px;
-            margin-left: auto;
-            font-size: 16px;
-            font-weight: var(--font-weight-bold);
-        }
-    }
 }
 </style>
 
@@ -197,6 +182,14 @@ async function returnEditor() {
 @keyframes kf-editor-out {
     from { transform: translateY(0); }
     to { transform: translateY(100%); }
+}
+
+.user-dialog-modal:has(#thread-editor) {
+    pointer-events: none;
+}
+
+.user-dialog-modal:has(#thread-editor) .user-dialog {
+    pointer-events: auto;
 }
 
 #thread-editor {
@@ -285,6 +278,16 @@ async function returnEditor() {
             padding: 0;
             border-radius: 0;
             background-color: transparent;
+
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+
+            img.BDE_Image {
+                zoom: 0.3;
+                cursor: zoom-in;
+            }
         }
     }
 }
