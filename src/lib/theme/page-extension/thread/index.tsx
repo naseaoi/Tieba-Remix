@@ -13,7 +13,7 @@ import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-ba
 import { pager } from "@/lib/tieba-components/pager";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
-import { waitForReadyUEditor } from "@/lib/utils/use-ueditor";
+import { requestUEditorInit, resolveReadyUEditor, waitForReadyUEditor } from "@/lib/utils/use-ueditor";
 import _ from "@/lib/utils/_";
 import { UserButton, toast } from "user-view";
 import { VNode } from "vue";
@@ -393,7 +393,11 @@ export default async function () {
         await waitUntil(() => !(floatBar.get() == null));
         await waitUntil(() => !(dom("#ueditor_replace") == null));
 
-        floatBar.buttons().filter(button => button.type === "post").forEach(button => button.el.remove());
+        const nativePostButtons = floatBar.buttons().filter(button => button.type === "post");
+        nativePostButtons.forEach(button => {
+            button.el.style.display = "none";
+            button.el.toggleAttribute("aria-hidden", true);
+        });
         const commentButton = floatBar.add("other", showEditor, "trex-comment-button", "comment", 2);
         setFloatButtonTooltip(commentButton.el, "评论");
 
@@ -418,12 +422,15 @@ export default async function () {
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
             }
+            const scrollY = window.scrollY;
             try {
+                requestNativeEditorInit(scrollY);
                 const ueditor = await waitForReadyUEditor();
                 if (!ueditor) {
                     toast({ message: "编辑器加载中，请稍后再试", type: "warning" });
                     return;
                 }
+                restoreScrollPosition(scrollY);
                 editorDialog = renderDialog(ThreadEditor, { ueditor, type: "reply" }, {
                     unloaded() { editorDialog = undefined; },
                     abnormalUnload() { editorDialog = undefined; },
@@ -431,6 +438,26 @@ export default async function () {
             } finally {
                 openingEditor = false;
             }
+        }
+
+        function requestNativeEditorInit(scrollY: number) {
+            requestUEditorInit();
+            if (resolveReadyUEditor()) {
+                restoreScrollPosition(scrollY);
+                return;
+            }
+            nativePostButtons.forEach(button => {
+                const anchor = button.el.querySelector<HTMLElement>("a");
+                (anchor ?? button.el).click();
+            });
+            restoreScrollPosition(scrollY);
+        }
+
+        function restoreScrollPosition(scrollY: number) {
+            window.scrollTo({ top: scrollY });
+            requestAnimationFrame(() => window.scrollTo({ top: scrollY }));
+            requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: scrollY })));
+            window.setTimeout(() => window.scrollTo({ top: scrollY }), 80);
         }
 
         document.addEventListener("click", function (event) {

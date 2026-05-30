@@ -1,6 +1,7 @@
 import { uploadTiebaImage, type UploadedImage } from "@/lib/api/upload-image";
 import { asyncdom } from "@/lib/elemental";
 import { waitUntil } from "@/lib/utils";
+import { unsafeWindow as importedUnsafeWindow } from "$";
 import { toast } from "user-view";
 import { onBeforeUnmount, ref, type Ref } from "vue";
 
@@ -18,8 +19,21 @@ interface UEditorInstance {
     execCommand(command: string, ...args: unknown[]): unknown;
 }
 
+interface UEditorGlobal {
+    getActiveEditor?(): UEditorInstance | null;
+    getEditor?(id: string): UEditorInstance | null;
+}
+
+function pageWindow() {
+    return importedUnsafeWindow ?? window;
+}
+
+function getUEditorGlobal(): UEditorGlobal | undefined {
+    return (pageWindow() as unknown as { UE?: UEditorGlobal }).UE;
+}
+
 function activeUEditor(): UEditorInstance | undefined {
-    const ue = (window as unknown as { UE?: { getActiveEditor?(): UEditorInstance | null } }).UE;
+    const ue = getUEditorGlobal();
     return ue?.getActiveEditor?.() ?? undefined;
 }
 
@@ -45,7 +59,20 @@ export function resolveReadyUEditor(root: ParentNode = document): Element | unde
     return container;
 }
 
+export function requestUEditorInit(): void {
+    try {
+        getUEditorGlobal()?.getEditor?.("ueditor_replace");
+    } catch (error) {
+        console.warn("[Tieba-Remix] 请求编辑器初始化失败:", error);
+    }
+    const editable = document.querySelector<HTMLElement>("#ueditor_replace");
+    const MouseEventCtor = pageWindow().MouseEvent ?? MouseEvent;
+    editable?.dispatchEvent(new MouseEventCtor("mousedown", { bubbles: true, cancelable: true }));
+    editable?.dispatchEvent(new MouseEventCtor("click", { bubbles: true, cancelable: true }));
+}
+
 export async function waitForReadyUEditor(root: ParentNode = document, timeout = UEDITOR_READY_TIMEOUT): Promise<Element | undefined> {
+    requestUEditorInit();
     return waitUntil(() => resolveReadyUEditor(root) != null, timeout)
         .then(() => resolveReadyUEditor(root))
         .catch(() => undefined);
