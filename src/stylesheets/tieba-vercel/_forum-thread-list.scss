@@ -622,11 +622,8 @@
             }
         }
 
-        .vpic_wrap img:not([style]) {
-            opacity: 0;
-        }
-
         .vpic_wrap img {
+            display: block !important;
             border-radius: $vercel-radius-sm !important;
         }
 
