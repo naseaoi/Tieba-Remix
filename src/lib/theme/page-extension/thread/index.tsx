@@ -26,6 +26,7 @@ import threadStyle from "./thread.scss?inline";
 export default async function () {
     if (!pageExtension.get().thread) return;
     if (currentPageType() !== "thread") return;
+    if (isThreadUnavailablePage()) return;
 
     overwriteCSS(
         threadStyle,
@@ -141,15 +142,21 @@ export default async function () {
         }), document.body.firstChild);
     });
 
-    const content = await asyncdom<"div">(".content");
-    const pbContent = await asyncdom<"div">("#pb_content");
+    const content = await asyncdom<"div">(".content", undefined, 10_000);
+    const pbContent = await asyncdom<"div">("#pb_content", undefined, 10_000);
+    if (!content || !pbContent) return;
+    const contentRoot = content;
+    const pbContentRoot = pbContent;
 
     await createContents();
     async function createContents() {
-        const threadList = await asyncdom("#j_p_postlist");
+        const threadList = await asyncdom("#j_p_postlist", undefined, 10_000);
+        if (!threadList) return;
         threadList.classList.add("content-wrapper");
 
         let thread = threadParser();
+        if (thread.cotents.length === 0) return;
+        if (!thread.forum.components.iconContainer?.children[0]) return;
 
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
@@ -173,7 +180,7 @@ export default async function () {
                     </UserButton>
                 </div>
             </div>
-        </div>, content, pbContent);
+        </div>, contentRoot, pbContentRoot);
 
         // 绑定事件
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
@@ -382,7 +389,7 @@ export default async function () {
             return pagerComponent;
         }
     };
-    insertPager(pbContent, pbContent.firstChild, {
+    insertPager(pbContentRoot, pbContentRoot.firstChild, {
         marginBottom: "24px",
         position: PageData.pager.total_page <= 1 ? "absolute" : "",
         right: PageData.pager.total_page <= 1 ? "48px" : "",
@@ -402,13 +409,13 @@ export default async function () {
         setFloatButtonTooltip(commentButton.el, "评论");
 
         // 添加末尾帖子回复入口
-        insertPager(pbContent, pbContent.lastChild, {
+        insertPager(pbContentRoot, pbContentRoot.lastChild, {
             paddingTop: "24px",
         });
         appendJSX(
             <div id="thread-jsx-components">
                 <UserButton class="dummy-button" noBorder onClick={showEditor}>回复帖子</UserButton>
-            </div>, pbContent);
+            </div>, pbContentRoot);
 
         let editorDialog: RenderedComponent | undefined;
         let openingEditor = false;
@@ -468,4 +475,10 @@ export default async function () {
             void showEditor();
         }, true);
     }
+}
+
+function isThreadUnavailablePage(): boolean {
+    if (document.querySelector(".page404")) return true;
+    if (PageData?.thread?.thread_id) return false;
+    return document.querySelector("#j_p_postlist, #pb_content") == null;
 }
