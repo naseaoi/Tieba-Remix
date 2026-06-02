@@ -1,15 +1,7 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
-// =============================================
-// Vercel 风格 - 帖子页 (thread)
-// 同时覆盖原版与 pageExtension.thread 扩展模式
-// =============================================
-
 html.style-vercel {
-    // ---------------------------
-    // 容器
-    // ---------------------------
     #container .content {
         border-radius: $vercel-radius-md !important;
         background: unset !important;
@@ -24,18 +16,12 @@ html.style-vercel {
         border: none !important;
     }
 
-    // ---------------------------
-    // 吧图标
-    // ---------------------------
     .card_head,
     .plat_head_theme2 .plat_picbox {
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-sm !important;
     }
 
-    // ---------------------------
-    // 吧名 / 跳转
-    // ---------------------------
     .card_top_theme2 .card_title_fname,
     .plat_title_h3,
     .plat_title_h3:hover,
@@ -43,7 +29,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // 关注/取关按钮
     .islike_focus {
         border: 1px solid var(--default-fore) !important;
         border-radius: $vercel-radius-sm !important;
@@ -58,7 +43,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // 签到按钮
     .sign_box_bright {
         border: 1px solid var(--default-fore) !important;
         border-radius: $vercel-radius-sm !important;
@@ -76,17 +60,11 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // ---------------------------
-    // 跳页
-    // ---------------------------
     .jump_input_bright {
         @include vercel-input;
         border-radius: $vercel-radius-sm !important;
     }
 
-    // ---------------------------
-    // 标题栏
-    // ---------------------------
     .core_title_wrap_bright {
         border-color: var(--border-color) !important;
         backdrop-filter: none !important;
@@ -108,9 +86,7 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // 帖子页隐藏顶部「看帖/图片/吧主推荐」导航栏（与帖子阅读无关，且与 vercel 极简风冲突）
-    // loadMainCSS() 把本文件全局注入，必须用 [data-page-type="thread"] 限定到 thread 页，
-    // 否则会误伤 forum (吧首页) 等同样存在 .nav_wrap 的页面
+    // 仅在线程页隐藏顶部导航
     &[data-page-type="thread"] .nav_wrap {
         display: none !important;
     }
@@ -123,7 +99,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // 跳页按钮
     .thread_theme_5 {
         border-color: var(--border-color) !important;
         background-color: var(--default-background) !important;
@@ -139,9 +114,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // ---------------------------
-    // 左侧用户栏（原版）
-    // ---------------------------
     .l_post_bright {
         border-color: var(--border-color) !important;
         background: none !important;
@@ -164,7 +136,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // 等级牌
     .d_badge_bright,
     .user_level .badge {
         border: 1px solid var(--border-color) !important;
@@ -173,17 +144,12 @@ html.style-vercel {
         background-color: var(--default-background) !important;
     }
 
-    // 等级牌内层数字：只清除贴吧原版的位图背景 + 改用 mono 字体，
-    // 等级色由 tieba-main.scss 的 .d_badge_icon{N} .d_badge_lv 规则按等级语义着色（绿/蓝/黄/橙）
     .d_badge_bright .d_badge_lv,
     .user_level .badge_index {
         background-image: none !important;
         font-family: $vercel-font-mono !important;
     }
 
-    // ---------------------------
-    // 右侧栏
-    // ---------------------------
     .region_bright {
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-md !important;
@@ -199,9 +165,6 @@ html.style-vercel {
         background: var(--default-background) !important;
     }
 
-    // ---------------------------
-    // 正文
-    // ---------------------------
     .p_content {
         border: none !important;
         background-color: var(--default-background) !important;
@@ -211,8 +174,6 @@ html.style-vercel {
         border-radius: $vercel-radius-sm !important;
     }
 
-    // 长图占位：贴吧原生 JS 在 .replace_div 上注入 inline width/height（按原图自然尺寸）作为
-    // 「点击展开」占位，必须强制覆盖否则图片缩小后容器仍按原始高度撑开 → 下方留大块空白
     .replace_div {
         width: auto !important;
         height: auto !important;
@@ -228,10 +189,6 @@ html.style-vercel {
         display: none !important;
     }
 
-    // 一行多图智能排列：installThreadImageGrid 把连续图片包到 .vercel-image-grid，删除组内 <br>
-    // - auto-fit（非 auto-fill）：空轨道宽度折叠为 0，少图组才能被 justify-content 居中
-    // - grid-auto-rows 固定 180px + object-fit: cover：避免行高跟随图片自然尺寸，单元格内不再
-    //   留白；否则留白属于 <img> 元素，鼠标点击间距空白会触发图片预览
     .vercel-image-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 200px));
@@ -261,10 +218,6 @@ html.style-vercel {
         }
     }
 
-    // 楼层尾
-    // 保留贴吧原信息（IP/平台/楼层/时间/举报），全部 mono 字号统一为 minimal-fore；
-    // 「X 楼」与紧跟的「时间」由 installThreadFloorTag 单独打标，
-    // 通过 flex order 把它们重排到最左端作为优先信息，楼层用胶囊边框突出
     .post-tail-wrap,
     .core_reply_tail:not(.clearfix) {
         @include mono-meta;
@@ -289,8 +242,7 @@ html.style-vercel {
             padding: 0 6px;
             border: 1px solid var(--border-color);
             border-radius: $vercel-radius-xs;
-            // 隐藏贴吧原版的 "X 楼" 原文，由 ::before 渲染为 "#N" 格式
-            // （DOM textContent 保留，data-floor-num 由 installThreadFloorTag 注入）
+            // 隐藏原楼层文本，使用 ::before 输出楼层号
             font-size: 0 !important;
             line-height: 1.6;
             transition: border-color $vercel-trans-normal $vercel-ease;
@@ -312,11 +264,6 @@ html.style-vercel {
         }
     }
 
-    // ---------------------------
-    // 楼中楼回复
-    // 整体作为一块向右缩进的子区域，左侧用细线分隔（Twitter/Reddit 风格）
-    // 取消默认的整圈外框 / 背景，保持与楼层正文视觉连续
-    // ---------------------------
     .core_reply_wrapper {
         overflow: hidden !important;
         border: none !important;
@@ -334,7 +281,6 @@ html.style-vercel {
         background: transparent !important;
     }
 
-    // 楼中楼内容容器：保留向右缩进作为视觉分层，不画左侧竖线
     .l_post_bright .core_reply_wrapper .core_reply_content {
         border: none !important;
         padding-left: 16px !important;
@@ -350,11 +296,6 @@ html.style-vercel {
         background-color: var(--default-background) !important;
     }
 
-    // ---------------------------
-    // 楼中楼翻页 / "还有 X 条回复，点击查看"
-    // 扩展模式 (comments.scss) 用 margin-top: -12px 把它贴近上一条回复，与 vercel 间距风格冲突；
-    // 这里改用正常的上间距 + 一条横向虚线分隔，让"展开更多"与已加载回复之间有清晰呼吸感。
-    // ---------------------------
     .core_reply_content .lzl_li_pager {
         padding-top: 10px !important;
         margin-top: 10px !important;
@@ -381,16 +322,12 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // "我也说一句" — 楼中楼里 .j_lzl_p.btn-sub 按钮
-    // 扩展模式 (comments.scss .btn-sub) 用 @extend %anchor 把它强制改成无边框扁平链接风，
-    // 这里在更高优先级下还原为标准 vercel 边框按钮风格，与其它 .btn-sub 风格一致。
     .l_post_bright .core_reply_wrapper .j_lzl_p.btn-sub {
         @include vercel-button($vercel-radius-sm);
         font-size: $vercel-fs-xs;
         line-height: 1.4;
     }
 
-    // 楼中楼编辑器高度与滚动
     .core_reply_content {
         .edui-editor-body {
             height: auto !important;
@@ -410,12 +347,6 @@ html.style-vercel {
         }
     }
 
-    // ---------------------------
-    // 楼中楼标签（tieba-tags 模块）— vercel 主题专属配色
-    // 模块默认使用 tieba-theme（紫色）/ cengzhu-theme（粉色），这两套变量在
-    // palette-vercel.scss 里未定义 → 落到 var() 未定义状态，导致颜色完全不可见。
-    // 这里改用 vercel 调色板里的 level-* 语义色，与帖子楼层「楼主/等级牌」配色统一。
-    // ---------------------------
     .tieba-tags-lz::after {
         background-color: var(--level-blue-background) !important;
         color: var(--level-blue-fore) !important;
@@ -426,8 +357,6 @@ html.style-vercel {
         color: var(--level-green-fore) !important;
     }
 
-    // 帖子楼层名旁的「楼主」原生标识 — 贴吧 HTML 本身就在每个楼层（首楼含）注入
-    // `.louzhubiaoshi_wrap`，这里统一改造为与楼中楼 `.tieba-tags-lz::after` 一致的蓝色胶囊
     .louzhubiaoshi_wrap {
         display: inline-flex;
         align-items: center;
@@ -439,7 +368,6 @@ html.style-vercel {
         font-weight: var(--font-weight-normal);
         line-height: 1.4;
 
-        // 内部任何子元素（图标/文字）继承蓝色文字
         * {
             color: inherit !important;
             background: none !important;
@@ -459,7 +387,7 @@ html.style-vercel {
         border-radius: $vercel-radius-xs !important;
     }
 
-    // 文字链接：固定蓝色 + 链接图标前缀；:not(:has(img)) 排除图片/链接卡
+    // 纯文本链接
     .d_post_content a:not(.at):not(:has(img)),
     .lzl_cnt .lzl_content_main a:not(.at):not(:has(img)) {
         color: #2563eb !important;
@@ -484,7 +412,6 @@ html.style-vercel {
         }
     }
 
-    // 跳页
     .pager_theme_5 a,
     .pager_theme_5 span,
     .jump_btn_bright {
@@ -499,9 +426,6 @@ html.style-vercel {
         color: var(--default-fore) !important;
     }
 
-    // ---------------------------
-    // 底部编辑器
-    // ---------------------------
     .thread_theme_7 {
         border-color: var(--border-color) !important;
         background-color: var(--default-background) !important;
@@ -535,11 +459,6 @@ html.style-vercel {
         @include vercel-button($vercel-radius-sm);
     }
 
-    // ---------------------------
-    // pageExtension.thread = true 扩展模式
-    // ---------------------------
-
-    // 标题
     #title-wrapper {
         .thread-title {
             color: var(--default-fore) !important;
@@ -566,12 +485,10 @@ html.style-vercel {
         }
     }
 
-    // 移除装饰圆光
     .forum-mask-wrapper {
         display: none !important;
     }
 
-    // 内容主容器：扩展模式下的 pb_content
     #container .content .pb_content {
         border-top: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-md $vercel-radius-md 0 0 !important;
@@ -579,7 +496,6 @@ html.style-vercel {
         box-shadow: none !important;
     }
 
-    // 楼层卡片
     .content-wrapper {
         .author-container {
             .floor-avatar {
@@ -594,7 +510,6 @@ html.style-vercel {
                 color: var(--default-fore) !important;
             }
 
-            // 默认 .floor-badge —— 文本为"楼主"，HTML 无 .level-* 修饰类 → 淡蓝色胶囊
             .badge-container .floor-badge {
                 border-radius: $vercel-radius-xs !important;
                 background-color: var(--level-blue-background) !important;
@@ -602,7 +517,6 @@ html.style-vercel {
                 font-family: $vercel-font-mono;
             }
 
-            // 等级牌 —— 带 .level-{green/blue/yellow/orange} 修饰，按等级区分颜色
             .badge-container .floor-badge.level-green {
                 background-color: var(--level-green-background) !important;
                 color: var(--level-green-fore) !important;
@@ -633,7 +547,6 @@ html.style-vercel {
                 }
             }
 
-            // 与 .author-container 同套规则：默认蓝，等级按颜色区分
             .floor-badge {
                 border-radius: $vercel-radius-xs !important;
                 background-color: var(--level-blue-background) !important;
@@ -666,7 +579,6 @@ html.style-vercel {
         }
     }
 
-    // 回复输入框 dummy
     #thread-jsx-components .dummy-button {
         border-bottom: 1px solid var(--border-color) !important;
         color: var(--minimal-fore) !important;
@@ -680,9 +592,6 @@ html.style-vercel {
         }
     }
 
-    // ---------------------------
-    // 回复模块（thread-editor 弹窗）
-    // ---------------------------
     #thread-editor {
         gap: 10px;
         padding: 16px;
@@ -795,7 +704,6 @@ html.style-vercel {
         }
     }
 
-    // 回复弹窗外壳
     .user-dialog-modal .user-dialog.default:has(#thread-editor) {
         border: 1px solid var(--border-color) !important;
         border-bottom: none !important;
@@ -825,9 +733,6 @@ html.style-vercel {
         box-shadow: 0 -2px 12px rgb(0 0 0 / 28%) !important;
     }
 
-    // ---------------------------
-    // 原版弹窗（网络图片等 .dialogJ）
-    // ---------------------------
     .dialogJ {
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-md !important;
@@ -902,13 +807,11 @@ html.style-vercel {
             }
         }
 
-        // 输入框
         .l_netpic_input,
         .ui_textfield {
             @include vercel-input;
         }
 
-        // 按钮
         .ui_btn {
             @include vercel-button;
             display: inline-flex !important;
@@ -957,7 +860,6 @@ html.style-vercel {
             }
         }
 
-        // 禁用态按钮（发帖气泡取消等）
         .ui_btn_disable,
         .ui_btn_m_disable {
             @include vercel-button;
@@ -991,7 +893,6 @@ html.style-vercel {
             }
         }
 
-        // 底部操作栏
         .i_layer_bottom {
             width: 100% !important;
             box-sizing: border-box !important;

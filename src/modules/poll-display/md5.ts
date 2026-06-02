@@ -1,7 +1,3 @@
-// 轻量 MD5 实现（基于 RFC 1321），仅用于贴吧 App 接口签名。
-// 输入：UTF-8 字符串；输出：32 位小写十六进制字符串。
-// 选择内联实现是为了避免新增依赖；MD5 已不适合做安全用途，但这里只是协议签名所必需的派生哈希。
-
 const HEX = "0123456789abcdef";
 
 function toHex(num: number): string {
@@ -136,19 +132,16 @@ export function md5(input: string): string {
         md5cycle(state, bytesToBlock(bytes, i * 64));
     }
 
-    // 处理最后不满 64 字节的尾部
     const tailLen = totalLen - fullBlocks * 64;
     const tail = new Uint8Array(64);
     tail.set(bytes.subarray(fullBlocks * 64));
     tail[tailLen] = 0x80;
 
     if (tailLen >= 56) {
-        // 末尾长度无法塞进当前块，先冲一块再补一块
         md5cycle(state, bytesToBlock(tail, 0));
         tail.fill(0);
     }
 
-    // 位长（小端，64 位），JS 整数安全到 2^53，足够表达请求体大小
     const bitLenLow = (totalLen * 8) >>> 0;
     const bitLenHigh = Math.floor(totalLen / 0x20000000) >>> 0;
     tail[56] = bitLenLow & 0xff;
