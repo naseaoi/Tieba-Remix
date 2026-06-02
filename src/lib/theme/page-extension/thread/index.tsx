@@ -18,6 +18,7 @@ import _ from "@/lib/utils/_";
 import { UserButton, toast } from "user-view";
 import { VNode } from "vue";
 import { setupCommentEmotionPanel } from "./comment-emotion-panel";
+import { setupCommentToggleAnimation } from "./comment-toggle";
 import commentsStyle from "./comments.scss?inline";
 import compactStyle from "./compact.scss?inline";
 import { threadParser } from "./parser";
@@ -33,6 +34,8 @@ export default async function () {
         compactStyle,
         commentsStyle,
     );
+
+    setupCommentToggleAnimation();
 
     await waitUntil(() => !(document.body == null)).then(function () {
         // document.body.insertBefore(mainWrapper, document.body.firstChild);
