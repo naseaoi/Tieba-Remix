@@ -303,11 +303,11 @@
         }
 
         > .history-ad-wrap:empty,
-        > .history-ad-wrap:not(:has(.ylh-ad-container, [id^="mediago-"], iframe, ins, .adsbygoogle)) {
+        > .history-ad-wrap:not(:has([id^="mediago-"], iframe, ins, .adsbygoogle)) {
             display: none !important;
         }
 
-        > .history-ad-wrap:has(.ylh-ad-container, [id^="mediago-"], iframe, ins, .adsbygoogle) {
+        > .history-ad-wrap:has([id^="mediago-"], iframe, ins, .adsbygoogle) {
             display: contents !important;
         }
 
@@ -647,209 +647,14 @@
             opacity: 0.6;
         }
 
-        // 广告帖
-
-        // 外层广告包装
+        // 优量汇广告整槽收起
+        > .history-ad-wrap:has(.ylh-ad-container),
         > li:has(> .ylh-ad-container) {
-            display: contents !important;
+            display: none !important;
         }
 
-        > .history-ad-wrap:has(+ .ylh-ad-container) {
-            display: contents !important;
-        }
-
-        // 广告卡片
         .ylh-ad-container {
-            display: grid !important;
-            position: relative !important;
-            box-sizing: border-box !important;
-            grid-template-columns: minmax(0, 1fr) auto !important;
-            grid-template-areas:
-                "title rep"
-                "media media" !important;
-            column-gap: 12px !important;
-            row-gap: 8px !important;
-            align-items: center !important;
-            width: 100% !important;
-            min-width: 0 !important;
-            max-width: 100% !important;
-            min-height: 80px !important;
-            padding: 16px !important;
-            margin: 0 !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: $vercel-radius-md !important;
-            background-color: var(--default-background) !important;
-            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
-            overflow: hidden !important;
-            transition: border-color $vercel-trans-normal $vercel-ease,
-                        box-shadow $vercel-trans-normal $vercel-ease !important;
-
-            &:hover {
-                border-color: var(--minimal-fore) !important;
-                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
-            }
-
-            html.dark-theme & {
-                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
-
-                &:hover {
-                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
-                }
-            }
-
-            // 回复数
-            > .ylh-ad-reply-num-wrap {
-                grid-area: rep !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                align-self: center !important;
-                justify-self: end !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                background: none !important;
-
-                .ylh-ad-reply-num {
-                    @include mono-meta($vercel-fs-sm);
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    color: var(--default-fore) !important;
-                    font-weight: var(--font-weight-bold) !important;
-                    line-height: 1 !important;
-                }
-            }
-
-            // 中层包装
-            > .ylh-custom-ad-container {
-                display: contents !important;
-            }
-
-            // 顶部条
-            .ylh-top-wrap {
-                grid-area: title !important;
-                display: flex !important;
-                align-items: center !important;
-                min-width: 0 !important;
-                gap: 8px !important;
-            }
-
-            .ylh-ad-title-wrap {
-                flex: 1 1 auto !important;
-                min-width: 0 !important;
-            }
-
-            .ylh-ad-title {
-                display: -webkit-box !important;
-                color: var(--default-fore) !important;
-                font-size: $vercel-fs-lg !important;
-                font-weight: var(--font-weight-bold) !important;
-                line-height: 1.4 !important;
-                -webkit-line-clamp: 2 !important;
-                -webkit-box-orient: vertical !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-            }
-
-            // 隐藏投放方信息
-            .ylh-ad-author {
-                display: none !important;
-            }
-
-            // 广告标签
-            .ylh-ad-tag {
-                flex-shrink: 0 !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                padding: 1px 6px !important;
-                border-radius: $vercel-radius-xs !important;
-                background-color: var(--warning-color) !important;
-                color: #fff !important;
-                font-size: $vercel-fs-xs !important;
-                line-height: 1.4 !important;
-
-                .ylh-ad-icon { display: none !important; }
-                .ylh-ad-text {
-                    color: inherit !important;
-                    font-size: inherit !important;
-                    line-height: inherit !important;
-                }
-            }
-
-            // 媒体区
-            .ylh-ad-content-wrap {
-                grid-area: media !important;
-                display: flex !important;
-                flex-direction: column !important;
-                min-width: 0 !important;
-                max-width: 100% !important;
-                overflow: hidden !important;
-            }
-
-            .ylh-ad-content {
-                position: relative !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                max-height: 120px !important;
-                border-radius: $vercel-radius-sm !important;
-                overflow: hidden !important;
-                background-size: cover !important;
-                background-position: center !important;
-
-                .ylh-ad-img,
-                video {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    max-height: 120px !important;
-                    height: auto !important;
-                    object-fit: cover !important;
-                }
-
-                .ylh-video-container,
-                .ylh-video-container > div {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    max-height: 120px !important;
-                }
-            }
-
-            // 假回复条
-            .ylh-ad-reply {
-                display: none !important;
-            }
-
-            // 右上角操作
-            > .ylh-ad-close {
-                position: absolute !important;
-                top: 4px !important;
-                right: 6px !important;
-                width: 16px !important;
-                height: 16px !important;
-                background: none !important;
-                color: var(--minimal-fore) !important;
-                opacity: 0 !important;
-                cursor: pointer !important;
-                transition: opacity $vercel-trans-normal $vercel-ease !important;
-
-                &::before {
-                    content: "×";
-                    display: block;
-                    font-size: 16px;
-                    line-height: 16px;
-                    text-align: center;
-                }
-
-                &:hover {
-                    color: var(--default-fore) !important;
-                }
-            }
-
-            &:hover > .ylh-ad-close {
-                opacity: 1 !important;
-            }
-
-            > .handle-btn-box {
-                display: none !important;
-            }
+            display: none !important;
         }
     }
 }
