@@ -2,9 +2,8 @@ import type { SettingContent } from "@/components/settings.vue";
 import type { UserModuleEx } from "@/ex";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom, findParent } from "@/lib/elemental";
+import { GM_getValue, GM_setValue } from "@/lib/monkey";
 import { threadCommentsObserver } from "@/lib/observers";
-import { UserKey } from "@/lib/user-values";
-import _ from "@/lib/utils/_";
 
 export default {
     id: "toolkit",
@@ -37,7 +36,6 @@ export default {
 } as UserModuleEx;
 
 const toolkitFeatures = {
-    /** 重新加载错误头像 */
     reloadAvatars() {
         const observer = new IntersectionObserver(function (entries) {
             entries.forEach(entry => {
@@ -68,6 +66,30 @@ const toolkitFeatures = {
 
 type ToolkitToggles = Record<keyof typeof toolkitFeatures, boolean>;
 
-const toolkitToggles = new UserKey<ToolkitToggles>("toolkitToggles", {
+const TOOLKIT_TOGGLES_KEY = "toolkitToggles";
+const TOOLKIT_TOGGLES_DEFAULT: ToolkitToggles = {
     reloadAvatars: true,
-});
+};
+
+const toolkitToggles = {
+    get(): ToolkitToggles {
+        const value = GM_getValue<Partial<ToolkitToggles>>(TOOLKIT_TOGGLES_KEY, TOOLKIT_TOGGLES_DEFAULT);
+        return {
+            ...TOOLKIT_TOGGLES_DEFAULT,
+            ...(isToolkitToggles(value) ? value : {}),
+        };
+    },
+    set(value: ToolkitToggles): void {
+        GM_setValue(TOOLKIT_TOGGLES_KEY, value);
+    },
+    merge(value: Partial<ToolkitToggles>): void {
+        toolkitToggles.set({
+            ...toolkitToggles.get(),
+            ...value,
+        });
+    },
+};
+
+function isToolkitToggles(value: unknown): value is Partial<ToolkitToggles> {
+    return typeof value === "object" && value !== null;
+}

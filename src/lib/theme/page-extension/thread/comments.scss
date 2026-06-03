@@ -22,6 +22,19 @@ $lzl-content-margin: 12px;
             --very-light-background: #292929;
         }
 
+        // 楼中楼展开 / 折叠过渡
+        &.tbr-lzl-toggling {
+            transition:
+                height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+                padding 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+                margin 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+                opacity var(--fast-duration) ease;
+
+            @media (prefers-reduced-motion: reduce) {
+                transition: none;
+            }
+        }
+
         // 楼中楼容器
         .core_reply_content {
             padding-right: 20px;

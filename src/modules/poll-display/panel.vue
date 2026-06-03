@@ -53,7 +53,6 @@ const statusText = computed(() => {
     return `截止 ${formatDate(end * 1000)}`;
 });
 
-// 按票数倒序展示，便于一眼看出热度排名
 const sortedOptions = computed<PollOption[]>(() => {
     return [...props.poll.options].sort((a, b) => b.num - a.num);
 });
@@ -61,7 +60,6 @@ const sortedOptions = computed<PollOption[]>(() => {
 const leadingId = computed(() => sortedOptions.value[0]?.id);
 
 const denom = computed(() => {
-    // 多选用 total_num（人次），单选两个字段值相同
     const base = props.poll.is_multi ? props.poll.total_poll : props.poll.total_num;
     return base > 0 ? base : 1;
 });

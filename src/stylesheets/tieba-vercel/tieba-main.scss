@@ -1,20 +1,12 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
-// =============================================
-// Vercel 风格 - 通用元素覆盖
-// 作用域：html.style-vercel 下的所有贴吧页面
-// =============================================
-
 html.style-vercel {
     body {
         background-color: var(--page-background);
         color: var(--default-fore);
     }
 
-    // ---------------------------
-    // 顶部导航栏（脚本注入的 #nav-bar）
-    // ---------------------------
     #nav-bar {
         border: 1px solid var(--border-color);
         background-color: var(--surface-glass);
@@ -25,16 +17,12 @@ html.style-vercel {
         }
     }
 
-    // ---------------------------
-    // 通用按钮覆盖
-    // ---------------------------
     button,
     .user-button {
         transition: border-color $vercel-trans-normal $vercel-ease,
                     background-color $vercel-trans-normal $vercel-ease;
     }
 
-    // 通用 anchor / 按钮去毛刺
     .anchor,
     .anchor-noback {
         color: var(--default-fore);
@@ -46,12 +34,6 @@ html.style-vercel {
         }
     }
 
-    // ---------------------------
-    // 侧边浮动按钮栏（贴吧原生）
-    // 仅保留：发帖 / 回顶；反馈移入「更多」二级菜单，其余（客服、下载、刷新、分享、收藏）一律隐藏。
-    // 当用户在设置面板关闭底部发帖模块（body[hide-bottom-editor]）时，"发帖"按钮也跟随隐藏，
-    // 避免点击后无目标可滚定位。
-    // ---------------------------
     .tbui_aside_float_bar {
         .tbui_fbar_auxiliaryCare,
         .tbui_fbar_down,
@@ -86,30 +68,20 @@ html.style-vercel {
         }
     }
 
-    // 底部发帖模块被关闭时，同步隐藏右下角悬浮"发帖"按钮
     body[hide-bottom-editor] .tbui_aside_float_bar .tbui_fbar_post {
         display: none !important;
     }
 
-    // ---------------------------
-    // 移除 Remixed 的圆角与阴影遗留
-    // ---------------------------
     .head_inner {
         background-color: var(--default-background) !important;
         box-shadow: none !important;
     }
 
-    // 移除模糊背景效果（与 Vercel 极简原则冲突）
     .blur-effect,
     .blur-if-custom-background {
         backdrop-filter: none;
     }
 
-    // ---------------------------
-    // 等级牌
-    // 贴吧原网页本身并不按等级区分颜色，vercel 主题下统一显示为淡橙色作为视觉强调。
-    // 通用 .level-* / .tieba-lvl-* 语义色保留下方，供版本提示、楼主/层主标签等其它场景使用。
-    // ---------------------------
     .d_badge_bright .d_badge_lv,
     .user_level .badge_index {
         background-color: var(--level-orange-background) !important;
@@ -140,18 +112,11 @@ html.style-vercel {
         color: var(--level-orange-fore) !important;
     }
 
-    // ---------------------------
-    // 选区颜色
-    // ---------------------------
     ::selection {
         background-color: var(--default-fore);
         color: var(--default-background);
     }
 
-    // ---------------------------
-    // 顶部百度站点导航（网页/资讯/视频/图片/贴吧/...）
-    // 贴吧所有页面共享，统一改造为 vercel 风格扁平 nav
-    // ---------------------------
     .search_top {
         display: flex !important;
         align-items: center !important;
@@ -166,8 +131,7 @@ html.style-vercel {
         align-items: center !important;
         flex-wrap: nowrap !important;
         gap: 4px !important;
-        // 覆盖贴吧给 .search_nav 的 inline style="margin-right: 635px"
-        // 这个 635 是给原版顶栏右上角让位用的，移除后才能真正居中且不被挤压换行
+        // 重置站点导航内联外边距
         margin: 0 !important;
         float: none !important;
         background: none !important;
@@ -196,7 +160,6 @@ html.style-vercel {
         background-color: var(--default-hover) !important;
     }
 
-    // 当前页签（<b>贴吧</b>）：粗体 + 深色背景胶囊
     .search_nav b {
         display: inline-flex !important;
         align-items: center !important;

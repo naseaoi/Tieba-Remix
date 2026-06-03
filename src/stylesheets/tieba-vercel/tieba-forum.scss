@@ -4,11 +4,6 @@
 @use "./forum-thread-list" as threads;
 @use "./forum-footer" as footer;
 
-// =============================================
-// Vercel 风格 - 吧首页 (forum)
-// 核心：帖子列表卡片网格化
-// =============================================
-
 html.style-vercel {
     @include header.forum-header;
     @include title.forum-title-card;
@@ -17,9 +12,6 @@ html.style-vercel {
     @include footer.forum-footer;
 }
 
-// attribute-driven 折叠态：由 forum-pinned-fold-watcher.ts 在 install 入口同步给
-// <html> 加 data-forum-pinned="folded"。让 CSS 在 pagelet 首帧注入 .thread_top_list_folder
-// 时就匹配折叠样式，无需等待 watcher 异步加 .pinned-folded class，消除短暂的展开态闪动。
 html.style-vercel[data-forum-pinned="folded"] .threadlist_bright > li.thread_top_list_folder {
     @include threads.pinned-folded-state;
 }
