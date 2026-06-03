@@ -351,6 +351,7 @@ body.special_conf_skin {
         .button-container {
             display: flex;
             align-items: center;
+            height: 22px;
 
             .forum-button {
                 padding: 0 2px;
@@ -360,6 +361,11 @@ body.special_conf_skin {
 
                 &:not(:hover, :active, :focus) {
                     background-color: transparent;
+                }
+
+                &.icon {
+                    width: 22px;
+                    height: 22px;
                 }
             }
         }
