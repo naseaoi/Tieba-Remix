@@ -56,8 +56,8 @@ const dialogOpts: UserDialogOpts = {
         borderBottomRightRadius: "0",
         boxShadow: "0 0 24px var(--tieba-theme-color)",
     },
-    renderAnimation: "kf-editor-in var(--default-duration)",
-    unloadAnimation: "kf-editor-out var(--default-duration)",
+    renderAnimation: "kf-editor-in 0.28s cubic-bezier(0.22, 0.61, 0.36, 1)",
+    unloadAnimation: "kf-editor-out 0.28s cubic-bezier(0.22, 0.61, 0.36, 1)",
 };
 
 const dialog = ref<InstanceType<typeof UserDialog>>();

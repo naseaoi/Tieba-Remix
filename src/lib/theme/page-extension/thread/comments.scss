@@ -25,9 +25,9 @@ $lzl-content-margin: 12px;
         // 楼中楼展开 / 折叠过渡
         &.tbr-lzl-toggling {
             transition:
-                height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-                padding 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-                margin 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+                height 0.28s ease-out,
+                padding 0.28s ease-out,
+                margin 0.28s ease-out,
                 opacity var(--fast-duration) ease;
 
             @media (prefers-reduced-motion: reduce) {
@@ -254,6 +254,24 @@ $lzl-content-margin: 12px;
                     z-index: 9999;
                 }
             }
+        }
+    }
+}
+
+// j_lzl_container 和 lzl_editor_container 过渡动画
+.j_lzl_container,
+.lzl_editor_container {
+    overflow: hidden;
+
+    &.tbr-lzl-toggling {
+        transition:
+            height 0.28s ease-out,
+            padding 0.28s ease-out,
+            margin 0.28s ease-out,
+            opacity var(--fast-duration) ease;
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
         }
     }
 }
