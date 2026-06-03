@@ -7,6 +7,7 @@ const FALLBACK_DURATION = 280;
 const SAFETY_BUFFER = 120;
 const PATCH_FLAG = "__tbrLzlTogglePatched";
 const JQUERY_WAIT_TIMEOUT = 15_000;
+const TOGGLE_EDGE_PROPS = ["padding-top", "padding-bottom", "margin-top", "margin-bottom"];
 
 interface JQuerySet {
     length: number;
@@ -116,13 +117,17 @@ function expand(element: HTMLElement, complete?: () => void): void {
         return;
     }
 
+    clearVerticalEdges(element);
+    const edges = readVerticalEdges(element);
     const targetHeight = element.scrollHeight;
     element.classList.add(TOGGLING_CLASS);
     element.style.height = "0px";
     element.style.opacity = "0";
+    collapseVerticalEdges(element);
     void element.offsetHeight;
     element.style.height = `${targetHeight}px`;
     element.style.opacity = "1";
+    setVerticalEdges(element, edges);
 
     whenSettled(element, () => {
         resetInlineStyles(element);
@@ -140,12 +145,15 @@ function collapse(element: HTMLElement, complete?: () => void): void {
         return;
     }
 
+    const edges = readVerticalEdges(element);
     element.classList.add(TOGGLING_CLASS);
     element.style.height = `${element.scrollHeight}px`;
     element.style.opacity = "1";
+    setVerticalEdges(element, edges);
     void element.offsetHeight;
     element.style.height = "0px";
     element.style.opacity = "0";
+    collapseVerticalEdges(element);
 
     whenSettled(element, () => {
         element.style.display = "none";
@@ -158,6 +166,26 @@ function resetInlineStyles(element: HTMLElement): void {
     element.classList.remove(TOGGLING_CLASS);
     element.style.height = "";
     element.style.opacity = "";
+    clearVerticalEdges(element);
+}
+
+function readVerticalEdges(element: HTMLElement): Record<string, string> {
+    const style = getComputedStyle(element);
+    const edges: Record<string, string> = {};
+    for (const prop of TOGGLE_EDGE_PROPS) edges[prop] = style.getPropertyValue(prop);
+    return edges;
+}
+
+function setVerticalEdges(element: HTMLElement, edges: Record<string, string>): void {
+    for (const prop of TOGGLE_EDGE_PROPS) element.style.setProperty(prop, edges[prop], "important");
+}
+
+function collapseVerticalEdges(element: HTMLElement): void {
+    for (const prop of TOGGLE_EDGE_PROPS) element.style.setProperty(prop, "0px", "important");
+}
+
+function clearVerticalEdges(element: HTMLElement): void {
+    for (const prop of TOGGLE_EDGE_PROPS) element.style.removeProperty(prop);
 }
 
 function whenSettled(element: HTMLElement, onSettled: () => void): void {
