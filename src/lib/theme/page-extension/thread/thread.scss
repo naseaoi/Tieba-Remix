@@ -93,61 +93,63 @@ body.special_conf_skin {
 
 // 帖子内容容器
 #j_p_postlist {
-    display: flex;
-    box-sizing: border-box;
-    flex-direction: column;
-    gap: 16px;
+    &.content-wrapper {
+        display: flex;
+        box-sizing: border-box;
+        flex-direction: column;
+        gap: 16px;
 
-    // 楼层右上角 badge
-    .save_face_bg {
-        display: none;
-    }
+        // 楼层右上角 badge
+        .save_face_bg {
+            display: none;
+        }
 
-    .l_post_bright {
-        border: none;
+        .l_post_bright {
+            border: none;
 
-        .d_post_content_main {
-            width: 100%;
-            padding: 0;
-            background-color: unset !important;
-
-            .p_content {
-                min-height: unset;
+            .d_post_content_main {
+                width: 100%;
                 padding: 0;
-                margin-bottom: -42px;
-                background-color: unset;
+                background-color: unset !important;
 
-                // 该贴已被 *吧屏蔽
-                .shield-tip {
-                    background: none;
-                }
-
-                .d_post_content {
+                .p_content {
+                    min-height: unset;
                     padding: 0;
-                    background-color: unset !important;
-                    font-size: $content-font-size;
-                    grid-area: content;
-                }
+                    margin-bottom: -42px;
+                    background-color: unset;
 
-                .replace_div {
-                    width: auto !important;
-                }
+                    // 该贴已被 *吧屏蔽
+                    .shield-tip {
+                        background: none;
+                    }
 
-                .BDE_Smiley {
-                    width: 24px;
-                    height: 24px;
-                    vertical-align: text-bottom;
-                }
+                    .d_post_content {
+                        padding: 0;
+                        background-color: unset !important;
+                        font-size: $content-font-size;
+                        grid-area: content;
+                    }
 
-                .BDE_Image {
-                    display: flex;
-                    width: auto;
-                    max-width: min(100%, 320px);
-                    height: auto;
-                    max-height: 400px;
-                    border-radius: 4px;
-                    margin: 6px auto;
-                    object-fit: contain;
+                    .replace_div {
+                        width: auto !important;
+                    }
+
+                    .BDE_Smiley {
+                        width: 24px;
+                        height: 24px;
+                        vertical-align: text-bottom;
+                    }
+
+                    .BDE_Image {
+                        display: flex;
+                        width: auto;
+                        max-width: min(100%, 320px);
+                        height: auto;
+                        max-height: 400px;
+                        border-radius: 4px;
+                        margin: 6px auto;
+                        object-fit: contain;
+                    }
                 }
             }
         }

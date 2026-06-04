@@ -153,9 +153,9 @@ export default async function () {
 
     await createContents();
     async function createContents() {
-        const threadList = await asyncdom("#j_p_postlist", undefined, 10_000);
-        if (!threadList) return;
-        threadList.classList.add("content-wrapper");
+        const maybeThreadList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
+        if (!maybeThreadList) return;
+        const threadList = maybeThreadList;
 
         let thread = threadParser();
         if (thread.cotents.length === 0) return;
@@ -185,6 +185,9 @@ export default async function () {
             </div>
         </div>, contentRoot, pbContentRoot);
 
+        applyAuthorContainers(thread);
+        threadList.classList.add("content-wrapper");
+
         // 绑定事件
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
             dom<"button">(".j_signbtn")?.click();
@@ -211,35 +214,43 @@ export default async function () {
         }, { once: true });
 
         threadFloorsObserver.addEvent(function () {
-            if (dom(".d_author", []).length === 0) return;
+            if (dom(".d_author", threadList, []).length === 0) return;
 
             // TODO: performance
             thread = threadParser();
-            thread.cotents.forEach((c, i) => {
-                const floor = c.post.closest(".l_post")?.querySelector<HTMLDivElement>(".d_post_content_main");
+            applyAuthorContainers(thread);
+        });
+
+        function applyAuthorContainers(sourceThread: ReturnType<typeof threadParser>) {
+            sourceThread.cotents.forEach((c, i) => {
+                const postRoot = c.post.closest(".l_post");
+                if (!postRoot?.querySelector(".d_author")) return;
+
+                const floor = postRoot.querySelector<HTMLDivElement>(".d_post_content_main");
                 if (!floor) return;
-                const authorContainer = createAuthorContainer(i);
+
+                floor.querySelector(".author-container")?.remove();
+                const authorContainer = createAuthorContainer(sourceThread, i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
 
-            // 去除左侧用户栏
-            (dom(".d_author", [])).forEach(el => el.remove());
-        });
+            (dom(".d_author", threadList, [])).forEach(el => el.remove());
+        }
 
-        function createAuthorContainer(index: number) {
+        function createAuthorContainer(sourceThread: ReturnType<typeof threadParser>, index: number) {
             const authorContainer = domrd("div", {
                 class: "author-container",
             });
 
-            thread.cotents[index].profile.nameAnchor.classList.add("anchor");
+            sourceThread.cotents[index].profile.nameAnchor.classList.add("anchor");
 
-            authorContainer.appendChild(thread.cotents[index].profile.avatar);
-            authorContainer.appendChild(thread.cotents[index].profile.nameAnchor);
+            authorContainer.appendChild(sourceThread.cotents[index].profile.avatar);
+            authorContainer.appendChild(sourceThread.cotents[index].profile.nameAnchor);
 
             const badgeContainer = appendJSX<HTMLDivElement>(<div class="badge-container"></div>, authorContainer);
 
-            const profileLevel = thread.cotents[index].profile.level;
-            const badgeTitle = thread.cotents[index].profile.badgeTitle;
+            const profileLevel = sourceThread.cotents[index].profile.level;
+            const badgeTitle = sourceThread.cotents[index].profile.badgeTitle;
             const hasLevel = Number.isFinite(profileLevel) && profileLevel > 0;
             appendJSX(
                 <div class={hasLevel ? `floor-badge level-${levelToClass(profileLevel)}` : "floor-badge"}>
@@ -247,7 +258,7 @@ export default async function () {
                     <div class="badge-title">{badgeTitle}</div>
                 </div>, badgeContainer.root);
 
-            if (thread.cotents[index].isLouzhu)
+            if (sourceThread.cotents[index].isLouzhu)
                 appendJSX(<div class="floor-badge">楼主</div>, badgeContainer.root);
 
             return authorContainer;
