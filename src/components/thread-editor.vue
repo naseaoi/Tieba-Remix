@@ -2,12 +2,14 @@
     <UserDialog ref="dialog" v-bind="dialogOpts" @unload="returnEditor">
         <div id="thread-editor">
             <div id="thread-editor-actions">
-                <UserButton aria-label="发表" id="thread-editor-submit" class="editor-action" @click="submit">
+                <button type="button" aria-label="发表" id="thread-editor-submit" class="user-button editor-action"
+                    @pointerdown.capture="stopActionEvent" @click.capture="submitFromAction">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
-                </UserButton>
-                <UserButton aria-label="关闭" id="thread-editor-exit" class="editor-action" @click="unload">
+                </button>
+                <button type="button" aria-label="关闭" id="thread-editor-exit" class="user-button editor-action"
+                    @pointerdown.capture="stopActionEvent" @click.capture="closeFromAction">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>
-                </UserButton>
+                </button>
             </div>
             <UserTextbox v-if="type === 'thread'" class="title-editor" placeholder="输入标题" lodash-style></UserTextbox>
 
@@ -20,7 +22,7 @@
 import { imagesViewer } from "@/components/images-viewer";
 import { asyncdom } from "@/lib/elemental";
 import { UEDITOR_READY_TIMEOUT, useUEditor } from "@/lib/utils/use-ueditor";
-import { UserButton, UserDialog, UserDialogOpts, UserTextbox } from "user-view";
+import { UserDialog, UserDialogOpts, UserTextbox } from "user-view";
 import { nextTick, onMounted, ref } from "vue";
 
 export interface ThreadEditorOpts {
@@ -95,6 +97,22 @@ onMounted(async function () {
 
 async function submit() {
     await editor.submit();
+    unload();
+}
+
+function stopActionEvent(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+}
+
+async function submitFromAction(event: Event) {
+    stopActionEvent(event);
+    await submit();
+}
+
+function closeFromAction(event: Event) {
+    stopActionEvent(event);
     unload();
 }
 
@@ -200,6 +218,10 @@ defineExpose({ unload });
 }
 
 #thread-editor {
+    .j-placeholder-pay-member {
+        display: none !important;
+    }
+
     #ueditor_replace {
         font-size: 16px;
     }

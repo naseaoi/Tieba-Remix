@@ -44,7 +44,7 @@ html.style-vercel {
             display: none !important;
         }
 
-        li {
+        > li {
             border-radius: $vercel-radius-sm;
             background-color: transparent;
             transition: background-color $vercel-trans-normal $vercel-ease;
@@ -58,7 +58,7 @@ html.style-vercel {
             }
         }
 
-        a {
+        > li > a {
             color: var(--minimal-fore);
             transition: color $vercel-trans-normal $vercel-ease;
 

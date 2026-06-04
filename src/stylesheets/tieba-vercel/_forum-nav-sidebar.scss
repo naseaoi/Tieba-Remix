@@ -239,6 +239,104 @@
         overflow: hidden;
     }
 
+    .aside_region .region_cnt {
+        margin-top: 10px !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        line-height: $vercel-lh-normal !important;
+    }
+
+    .aside_region .region_cnt a {
+        color: var(--default-fore) !important;
+        text-decoration: none !important;
+        transition: color $vercel-trans-normal $vercel-ease,
+                    border-color $vercel-trans-normal $vercel-ease,
+                    background-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .aside_region .region_cnt a:hover {
+        color: var(--default-fore) !important;
+    }
+
+    .aside_region .region_cnt .j_mod_item,
+    .aside_region .region_cnt .frs_apply_assist,
+    .aside_region .region_cnt #j_tcharge_dialog {
+        display: inline-flex !important;
+        align-items: center !important;
+        max-width: 100% !important;
+        min-height: 24px !important;
+        box-sizing: border-box !important;
+        padding: 2px 8px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        margin: 2px 4px 2px 0 !important;
+        background-color: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        line-height: 1.4 !important;
+    }
+
+    .aside_region .region_cnt .j_mod_item:hover,
+    .aside_region .region_cnt .frs_apply_assist:hover,
+    .aside_region .region_cnt #j_tcharge_dialog:hover {
+        border-color: var(--minimal-fore) !important;
+        background-color: var(--default-hover) !important;
+    }
+
+    .aside_region button,
+    .aside_region .btn,
+    .aside_region .ui_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        min-height: 28px !important;
+        padding: 4px 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1.4 !important;
+        cursor: pointer !important;
+        transition: border-color $vercel-trans-normal $vercel-ease,
+                    background-color $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .aside_region button:hover,
+    .aside_region .btn:hover,
+    .aside_region .ui_btn:hover {
+        border-color: var(--minimal-fore) !important;
+        background-color: var(--default-hover) !important;
+    }
+
+    .novel-award-aside .novel-award-aside-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-height: 32px !important;
+        padding: 6px 12px !important;
+        border: 1px solid var(--default-fore) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-fore) !important;
+        color: var(--default-background) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-bold) !important;
+        line-height: 1.4 !important;
+        transition: opacity $vercel-trans-normal $vercel-ease !important;
+    }
+
+    .novel-award-aside .novel-award-aside-btn:hover {
+        opacity: 0.86;
+    }
+
+    .aside_region .region_header .pull_right a::after {
+        box-sizing: border-box;
+        min-height: 22px;
+    }
+
     .aside_region.forum_info .region_header .pull_right a {
         display: inline-block;
         padding: 0;
