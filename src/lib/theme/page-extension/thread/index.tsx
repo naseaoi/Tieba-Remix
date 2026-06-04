@@ -321,7 +321,7 @@ export default async function () {
                         const floorImages = dom<"img">(".BDE_Image", postContent!, []);
                         const localIndex = Math.max(0, floorImages.findIndex(img => img === newEl));
                         if (floorPics.length > 0) {
-                            imagesViewer({
+                            void imagesViewer({
                                 content: floorPics,
                                 defaultIndex: Math.min(localIndex, floorPics.length - 1),
                             });
@@ -333,7 +333,7 @@ export default async function () {
                         const postIdMatch = +(newEl.dataset.pid ?? 0);
                         newEl.dataset.index = `${allImages.findIndex(img => img.postId === postIdMatch) + dom<"img">(".BDE_Image", postContent!, []).findIndex(img => img === newEl)}`;
                     }
-                    imagesViewer({
+                    void imagesViewer({
                         content: allImages,
                         defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
                     });

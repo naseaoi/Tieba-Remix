@@ -41,7 +41,7 @@
                 </UserButton>
 
                 <!-- 设置 -->
-                <UserButton class="nav-icon-button" no-border="all" @click="renderDialog(Settings)">
+                <UserButton class="nav-icon-button" no-border="all" @click="openSettings">
                     <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path
@@ -74,7 +74,6 @@ import _ from "@/lib/utils/_";
 import { messageBox, toast, UserButton } from "user-view";
 import { computed, onMounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";
-import Settings from "./settings.vue";
 
 export type NavBarHideMode = "fold" | "alwaysFold" | "never";
 type MenuKey = "message" | "more" | "user";
@@ -293,6 +292,11 @@ async function login() {
     function cannotLogin() {
         toast({ message: "未检测到可用的登录入口，请刷新重试", type: "warning" });
     }
+}
+
+async function openSettings() {
+    const { default: Settings } = await import("./settings.vue");
+    renderDialog(Settings);
 }
 
 function loadNavMenuContent() {

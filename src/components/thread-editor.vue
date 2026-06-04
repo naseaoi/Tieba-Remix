@@ -103,7 +103,7 @@ function onImageClick(event: MouseEvent) {
     if (!(target instanceof HTMLImageElement) || !target.classList.contains("BDE_Image")) return;
     event.preventDefault();
     event.stopPropagation();
-    imagesViewer({ content: target.getAttribute("src") ?? target.src });
+    void imagesViewer({ content: target.getAttribute("src") ?? target.src });
 }
 
 function unload() {

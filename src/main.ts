@@ -1,7 +1,6 @@
 import { GM_registerMenuCommand, waitForCoreMonkeyApis } from "@/lib/monkey";
 import _ from "@/lib/utils/_";
 import "user-view/build/index.css";
-import Settings from "./components/settings.vue";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { parseUserModules } from "./lib/common/packer";
 import { setupLegacyRedirect, BootstrapSignal } from "./lib/legacy-redirect";
@@ -29,7 +28,10 @@ setupLegacyRedirect(bootstrap);
 
 function bootstrap(signal: BootstrapSignal) {
     void waitForCoreMonkeyApis().then(() => {
-        GM_registerMenuCommand("设置", () => renderDialog(Settings));
+        GM_registerMenuCommand("设置", async () => {
+            const { default: Settings } = await import("./components/settings.vue");
+            renderDialog(Settings);
+        });
     });
     startBootstrap(signal);
 }
