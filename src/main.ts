@@ -2,13 +2,11 @@ import { GM_registerMenuCommand, waitForCoreMonkeyApis } from "@/lib/monkey";
 import _ from "@/lib/utils/_";
 import "user-view/build/index.css";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
+import { openSettingsDialog } from "./lib/common/open-settings";
 import { parseUserModules } from "./lib/common/packer";
 import { setupLegacyRedirect, BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
-import { renderDialog } from "./lib/render";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
-import index from "./lib/theme/page-extension/index";
-import thread from "./lib/theme/page-extension/thread";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
 import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
@@ -23,15 +21,13 @@ import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid
 import { installSymbolFontStatus } from "./lib/symbol-font-status";
 import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
+import { userModuleManifests } from "./modules/manifest";
 
 setupLegacyRedirect(bootstrap);
 
 function bootstrap(signal: BootstrapSignal) {
     void waitForCoreMonkeyApis().then(() => {
-        GM_registerMenuCommand("设置", async () => {
-            const { default: Settings } = await import("./components/settings.vue");
-            renderDialog(Settings);
-        });
+        GM_registerMenuCommand("设置", () => { void openSettingsDialog(); });
     });
     startBootstrap(signal);
 }
@@ -71,10 +67,9 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
 
-    const indexReady = index();
-    const threadReady = thread();
+    const pageExtensionReady = loadPageExtension();
     const modulesReady = parseUserModules(
-        import.meta.glob("./modules/**/index.ts"),
+        userModuleManifests,
         module => {
             AllModules().push(module);
         }
@@ -99,7 +94,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
         document.addEventListener("DOMContentLoaded", startObservers, { once: true });
     }
 
-    const firstPaintReady = Promise.all([cssReady, indexReady, threadReady, modulesReady]);
+    const firstPaintReady = Promise.all([cssReady, pageExtensionReady, modulesReady]);
     firstPaintReady.then(
         () => requestAnimationFrame(() => requestAnimationFrame(onReady)),
         onReady,
@@ -139,4 +134,21 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     });
 
     console.info(REMIXED);
+}
+
+async function loadPageExtension() {
+    switch (currentPageType()) {
+        case "index": {
+            const { default: index } = await import("./lib/theme/page-extension/index");
+            return index();
+        }
+
+        case "thread": {
+            const { default: thread } = await import("./lib/theme/page-extension/thread");
+            return thread();
+        }
+
+        default:
+            return;
+    }
 }

@@ -66,8 +66,8 @@
 
 <script lang="ts" setup>
 import { tiebaAPI } from "@/lib/api/tieba";
+import { openSettingsDialog } from "@/lib/common/open-settings";
 import { dom } from "@/lib/elemental";
-import { renderDialog } from "@/lib/render";
 import { navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "@/lib/utils/_";
@@ -295,8 +295,7 @@ async function login() {
 }
 
 async function openSettings() {
-    const { default: Settings } = await import("./settings.vue");
-    renderDialog(Settings);
+    await openSettingsDialog();
 }
 
 function loadNavMenuContent() {
