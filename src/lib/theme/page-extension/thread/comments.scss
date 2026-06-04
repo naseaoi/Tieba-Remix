@@ -160,6 +160,21 @@ $lzl-content-margin: 12px;
             }
 
             // 楼中楼编辑器
+            .lzl_editor_container {
+                box-sizing: border-box;
+                width: 100% !important;
+
+                .edui-container,
+                .edui-editor,
+                .edui-editor-body,
+                .edui-editor-middle,
+                .edui-body-container,
+                .lzl_panel_wrapper {
+                    box-sizing: border-box;
+                    width: 100% !important;
+                }
+            }
+
             .edui-container {
                 width: auto !important;
                 max-height: 64px;
