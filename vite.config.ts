@@ -127,6 +127,9 @@ const prodConfig = defineConfig({
         terserOptions: {
             sourceMap: false,
             toplevel: true,
+            format: {
+                comments: false,
+            },
             compress: {
                 pure_funcs: [
                     "console.log",

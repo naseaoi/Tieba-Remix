@@ -25,7 +25,7 @@ import { userModuleManifests } from "./modules/manifest";
 
 export function bootstrap(signal: BootstrapSignal) {
     void waitForCoreMonkeyApis().then(() => {
-        GM_registerMenuCommand("璁剧疆", () => { void openSettingsDialog(); });
+        GM_registerMenuCommand("设置", () => { void openSettingsDialog(); });
     });
     startBootstrap(signal);
 }
