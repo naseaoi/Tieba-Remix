@@ -4,7 +4,7 @@ import deepmerge from "deepmerge";
 import { resolve } from "path";
 import postcssPresetEnv from "postcss-preset-env";
 import { UserConfig, defineConfig } from "vite";
-import monkey, { MonkeyOption, cdn, util } from "vite-plugin-monkey";
+import monkey, { MonkeyOption } from "vite-plugin-monkey";
 
 // 版本号来源：CI 从 tag 名通过 USERSCRIPT_VERSION 注入
 const USERSCRIPT_VERSION = process.env.USERSCRIPT_VERSION?.replace(/^v/, "") || "0.0.0-dev";
@@ -36,18 +36,10 @@ const scriptOptions: MonkeyOption = {
             "tieba.baidu.com",
             "uploadphotos.baidu.com",
         ],
-        require: [
-            "https://fastly.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
-        ],
         "run-at": "document-start",
     },
     build: {
-        externalGlobals: {
-            "vue": cdn.jsdelivrFastly("Vue", "dist/vue.global.prod.js")
-                .concat(util.dataUrl(";window.Vue=Vue;")),
-            "libelemental": cdn.jsdelivrFastly("libelemental", "build/index.min.js"),
-            "user-view": cdn.jsdelivrFastly("UserView", "build/index.min.js"),
-        },
+        systemjs: "inline",
     },
 };
 

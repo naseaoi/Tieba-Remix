@@ -93,11 +93,16 @@ body.special_conf_skin {
 
 // 帖子内容容器
 #j_p_postlist {
-    &.content-wrapper {
-        display: flex;
-        box-sizing: border-box;
-        flex-direction: column;
-        gap: 16px;
+    display: flex;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 16px;
+
+    &:not(.content-wrapper) {
+        .d_author {
+            display: none !important;
+        }
+    }
 
         // 楼层右上角 badge
         .save_face_bg {
@@ -153,7 +158,6 @@ body.special_conf_skin {
                 }
             }
         }
-    }
 
     div[data-po] {
         display: none;
