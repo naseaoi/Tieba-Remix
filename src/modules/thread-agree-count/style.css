@@ -42,6 +42,14 @@
     line-height: 1;
 }
 
+.lzl-agree-count-badge {
+    height: 24px;
+    order: 100;
+    padding: 0 2px;
+    margin-left: auto;
+    line-height: 1;
+}
+
 .post-tail-wrap:has(.floor-agree-count-badge) .p_reply,
 .core_reply_tail:not(.clearfix):has(.floor-agree-count-badge) .p_reply,
 .post-tail-wrap:has(.floor-agree-count-badge) .tbr-floor-menu {

@@ -1,4 +1,5 @@
 import { unsafeWindow as importedUnsafeWindow } from "$";
+import { installLzlReplyToggle } from "@/lib/tieba-components/lzl-reply-toggle";
 import { waitUntil } from "@/lib/utils";
 
 const LIST_SELECTOR = ".core_reply_wrapper, .j_lzl_container";
@@ -41,6 +42,7 @@ export function setupCommentToggleAnimation(): void {
     installed = true;
 
     setupEditorSwitchFix();
+    installLzlReplyToggle(collapse);
 
     void waitUntil(() => pageJQuery() != null, JQUERY_WAIT_TIMEOUT)
         .then(() => {
