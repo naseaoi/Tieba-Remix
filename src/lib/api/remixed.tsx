@@ -9,12 +9,14 @@ import { darkPrefers } from "../theme";
 
 export type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
 
+const TIEBA_HOSTS = new Set(["tieba.baidu.com", "tiebac.baidu.com"]);
+
 /**
  * 获取当前页面的类型
  * @returns 当前页面的类型
  */
 export function currentPageType(): PageType {
-    if (location.hostname.toLowerCase() !== "tieba.baidu.com") return "unhandled";
+    if (!TIEBA_HOSTS.has(location.hostname.toLowerCase())) return "unhandled";
 
     const pathname = location.pathname.toLocaleLowerCase();
 

@@ -75,6 +75,7 @@ import { messageBox, toast, UserButton } from "user-view";
 import { computed, onMounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";
 import Settings from "./settings.vue";
+import { LOGIN_POPUP_VISIBLE_ATTR } from "@/modules/no-login";
 
 export type NavBarHideMode = "fold" | "alwaysFold" | "never";
 type MenuKey = "message" | "more" | "user";
@@ -265,6 +266,8 @@ async function init() {
 }
 
 async function login() {
+    document.documentElement.setAttribute(LOGIN_POPUP_VISIBLE_ATTR, "true");
+
     const loginButton = dom(".u_login");
     const directLoginButton = dom<"a">("#TANGRAM__PSP_24__submit");
 
@@ -285,14 +288,48 @@ async function login() {
     }
 
     function regularLogin() {
-        loginButton
-            ? dom<"a">("a", loginButton)?.click()
-            : cannotLogin();
+        const anchor = loginButton ? dom<"a">("a", loginButton) : undefined;
+        if (!anchor) {
+            cannotLogin();
+            return;
+        }
+
+        anchor.click();
+        void switchToPasswordLogin();
     }
 
     function cannotLogin() {
+        document.documentElement.removeAttribute(LOGIN_POPUP_VISIBLE_ATTR);
         toast({ message: "未检测到可用的登录入口，请刷新重试", type: "warning" });
     }
+}
+
+async function switchToPasswordLogin() {
+    try {
+        await waitUntil(() => resolvePasswordLoginSwitch() != null || isPasswordLoginVisible(), 3000);
+    } catch {
+        return;
+    }
+
+    if (isPasswordLoginVisible()) return;
+    resolvePasswordLoginSwitch()?.click();
+}
+
+function resolvePasswordLoginSwitch() {
+    const popup = dom("#tiebaCustomPassLogin, .tieba-custom-pass-login");
+    if (!popup) return undefined;
+
+    const candidates = dom<"p">(".tang-pass-footerBarULogin, [data-type='normal'], [title='用户名登录']", popup, []);
+    return candidates.find(item => item.textContent?.includes("用户名登录"));
+}
+
+function isPasswordLoginVisible() {
+    const panel = dom<"div">("#tiebaLoginId");
+    if (!panel) return false;
+
+    const rect = panel.getBoundingClientRect();
+    const style = getComputedStyle(panel);
+    return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
 }
 
 function loadNavMenuContent() {
