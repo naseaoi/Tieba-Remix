@@ -1,4 +1,4 @@
-import { isLiteralObject, waitUntil } from "@/lib/utils";
+import { isLiteralObject } from "@/lib/utils";
 import _ from "@/lib/utils/_";
 
 export const fadeInElems: string[] = [];
@@ -72,8 +72,31 @@ export async function asyncdom<T extends DOMTagNames = "default">(
     parent?: Element,
     timeout = Infinity
 ) {
-    return waitUntil(() => !(dom<T>(selector, parent) == null), timeout)
-        .then(() => dom<T>(selector, parent));
+    const found = dom<T>(selector, parent);
+    if (found) return found;
+
+    return new Promise<Maybe<DOMTagNameMap[T]>>(resolve => {
+        const root = parent ?? document.documentElement;
+        let timer = 0;
+
+        const done = (value: Maybe<DOMTagNameMap[T]>) => {
+            observer.disconnect();
+            window.clearTimeout(timer);
+            resolve(value);
+        };
+
+        const check = () => {
+            const next = dom<T>(selector, parent);
+            if (next) done(next);
+        };
+
+        const observer = new MutationObserver(check);
+        observer.observe(root, { childList: true, subtree: true });
+
+        if (Number.isFinite(timeout)) {
+            timer = window.setTimeout(() => done(undefined), timeout);
+        }
+    });
 }
 
 /**

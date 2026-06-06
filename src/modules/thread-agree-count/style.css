@@ -26,6 +26,8 @@
 }
 
 .thread-agree-count-badge {
+    min-width: 58px;
+    justify-content: center;
     padding: 2px 6px;
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 999px;
@@ -35,7 +37,9 @@
 }
 
 .floor-agree-count-badge {
+    min-width: 42px;
     height: 24px;
+    justify-content: center;
     order: 100;
     padding: 0 2px;
     margin-left: auto;
@@ -43,11 +47,49 @@
 }
 
 .lzl-agree-count-badge {
+    min-width: 42px;
     height: 24px;
+    justify-content: center;
     order: 100;
     padding: 0 2px;
     margin-left: auto;
     line-height: 1;
+}
+
+#title-wrapper .thread-title:not(:has(.thread-agree-count-badge))::after,
+.core_title_txt:not(:has(.thread-agree-count-badge))::after {
+    display: inline-flex;
+    flex: 0 0 58px;
+    height: 24px;
+    margin-left: 8px;
+    content: "";
+}
+
+.post-tail-wrap:not(:has(.floor-agree-count-badge))::after,
+.core_reply_tail:not(.clearfix):not(:has(.floor-agree-count-badge))::after {
+    display: inline-flex;
+    flex: 0 0 42px;
+    height: 24px;
+    order: 100;
+    margin-left: auto;
+    content: "";
+}
+
+.lzl_content_reply:not(:has(.lzl-agree-count-badge))::after {
+    display: inline-flex;
+    flex: 0 0 42px;
+    height: 24px;
+    order: 100;
+    margin-left: auto;
+    content: "";
+}
+
+.post-tail-wrap:not(:has(.floor-agree-count-badge)) .p_reply,
+.core_reply_tail:not(.clearfix):not(:has(.floor-agree-count-badge)) .p_reply,
+.post-tail-wrap:not(:has(.floor-agree-count-badge)) .tbr-floor-menu,
+.lzl_content_reply:not(:has(.lzl-agree-count-badge)) .lzl_s_r,
+.lzl_content_reply:not(:has(.lzl-agree-count-badge)) .tbr-floor-menu {
+    margin-left: 0 !important;
 }
 
 .post-tail-wrap:has(.floor-agree-count-badge) .p_reply,

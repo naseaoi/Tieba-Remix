@@ -6,6 +6,7 @@ import { currentPageType } from "@/lib/api/remixed";
 import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
+import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
@@ -27,7 +28,10 @@ import threadStyle from "./thread.scss?inline";
 export default async function () {
     if (!pageExtension.get().thread) return;
     if (currentPageType() !== "thread") return;
-    if (isThreadUnavailablePage()) return;
+    if (isThreadUnavailablePage()) {
+        markThreadLayoutReady();
+        return;
+    }
 
     overwriteCSS(
         threadStyle,
@@ -47,15 +51,30 @@ export default async function () {
     // 滚动隐藏模式：与 nav-bar 协同，首次向下滚动后永久收紧顶部空白（不再恢复）
     (function setupScrollCollapse() {
         let collapsed = false;
-        let lastScrollY = window.scrollY;
+        let lastScrollY = 0;
+        let userScrollIntent = false;
+        const markUserScrollIntent = () => {
+            userScrollIntent = true;
+        };
+        const markKeyboardScrollIntent = (event: KeyboardEvent) => {
+            if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) userScrollIntent = true;
+        };
+        window.addEventListener("wheel", markUserScrollIntent, { passive: true });
+        window.addEventListener("touchstart", markUserScrollIntent, { passive: true });
+        window.addEventListener("keydown", markKeyboardScrollIntent);
         const handle = _.throttle(function () {
             if (collapsed) return;
             if (navBarHideMode.get() !== "fold") return;
-            if (window.scrollY > lastScrollY && window.scrollY > 8) {
+            const scrollY = window.scrollY;
+            if (!userScrollIntent) {
+                lastScrollY = scrollY;
+                return;
+            }
+            if (scrollY > lastScrollY && scrollY > 8) {
                 document.documentElement.toggleAttribute("thread-top-collapsed", true);
                 collapsed = true;
             }
-            lastScrollY = window.scrollY;
+            lastScrollY = scrollY;
         }, 100);
         window.addEventListener("scroll", handle, { passive: true });
 
@@ -158,8 +177,14 @@ export default async function () {
         const threadList = maybeThreadList;
 
         let thread = threadParser();
-        if (thread.cotents.length === 0) return;
-        if (!thread.forum.components.iconContainer?.children[0]) return;
+        if (thread.cotents.length === 0) {
+            markThreadLayoutReady();
+            return;
+        }
+        if (!thread.forum.components.iconContainer?.children[0]) {
+            markThreadLayoutReady();
+            return;
+        }
 
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
@@ -187,6 +212,7 @@ export default async function () {
 
         applyAuthorContainers(thread);
         threadList.classList.add("content-wrapper");
+        markThreadLayoutReady();
 
         // 绑定事件
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
@@ -495,4 +521,8 @@ function isThreadUnavailablePage(): boolean {
     if (document.querySelector(".page404")) return true;
     if (PageData?.thread?.thread_id) return false;
     return document.querySelector("#j_p_postlist, #pb_content") == null;
+}
+
+function markThreadLayoutReady(): void {
+    document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY);
 }

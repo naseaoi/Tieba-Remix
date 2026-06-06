@@ -25,8 +25,14 @@ export default {
     description: "通过贴吧 App 接口读取帖子与回复的官方点赞数并显示在旧版帖子页，支持登录用户点赞 / 取消。",
     scope: ["thread"],
     runAt: "DOMLoaded",
-    entry: main,
+    entry: start,
 } as UserModule;
+
+function start(): void {
+    void main().catch(err => {
+        console.warn("[thread-agree-count] start failed:", err);
+    });
+}
 
 async function main(): Promise<void> {
     const tid = PageData?.thread?.thread_id;
@@ -45,13 +51,18 @@ async function main(): Promise<void> {
     const actionStateByKey = new Map<string, AgreeActionState>();
     const profileIpByUserId = new Map<number, Promise<string | undefined>>();
 
-    await syncSnapshot();
-    await syncSubPosts();
+    let skipInitialCommentEvent = true;
     threadFloorsObserver.addEvent(() => {
         void syncSnapshot();
         void syncSubPosts();
     });
-    threadCommentsObserver.addEvent(() => void syncSubPosts());
+    threadCommentsObserver.addEvent(() => {
+        if (skipInitialCommentEvent) {
+            skipInitialCommentEvent = false;
+            return;
+        }
+        void syncSubPosts();
+    });
 
     async function syncSnapshot(): Promise<void> {
         const key = `${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
@@ -102,10 +113,12 @@ async function main(): Promise<void> {
         entries.forEach(([parentId, next]) => {
             if (next) snapshots.set(parentId, next);
         });
-        const profileIps = await resolveSubPostProfileIps(threadList, snapshots, snapshot?.userIpByPortrait);
-        if (token !== subPostLoadToken) return;
+        renderSubPostAgree(threadList, snapshots, snapshot?.userIpByPortrait, new Map(), actionStateByKey);
 
-        renderSubPostAgree(threadList, snapshots, snapshot?.userIpByPortrait, profileIps, actionStateByKey);
+        void resolveSubPostProfileIps(threadList, snapshots, snapshot?.userIpByPortrait).then(profileIps => {
+            if (token !== subPostLoadToken) return;
+            renderSubPostAgree(threadList, snapshots, snapshot?.userIpByPortrait, profileIps, actionStateByKey);
+        });
     }
 
     function getSubPostSnapshot(parentId: number, rn: number): Promise<SubPostAgreeSnapshot | undefined> {
@@ -235,7 +248,7 @@ function renderSubPostAgree(threadList: HTMLElement, snapshotsByParentId: Map<nu
     const sourceByPortrait = collectFloorSourceByPortrait(threadList);
     const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
     posts.forEach(post => {
-        if (post.hasAttribute(SUB_POST_FLAG)) return;
+        const rendered = post.hasAttribute(SUB_POST_FLAG);
 
         const ids = getSubPostIds(post);
         if (!ids) return;
@@ -249,7 +262,7 @@ function renderSubPostAgree(threadList: HTMLElement, snapshotsByParentId: Map<nu
             getSubPostLocation(post, snapshot, userIpByPortrait, profileIpByUserId),
             getSubPostSource(post, snapshot, sourceByPortrait),
         );
-        if (!snapshot) return;
+        if (!snapshot || rendered) return;
 
         const count = snapshot.subPostAgreeById.get(ids.subPostId);
         if (count != null && !tail.querySelector(`.${LZL_BADGE_CLASS}`)) {

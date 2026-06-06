@@ -9,8 +9,118 @@ const SECURITY_RELOAD_DELAY_MS = 600;
 const SWITCH_SAFETY_RELOAD_MS = 5000;
 const SECURITY_PAGE_TITLE = "百度安全验证";
 const CLOAK_SAFETY_MS = 8000;
+export const THREAD_LAYOUT_STATUS_ATTR = "data-tbr-thread-layout";
+export const THREAD_LAYOUT_STATUS_LOADING = "loading";
+export const THREAD_LAYOUT_STATUS_READY = "ready";
+const THREAD_AGREE_COUNT_ATTR = "data-tbr-thread-agree-count";
+const THREAD_AGREE_COUNT_ENABLED = "enabled";
+const THREAD_AGREE_COUNT_MODULE_ID = "thread-agree-count";
 const THREAD_LOADING_LAYOUT_STYLE_ID = "tieba-remix-thread-loading-layout";
 const THREAD_LOADING_LAYOUT_STYLE = `
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] {
+    --content-max: 982px;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .head_inner,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .card_top_wrap,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .nav_wrap,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .p_thread,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .core_title_wrap_bright,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .right_section,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .pb_footer,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .post-foot-send-gift-container,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .head_ad_pop,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .plat_head,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .star_nav_wrap {
+    display: none !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .wrap1,
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .wrap2 {
+    background: none !important;
+    background-color: transparent !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] #container {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: var(--content-max, 982px) !important;
+    margin-top: 86px !important;
+    transition: none !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"][data-nav-bar-mode="alwaysFold"] #container {
+    margin-top: 16px !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] #container .content {
+    width: 100% !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] #container .content::before {
+    display: block !important;
+    height: 70px !important;
+    margin: 16px 0 !important;
+    content: "" !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_READY}"] #container .content::before {
+    content: none !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] #pb_content {
+    position: relative !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding: 24px 48px !important;
+    border-top: 2px solid var(--tieba-theme-color, #589afe) !important;
+    border-radius: 4px 4px 0 0 !important;
+    background-color: var(--default-background, #fff) !important;
+}
+
+html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .left_section {
+    width: 100% !important;
+    background: none !important;
+}
+
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] #title-wrapper .thread-title:not(:has(.thread-agree-count-badge))::after,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .core_title_txt:not(:has(.thread-agree-count-badge))::after {
+    display: inline-flex !important;
+    flex: 0 0 58px !important;
+    height: 24px !important;
+    margin-left: 8px !important;
+    content: "" !important;
+}
+
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .post-tail-wrap:not(:has(.floor-agree-count-badge))::after,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .core_reply_tail:not(.clearfix):not(:has(.floor-agree-count-badge))::after {
+    display: inline-flex !important;
+    flex: 0 0 42px !important;
+    height: 24px !important;
+    order: 100 !important;
+    margin-left: auto !important;
+    content: "" !important;
+}
+
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .lzl_content_reply:not(:has(.lzl-agree-count-badge))::after {
+    display: inline-flex !important;
+    flex: 0 0 42px !important;
+    height: 24px !important;
+    order: 100 !important;
+    margin-left: auto !important;
+    content: "" !important;
+}
+
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .post-tail-wrap:not(:has(.floor-agree-count-badge)) .p_reply,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .core_reply_tail:not(.clearfix):not(:has(.floor-agree-count-badge)) .p_reply,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .post-tail-wrap:not(:has(.floor-agree-count-badge)) .tbr-floor-menu,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .lzl_content_reply:not(:has(.lzl-agree-count-badge)) .lzl_s_r,
+html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .lzl_content_reply:not(:has(.lzl-agree-count-badge)) .tbr-floor-menu {
+    margin-left: 0 !important;
+}
+
 #j_p_postlist {
     display: flex !important;
     box-sizing: border-box !important;
@@ -139,6 +249,13 @@ function applyCloak(): void {
 function installThreadLoadingLayoutStyle(): void {
     if (!isThreadPath()) return;
     if (!threadPageExtensionEnabled()) return;
+    document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_LOADING);
+    document.documentElement.dataset.navBarMode = readNavBarHideMode();
+    const agreeCountEnabled = threadAgreeCountEnabled();
+    document.documentElement.toggleAttribute(THREAD_AGREE_COUNT_ATTR, agreeCountEnabled);
+    if (agreeCountEnabled) {
+        document.documentElement.setAttribute(THREAD_AGREE_COUNT_ATTR, THREAD_AGREE_COUNT_ENABLED);
+    }
     if (document.getElementById(THREAD_LOADING_LAYOUT_STYLE_ID)) return;
 
     const style = document.createElement("style");
@@ -154,6 +271,16 @@ function isThreadPath(): boolean {
 function threadPageExtensionEnabled(): boolean {
     const pageExtension = GM_getValue("pageExtension", { index: true, thread: true });
     return pageExtension.thread !== false;
+}
+
+function readNavBarHideMode(): string {
+    const mode = GM_getValue("navBarHideMode", "fold");
+    return mode === "fold" || mode === "alwaysFold" || mode === "never" ? mode : "fold";
+}
+
+function threadAgreeCountEnabled(): boolean {
+    const disabledModules = GM_getValue<string[]>("disabledModules", []);
+    return !Array.isArray(disabledModules) || !disabledModules.includes(THREAD_AGREE_COUNT_MODULE_ID);
 }
 
 function removeCloak(): void {
