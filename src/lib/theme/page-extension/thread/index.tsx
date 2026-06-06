@@ -166,14 +166,21 @@ export default async function () {
 
     const content = await asyncdom<"div">(".content", undefined, 10_000);
     const pbContent = await asyncdom<"div">("#pb_content", undefined, 10_000);
-    if (!content || !pbContent) return;
+    if (!content || !pbContent) {
+        markThreadLayoutReady();
+        return;
+    }
     const contentRoot = content;
     const pbContentRoot = pbContent;
 
     await createContents();
+
     async function createContents() {
         const maybeThreadList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
-        if (!maybeThreadList) return;
+        if (!maybeThreadList) {
+            markThreadLayoutReady();
+            return;
+        }
         const threadList = maybeThreadList;
 
         let thread = threadParser();
@@ -212,7 +219,6 @@ export default async function () {
 
         applyAuthorContainers(thread);
         threadList.classList.add("content-wrapper");
-        markThreadLayoutReady();
 
         // 绑定事件
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
@@ -317,8 +323,13 @@ export default async function () {
             avatarObserver.observe(content.profile.avatar);
         });
 
-        threadFloorsObserver.addEvent(async () => {
-            await waitUntil(() => !!PageData.thread.thread_id);
+        let threadImagesReady = Promise.resolve();
+        const processThreadImages = async () => {
+            if (!PageData.thread.thread_id) {
+                await waitUntil(() => !!PageData.thread.thread_id, 2_000).catch(() => undefined);
+            }
+            if (!PageData.thread.thread_id) return;
+
             (dom<"img">(".BDE_Image", threadList, [])).forEach(el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
                 const postContent = findParent(el, "d_post_content");
@@ -377,6 +388,9 @@ export default async function () {
                 });
                 el.replaceWith(newEl);
             });
+        };
+        threadFloorsObserver.addEvent(() => {
+            threadImagesReady = processThreadImages();
         });
 
         // 去除楼中楼用户发言的冒号
@@ -391,11 +405,10 @@ export default async function () {
 
         setupCommentEmotionPanel();
 
-        // 开发模式需要重启 observer
-        if (import.meta.env.DEV) {
-            threadFloorsObserver.observe();
-            threadCommentsObserver.observe();
-        }
+        threadFloorsObserver.observe();
+        threadCommentsObserver.observe();
+        await threadImagesReady;
+        return threadList;
     }
 
     // pager 相关
@@ -434,6 +447,8 @@ export default async function () {
         position: PageData.pager.total_page <= 1 ? "absolute" : "",
         right: PageData.pager.total_page <= 1 ? "48px" : "",
     });
+    await waitForThreadLayoutPaint();
+    markThreadLayoutReady();
 
     createTextbox();
     async function createTextbox() {
@@ -525,4 +540,10 @@ function isThreadUnavailablePage(): boolean {
 
 function markThreadLayoutReady(): void {
     document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY);
+}
+
+function waitForThreadLayoutPaint(): Promise<void> {
+    return new Promise(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
 }

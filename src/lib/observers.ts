@@ -10,6 +10,9 @@ export class TbObserver {
     private readonly selector: string;
     private readonly options: MutationObserverInit | undefined;
     private readonly initEvent: keyof WindowEventMap | undefined;
+    private observer: MutationObserver | undefined;
+    private observedElement: Element | undefined;
+    private initEventObserved = false;
 
     readonly events: (() => void)[] = [];
 
@@ -19,21 +22,25 @@ export class TbObserver {
     }
 
     public observe() {
-        const eventFuncs = () => {
-            this.events.forEach(func => {
-                func();
-            });
-        };
+        const obsElem = dom(this.selector);
+        if (this.observer && this.observedElement === obsElem) return;
 
         if (typeof this.initEvent === "undefined") {
-            eventFuncs();
-        } else {
-            window.addEventListener(this.initEvent, eventFuncs);
+            this.emit();
+        } else if (!this.initEventObserved) {
+            window.addEventListener(this.initEvent, () => this.emit());
+            this.initEventObserved = true;
         }
 
-        const observer = new MutationObserver(eventFuncs);
-        const obsElem = dom(this.selector);
-        if (obsElem) observer.observe(obsElem, this.options);
+        this.observer?.disconnect();
+        this.observer = undefined;
+        this.observedElement = undefined;
+
+        if (!obsElem) return;
+
+        this.observer = new MutationObserver(() => this.emit());
+        this.observer.observe(obsElem, this.options);
+        this.observedElement = obsElem;
     }
 
     public addEvent(...events: (() => void)[]) {
