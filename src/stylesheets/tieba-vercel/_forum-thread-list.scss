@@ -302,13 +302,17 @@
             display: none !important;
         }
 
-        > .history-ad-wrap:empty,
-        > .history-ad-wrap:not(:has([id^="mediago-"], iframe, ins, .adsbygoogle)) {
+        > .history-ad-wrap {
             display: none !important;
         }
 
-        > .history-ad-wrap:has([id^="mediago-"], iframe, ins, .adsbygoogle) {
+        > .history-ad-wrap:has(iframe, ins, .adsbygoogle, [id^="mediago-"] iframe, [id^="mediago-"] ins, [id^="mediago-"] .adsbygoogle) {
             display: contents !important;
+        }
+
+        > .ylh-ad-container,
+        > [id^="ylh-ad-container-"] {
+            display: none !important;
         }
 
         // 默认隐藏展开按钮
@@ -648,13 +652,14 @@
         }
 
         // 优量汇广告整槽收起
-        > .history-ad-wrap:has(.ylh-ad-container),
         > li:has(> .ylh-ad-container) {
             display: none !important;
         }
 
         .ylh-ad-container {
             display: none !important;
+            margin: 0 !important;
+            min-height: 0 !important;
         }
     }
 }

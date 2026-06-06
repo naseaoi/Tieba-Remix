@@ -490,7 +490,7 @@ html.style-vercel {
     }
 
     #container .content .pb_content {
-        border-top: 1px solid var(--border-color) !important;
+        border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-md $vercel-radius-md 0 0 !important;
         background-color: var(--default-background) !important;
         box-shadow: none !important;

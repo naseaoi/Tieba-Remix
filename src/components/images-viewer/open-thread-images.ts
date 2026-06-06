@@ -1,7 +1,7 @@
 import _ from "@/lib/utils/_";
 import { GetThreadImagesResponse, tiebaAPI } from "@/lib/api/tieba";
 import { currentStorage, highQualityImage, HOME_FEED_IMAGES } from "@/lib/user-values";
-import { imagesViewer } from "./index";
+import { imagesViewer } from "./viewer";
 
 export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
     const cache = currentStorage.get(HOME_FEED_IMAGES);
@@ -39,6 +39,7 @@ export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
 export function openThreadImages(tid: number, defaultIndex = 0): void {
     void (async () => {
         const list = await fetchThreadImages(tid);
-        if (list.length > 0) imagesViewer({ content: list, defaultIndex });
+        if (list.length === 0) return;
+        void imagesViewer({ content: list, defaultIndex });
     })();
 }

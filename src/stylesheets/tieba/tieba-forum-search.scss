@@ -14,6 +14,7 @@ html[data-page-type="forum"] .head_content {
 .tbui_aside_float_bar .trex-search-floating {
     position: relative;
     overflow: visible !important;
+    box-sizing: border-box;
 
     .trex-search-floating-toggle {
         display: flex !important;
@@ -21,6 +22,8 @@ html[data-page-type="forum"] .head_content {
         justify-content: center;
         width: 40px !important;
         height: 40px !important;
+        box-sizing: border-box;
+        border-radius: inherit !important;
         color: var(--minimal-fore);
         transition: color 0.18s ease;
 
@@ -52,9 +55,10 @@ html[data-page-type="forum"] .head_content {
         display: flex;
         align-items: center;
         gap: 4px;
+        box-sizing: border-box;
         padding: 3px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: 6px;
         background-color: var(--default-background);
         box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
         opacity: 0;
@@ -75,7 +79,7 @@ html[data-page-type="forum"] .head_content {
         max-height: 280px;
         overflow-y: auto;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: 6px;
         background-color: var(--default-background);
         box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
         opacity: 0;

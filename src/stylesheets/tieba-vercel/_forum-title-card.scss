@@ -3,6 +3,13 @@
 
 /// 吧标题区（card_top_theme）+ 关注/签到按钮
 @mixin forum-title-card {
+    .card_top_wrap {
+        border-radius: $vercel-radius-lg $vercel-radius-lg 0 0 !important;
+        background: none !important;
+        background-color: var(--default-background) !important;
+        overflow: hidden !important;
+    }
+
     .card_top_theme {
         position: relative;
         display: flex !important;
@@ -71,16 +78,34 @@
                 width: 100px !important;
                 height: 100px !important;
                 margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: $vercel-radius-md !important;
+                background: var(--default-background) !important;
+
+                > a {
+                    display: block !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
 
                 .card_head_img {
                     display: block !important;
                     width: 100% !important;
                     height: 100% !important;
+                    border-radius: inherit !important;
+                    object-fit: cover !important;
                 }
             }
 
             > .card_title {
                 grid-area: title !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+                min-height: 32px !important;
+                flex-wrap: wrap !important;
             }
 
             > .card_slogan {
@@ -89,6 +114,10 @@
 
             > .card_info {
                 grid-area: info !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                flex-wrap: wrap !important;
             }
         }
 
@@ -96,25 +125,47 @@
             order: 2 !important;
             flex-shrink: 0 !important;
             float: none !important;
-            align-self: stretch !important;
+            align-self: center !important;
             display: flex !important;
             align-items: center !important;
             justify-content: flex-end !important;
             position: relative;
             z-index: 1;
+            min-width: 164px !important;
             padding: 16px 24px !important;
 
             > [id*="sign_mod"],
             .sign_mod_bright {
                 display: flex !important;
                 align-items: center !important;
+                justify-content: center !important;
+                min-width: 140px !important;
             }
         }
     }
 
+    .card_title .focus_btn_wrap {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        vertical-align: middle !important;
+    }
+
+    .card_title .focus_btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        float: none !important;
+        margin: 0 !important;
+        vertical-align: middle !important;
+    }
+
     .card_title_fname {
+        display: inline-flex !important;
+        align-items: center !important;
         color: var(--default-fore) !important;
         font-weight: var(--font-weight-bold);
+        line-height: 1.4 !important;
     }
 
     .card_slogan {
@@ -126,7 +177,21 @@
         background-image: none !important;
         border: 1px solid var(--default-fore) !important;
         border-radius: $vercel-radius-sm !important;
+        margin-top: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        min-width: 72px !important;
+        padding: 0 12px !important;
         color: var(--default-background) !important;
+        font-size: 14px;
+        line-height: 28px;
+        text-align: center;
+    }
+
+    .islike_focus::after {
+        content: "关注";
     }
 
     .cancel_focus {
@@ -134,11 +199,24 @@
         background-color: var(--default-background) !important;
         border: 1px solid var(--border-color) !important;
         border-radius: $vercel-radius-sm !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        width: 72px;
+        padding: 0 12px !important;
         color: var(--default-fore) !important;
+        font-size: 14px;
+        line-height: 28px;
+        text-align: center;
 
         &:hover {
             border-color: var(--minimal-fore) !important;
         }
+    }
+
+    .cancel_focus::after {
+        content: "已关注";
     }
 
     .sign_box_bright,
@@ -147,7 +225,37 @@
         background-color: var(--default-fore) !important;
         border: 1px solid var(--default-fore) !important;
         border-radius: $vercel-radius-sm !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        width: 140px !important;
+        height: 40px !important;
         color: var(--default-background) !important;
+        font-size: 18px;
+        line-height: 40px;
+        text-align: center;
+    }
+
+    .sign_btn_bright::before {
+        display: block !important;
+        color: var(--default-background);
+        content: "签到";
+        font-size: 18px !important;
+        font-weight: var(--font-weight-normal) !important;
+        line-height: 1 !important;
+    }
+
+    .sign_btn_bright {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        font-size: 0 !important;
+        line-height: 1 !important;
+        color: transparent !important;
     }
 
     .sign_box_bright_signed,
@@ -155,6 +263,41 @@
         background: none !important;
         background-color: var(--default-background) !important;
         border: 1px solid var(--border-color) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         color: var(--default-fore) !important;
+        text-align: unset;
+    }
+
+    .sign_today_date,
+    .sign_month_lack_days {
+        display: none;
+    }
+
+    .sign_keep_span {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        width: 140px !important;
+        height: 40px;
+        margin: 0 !important;
+        padding: 0 12px !important;
+        color: var(--default-fore) !important;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .sign_mod_bright .sign_keep_span {
+        margin: 0 !important;
+    }
+
+    .sign_box_bright_signed::before {
+        content: none !important;
+    }
+
+    .sign_mod_bright .sign_keep_span::before {
+        content: "已签到 | ";
     }
 }

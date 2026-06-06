@@ -6,6 +6,7 @@ import { currentPageType } from "@/lib/api/remixed";
 import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
+import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
@@ -27,7 +28,10 @@ import threadStyle from "./thread.scss?inline";
 export default async function () {
     if (!pageExtension.get().thread) return;
     if (currentPageType() !== "thread") return;
-    if (isThreadUnavailablePage()) return;
+    if (isThreadUnavailablePage()) {
+        markThreadLayoutReady();
+        return;
+    }
 
     overwriteCSS(
         threadStyle,
@@ -47,15 +51,30 @@ export default async function () {
     // 滚动隐藏模式：与 nav-bar 协同，首次向下滚动后永久收紧顶部空白（不再恢复）
     (function setupScrollCollapse() {
         let collapsed = false;
-        let lastScrollY = window.scrollY;
+        let lastScrollY = 0;
+        let userScrollIntent = false;
+        const markUserScrollIntent = () => {
+            userScrollIntent = true;
+        };
+        const markKeyboardScrollIntent = (event: KeyboardEvent) => {
+            if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) userScrollIntent = true;
+        };
+        window.addEventListener("wheel", markUserScrollIntent, { passive: true });
+        window.addEventListener("touchstart", markUserScrollIntent, { passive: true });
+        window.addEventListener("keydown", markKeyboardScrollIntent);
         const handle = _.throttle(function () {
             if (collapsed) return;
             if (navBarHideMode.get() !== "fold") return;
-            if (window.scrollY > lastScrollY && window.scrollY > 8) {
+            const scrollY = window.scrollY;
+            if (!userScrollIntent) {
+                lastScrollY = scrollY;
+                return;
+            }
+            if (scrollY > lastScrollY && scrollY > 8) {
                 document.documentElement.toggleAttribute("thread-top-collapsed", true);
                 collapsed = true;
             }
-            lastScrollY = window.scrollY;
+            lastScrollY = scrollY;
         }, 100);
         window.addEventListener("scroll", handle, { passive: true });
 
@@ -153,13 +172,19 @@ export default async function () {
 
     await createContents();
     async function createContents() {
-        const threadList = await asyncdom("#j_p_postlist", undefined, 10_000);
-        if (!threadList) return;
-        threadList.classList.add("content-wrapper");
+        const maybeThreadList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
+        if (!maybeThreadList) return;
+        const threadList = maybeThreadList;
 
         let thread = threadParser();
-        if (thread.cotents.length === 0) return;
-        if (!thread.forum.components.iconContainer?.children[0]) return;
+        if (thread.cotents.length === 0) {
+            markThreadLayoutReady();
+            return;
+        }
+        if (!thread.forum.components.iconContainer?.children[0]) {
+            markThreadLayoutReady();
+            return;
+        }
 
         const forumIconLink = (thread.forum.components.iconContainer.children[0] as HTMLImageElement).src;  // 分辨率比从 PageData 中获取到的更高
 
@@ -184,6 +209,10 @@ export default async function () {
                 </div>
             </div>
         </div>, contentRoot, pbContentRoot);
+
+        applyAuthorContainers(thread);
+        threadList.classList.add("content-wrapper");
+        markThreadLayoutReady();
 
         // 绑定事件
         dom<"button">(".sign-in-button")?.addEventListener("click", function () {
@@ -211,35 +240,43 @@ export default async function () {
         }, { once: true });
 
         threadFloorsObserver.addEvent(function () {
-            if (dom(".d_author", []).length === 0) return;
+            if (dom(".d_author", threadList, []).length === 0) return;
 
             // TODO: performance
             thread = threadParser();
-            thread.cotents.forEach((c, i) => {
-                const floor = c.post.closest(".l_post")?.querySelector<HTMLDivElement>(".d_post_content_main");
+            applyAuthorContainers(thread);
+        });
+
+        function applyAuthorContainers(sourceThread: ReturnType<typeof threadParser>) {
+            sourceThread.cotents.forEach((c, i) => {
+                const postRoot = c.post.closest(".l_post");
+                if (!postRoot?.querySelector(".d_author")) return;
+
+                const floor = postRoot.querySelector<HTMLDivElement>(".d_post_content_main");
                 if (!floor) return;
-                const authorContainer = createAuthorContainer(i);
+
+                floor.querySelector(".author-container")?.remove();
+                const authorContainer = createAuthorContainer(sourceThread, i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
 
-            // 去除左侧用户栏
-            (dom(".d_author", [])).forEach(el => el.remove());
-        });
+            (dom(".d_author", threadList, [])).forEach(el => el.remove());
+        }
 
-        function createAuthorContainer(index: number) {
+        function createAuthorContainer(sourceThread: ReturnType<typeof threadParser>, index: number) {
             const authorContainer = domrd("div", {
                 class: "author-container",
             });
 
-            thread.cotents[index].profile.nameAnchor.classList.add("anchor");
+            sourceThread.cotents[index].profile.nameAnchor.classList.add("anchor");
 
-            authorContainer.appendChild(thread.cotents[index].profile.avatar);
-            authorContainer.appendChild(thread.cotents[index].profile.nameAnchor);
+            authorContainer.appendChild(sourceThread.cotents[index].profile.avatar);
+            authorContainer.appendChild(sourceThread.cotents[index].profile.nameAnchor);
 
             const badgeContainer = appendJSX<HTMLDivElement>(<div class="badge-container"></div>, authorContainer);
 
-            const profileLevel = thread.cotents[index].profile.level;
-            const badgeTitle = thread.cotents[index].profile.badgeTitle;
+            const profileLevel = sourceThread.cotents[index].profile.level;
+            const badgeTitle = sourceThread.cotents[index].profile.badgeTitle;
             const hasLevel = Number.isFinite(profileLevel) && profileLevel > 0;
             appendJSX(
                 <div class={hasLevel ? `floor-badge level-${levelToClass(profileLevel)}` : "floor-badge"}>
@@ -247,7 +284,7 @@ export default async function () {
                     <div class="badge-title">{badgeTitle}</div>
                 </div>, badgeContainer.root);
 
-            if (thread.cotents[index].isLouzhu)
+            if (sourceThread.cotents[index].isLouzhu)
                 appendJSX(<div class="floor-badge">楼主</div>, badgeContainer.root);
 
             return authorContainer;
@@ -321,7 +358,7 @@ export default async function () {
                         const floorImages = dom<"img">(".BDE_Image", postContent!, []);
                         const localIndex = Math.max(0, floorImages.findIndex(img => img === newEl));
                         if (floorPics.length > 0) {
-                            imagesViewer({
+                            void imagesViewer({
                                 content: floorPics,
                                 defaultIndex: Math.min(localIndex, floorPics.length - 1),
                             });
@@ -333,7 +370,7 @@ export default async function () {
                         const postIdMatch = +(newEl.dataset.pid ?? 0);
                         newEl.dataset.index = `${allImages.findIndex(img => img.postId === postIdMatch) + dom<"img">(".BDE_Image", postContent!, []).findIndex(img => img === newEl)}`;
                     }
-                    imagesViewer({
+                    void imagesViewer({
                         content: allImages,
                         defaultIndex: parseInt(newEl.dataset.index ?? "0", 10),
                     });
@@ -484,4 +521,8 @@ function isThreadUnavailablePage(): boolean {
     if (document.querySelector(".page404")) return true;
     if (PageData?.thread?.thread_id) return false;
     return document.querySelector("#j_p_postlist, #pb_content") == null;
+}
+
+function markThreadLayoutReady(): void {
+    document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY);
 }

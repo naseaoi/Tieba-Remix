@@ -1,6 +1,6 @@
 import { Component } from "vue";
 import { JSX } from "vue/jsx-runtime";
-import { SubSettingKey } from "./components/settings.vue";
+import type { SubSettingKey } from "./components/settings.vue";
 
 /** 用户模块（扩展） */
 interface UserModuleEx extends UserModule {

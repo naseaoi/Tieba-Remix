@@ -41,7 +41,7 @@
                 </UserButton>
 
                 <!-- 设置 -->
-                <UserButton class="nav-icon-button" no-border="all" @click="renderDialog(Settings)">
+                <UserButton class="nav-icon-button" no-border="all" @click="openSettings">
                     <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path
@@ -66,16 +66,15 @@
 
 <script lang="ts" setup>
 import { tiebaAPI } from "@/lib/api/tieba";
+import { openSettingsDialog } from "@/lib/common/open-settings";
 import { dom } from "@/lib/elemental";
-import { renderDialog } from "@/lib/render";
 import { navBarHideMode } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import _ from "@/lib/utils/_";
+import { LOGIN_POPUP_VISIBLE_ATTR } from "@/modules/no-login";
 import { messageBox, toast, UserButton } from "user-view";
 import { computed, onMounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";
-import Settings from "./settings.vue";
-import { LOGIN_POPUP_VISIBLE_ATTR } from "@/modules/no-login";
 
 export type NavBarHideMode = "fold" | "alwaysFold" | "never";
 type MenuKey = "message" | "more" | "user";
@@ -330,6 +329,10 @@ function isPasswordLoginVisible() {
     const rect = panel.getBoundingClientRect();
     const style = getComputedStyle(panel);
     return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+}
+
+async function openSettings() {
+    await openSettingsDialog();
 }
 
 function loadNavMenuContent() {

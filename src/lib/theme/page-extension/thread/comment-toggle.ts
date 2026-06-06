@@ -1,7 +1,11 @@
 import { unsafeWindow as importedUnsafeWindow } from "$";
+import { installLzlReplyToggle } from "@/lib/tieba-components/lzl-reply-toggle";
 import { waitUntil } from "@/lib/utils";
 
-const WRAPPER_SELECTOR = ".core_reply_wrapper, .j_lzl_container";
+const LIST_SELECTOR = ".core_reply_wrapper, .j_lzl_container";
+const EDITOR_SELECTOR = ".lzl_editor_container";
+const WRAPPER_SELECTOR = `${LIST_SELECTOR}, ${EDITOR_SELECTOR}`;
+const SUBPOST_SELECTOR = "li.j_lzl_s_p";
 const TOGGLING_CLASS = "tbr-lzl-toggling";
 const FALLBACK_DURATION = 280;
 const SAFETY_BUFFER = 120;
@@ -22,6 +26,9 @@ interface JQueryStatic {
         slideUp: SlideMethod;
         slideDown: SlideMethod;
         slideToggle: SlideMethod;
+        show: SlideMethod;
+        hide: SlideMethod;
+        toggle: SlideMethod;
         [key: string]: unknown;
     };
 }
@@ -33,6 +40,9 @@ let installed = false;
 export function setupCommentToggleAnimation(): void {
     if (installed) return;
     installed = true;
+
+    setupEditorSwitchFix();
+    installLzlReplyToggle(collapse);
 
     void waitUntil(() => pageJQuery() != null, JQUERY_WAIT_TIMEOUT)
         .then(() => {
@@ -54,6 +64,37 @@ function prefersReducedMotion(): boolean {
     return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
+interface LzlEditorLike {
+    _lzl?: { _loadLzlContent?: (target: unknown) => void } | null;
+    cur_sec?: { css?: (prop: string) => string } | null;
+}
+
+// 编辑框已打开时点击其他楼层的「我也说一句」，先把原生 cur_optdom 同步到点击楼层
+function setupEditorSwitchFix(): void {
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const entry = target.closest(".j_lzl_p");
+        if (!entry) return;
+
+        const win = pageWindow() as unknown as { LzlEditor?: LzlEditorLike; jQuery?: (el: Element) => unknown };
+        const lzlEditor = win.LzlEditor;
+        const jquery = win.jQuery;
+        if (!lzlEditor || typeof jquery !== "function") return;
+
+        const openLzl = lzlEditor._lzl;
+        const editorSection = lzlEditor.cur_sec;
+        if (!openLzl || typeof openLzl._loadLzlContent !== "function") return;
+        if (!editorSection || editorSection.css?.("display") === "none") return;
+
+        try {
+            openLzl._loadLzlContent(jquery(entry));
+        } catch {
+            // 原生方法异常时跳过
+        }
+    }, true);
+}
+
 function patchSlideMethods(jquery: JQueryStatic): void {
     const fn = jquery.fn;
     if (fn[PATCH_FLAG]) return;
@@ -61,6 +102,9 @@ function patchSlideMethods(jquery: JQueryStatic): void {
     const originalSlideUp = fn.slideUp;
     const originalSlideDown = fn.slideDown;
     const originalSlideToggle = fn.slideToggle;
+    const originalShow = fn.show;
+    const originalHide = fn.hide;
+    const originalToggle = fn.toggle;
 
     fn.slideUp = function (this: JQuerySet, ...args: unknown[]): JQuerySet {
         if (!matchesWrapper(this)) return originalSlideUp.apply(this, args);
@@ -78,6 +122,29 @@ function patchSlideMethods(jquery: JQueryStatic): void {
 
     fn.slideToggle = function (this: JQuerySet, ...args: unknown[]): JQuerySet {
         if (!matchesWrapper(this)) return originalSlideToggle.apply(this, args);
+        const complete = resolveComplete(args);
+        this.each((_, element) => {
+            (isHidden(element) ? expand : collapse)(element, complete);
+        });
+        return this;
+    };
+
+    fn.show = function (this: JQuerySet, ...args: unknown[]): JQuerySet {
+        if (!matchesWrapper(this)) return originalShow.apply(this, args);
+        const complete = resolveComplete(args);
+        this.each((_, element) => expand(element, complete));
+        return this;
+    };
+
+    fn.hide = function (this: JQuerySet, ...args: unknown[]): JQuerySet {
+        if (!matchesWrapper(this)) return originalHide.apply(this, args);
+        const complete = resolveComplete(args);
+        this.each((_, element) => collapse(element, complete));
+        return this;
+    };
+
+    fn.toggle = function (this: JQuerySet, ...args: unknown[]): JQuerySet {
+        if (!matchesWrapper(this)) return originalToggle.apply(this, args);
         const complete = resolveComplete(args);
         this.each((_, element) => {
             (isHidden(element) ? expand : collapse)(element, complete);
@@ -107,11 +174,29 @@ function isHidden(element: HTMLElement): boolean {
     return element.style.display === "none" || getComputedStyle(element).display === "none";
 }
 
+function isEditorContainer(element: HTMLElement): boolean {
+    return element.classList.contains("lzl_editor_container");
+}
+
+// 编辑器容器在列表祖先隐藏时随列表的展开动画一并显示，自身瞬时显示
+function revealsWithList(element: HTMLElement): boolean {
+    if (!isEditorContainer(element)) return false;
+    const list = element.closest(LIST_SELECTOR);
+    return list instanceof HTMLElement && isHidden(list);
+}
+
+// 楼层无楼中楼回复时编辑器随列表的收起动画一并隐藏，自身瞬时隐藏
+function collapsesWithList(element: HTMLElement): boolean {
+    if (!isEditorContainer(element)) return false;
+    const list = element.closest(LIST_SELECTOR);
+    return list instanceof HTMLElement && list.querySelector(SUBPOST_SELECTOR) == null;
+}
+
 function expand(element: HTMLElement, complete?: () => void): void {
     abortRunning(element);
     element.style.display = "";
 
-    if (prefersReducedMotion()) {
+    if (revealsWithList(element) || prefersReducedMotion()) {
         resetInlineStyles(element);
         complete?.call(element);
         return;
@@ -121,6 +206,7 @@ function expand(element: HTMLElement, complete?: () => void): void {
     const edges = readVerticalEdges(element);
     const targetHeight = element.scrollHeight;
     element.classList.add(TOGGLING_CLASS);
+    element.style.boxSizing = "border-box";
     element.style.height = "0px";
     element.style.opacity = "0";
     collapseVerticalEdges(element);
@@ -130,7 +216,11 @@ function expand(element: HTMLElement, complete?: () => void): void {
     setVerticalEdges(element, edges);
 
     whenSettled(element, () => {
-        resetInlineStyles(element);
+        element.style.height = "auto";
+        element.style.boxSizing = "";
+        element.classList.remove(TOGGLING_CLASS);
+        element.style.opacity = "";
+        clearVerticalEdges(element);
         complete?.call(element);
     });
 }
@@ -138,7 +228,7 @@ function expand(element: HTMLElement, complete?: () => void): void {
 function collapse(element: HTMLElement, complete?: () => void): void {
     abortRunning(element);
 
-    if (prefersReducedMotion()) {
+    if (collapsesWithList(element) || prefersReducedMotion()) {
         element.style.display = "none";
         resetInlineStyles(element);
         complete?.call(element);
@@ -147,6 +237,7 @@ function collapse(element: HTMLElement, complete?: () => void): void {
 
     const edges = readVerticalEdges(element);
     element.classList.add(TOGGLING_CLASS);
+    element.style.boxSizing = "border-box";
     element.style.height = `${element.scrollHeight}px`;
     element.style.opacity = "1";
     setVerticalEdges(element, edges);
@@ -166,6 +257,7 @@ function resetInlineStyles(element: HTMLElement): void {
     element.classList.remove(TOGGLING_CLASS);
     element.style.height = "";
     element.style.opacity = "";
+    element.style.boxSizing = "";
     clearVerticalEdges(element);
 }
 
