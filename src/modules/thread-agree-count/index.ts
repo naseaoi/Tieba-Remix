@@ -1,6 +1,6 @@
 import { asyncdom, domrd } from "@/lib/elemental";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
-import { AGREE_OBJ_TYPE_FLOOR, AGREE_OBJ_TYPE_SUB_POST, AGREE_OBJ_TYPE_THREAD, fetchAgreeSnapshot, fetchSubPostAgreeSnapshot, fetchUserProfileIp, type AgreeSnapshot, type SubPostAgreeSnapshot } from "./api";
+import { AGREE_OBJ_TYPE_FLOOR, AGREE_OBJ_TYPE_SUB_POST, AGREE_OBJ_TYPE_THREAD, fetchAgreeSnapshot, fetchSubPostAgreeSnapshot, fetchSubPostSourceSnapshot, fetchUserProfileIp, type AgreeSnapshot, type SubPostAgreeSnapshot } from "./api";
 import { createAgreeActionState, setupAgreeAction, type AgreeActionServerState, type AgreeActionState } from "./agree-action";
 import { formatCount } from "./format";
 import { toast } from "user-view";
@@ -48,20 +48,28 @@ async function main(): Promise<void> {
     let subPostLoadedKey = "";
     let subPostLoadToken = 0;
     const subPostSnapshotByParentId = new Map<number, Promise<SubPostAgreeSnapshot | undefined>>();
+    const subPostSnapshotCache = new Map<number, SubPostAgreeSnapshot>();
     const actionStateByKey = new Map<string, AgreeActionState>();
     const profileIpByUserId = new Map<number, Promise<string | undefined>>();
+    const resolvedProfileIpByUserId = new Map<number, string>();
+    const sourceByPortrait = new Map<string, string>();
+    const sourceBySubPostId = new Map<number, string>();
+    let subPostSourcePromise: Promise<Map<number, string>> | undefined;
+    let subPostSyncScheduled = false;
+    let subPostSyncRunning = false;
+    let subPostSyncPending = false;
 
     let skipInitialCommentEvent = true;
     threadFloorsObserver.addEvent(() => {
         void syncSnapshot();
-        void syncSubPosts();
+        scheduleSubPostsSync();
     });
     threadCommentsObserver.addEvent(() => {
         if (skipInitialCommentEvent) {
             skipInitialCommentEvent = false;
             return;
         }
-        void syncSubPosts();
+        scheduleSubPostsSync();
     });
 
     async function syncSnapshot(): Promise<void> {
@@ -93,14 +101,24 @@ async function main(): Promise<void> {
     }
 
     async function syncSubPosts(): Promise<void> {
-        const key = `${PageData.thread.thread_id}:${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
+        const key = currentSubPostKey();
         if (key !== subPostLoadedKey) {
             subPostSnapshotByParentId.clear();
+            subPostSnapshotCache.clear();
+            resolvedProfileIpByUserId.clear();
+            sourceByPortrait.clear();
+            sourceBySubPostId.clear();
+            subPostSourcePromise = undefined;
             subPostLoadedKey = key;
         }
 
-        const groups = collectSubPostGroups(threadList);
-        if (groups.size === 0) return;
+        const groups = collectSubPostGroups(threadList, subPostSnapshotCache);
+        if (groups.size === 0) {
+            renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+            void resolveAndRenderSubPostProfileIps(subPostSnapshotCache, key);
+            void resolveAndRenderSubPostSources(key);
+            return;
+        }
 
         const token = ++subPostLoadToken;
         const entries = await Promise.all([...groups].map(async ([parentId, rn]) => {
@@ -111,14 +129,82 @@ async function main(): Promise<void> {
 
         const snapshots = new Map<number, SubPostAgreeSnapshot>();
         entries.forEach(([parentId, next]) => {
-            if (next) snapshots.set(parentId, next);
+            if (!next) return;
+            subPostSnapshotCache.set(parentId, next);
+            snapshots.set(parentId, next);
         });
-        renderSubPostAgree(threadList, snapshots, snapshot?.userIpByPortrait, new Map(), actionStateByKey);
+        renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
 
-        void resolveSubPostProfileIps(threadList, snapshots, snapshot?.userIpByPortrait).then(profileIps => {
-            if (token !== subPostLoadToken) return;
-            renderSubPostAgree(threadList, snapshots, snapshot?.userIpByPortrait, profileIps, actionStateByKey);
+        void resolveAndRenderSubPostProfileIps(snapshots, key);
+        void resolveAndRenderSubPostSources(key);
+    }
+
+    function currentSubPostKey(): string {
+        return `${PageData.thread.thread_id}:${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
+    }
+
+    async function resolveAndRenderSubPostProfileIps(snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, key: string): Promise<void> {
+        const profileIps = await resolveSubPostProfileIps(threadList, snapshotsByParentId, snapshot?.userIpByPortrait);
+        if (key !== currentSubPostKey()) return;
+        if (profileIps.size === 0) return;
+
+        profileIps.forEach((ip, userId) => {
+            resolvedProfileIpByUserId.set(userId, ip);
         });
+        renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+    }
+
+    async function resolveAndRenderSubPostSources(key: string): Promise<void> {
+        const sources = await getSubPostSourceSnapshot();
+        if (key !== currentSubPostKey()) return;
+        if (sources.size === 0) return;
+
+        sources.forEach((source, subPostId) => {
+            sourceBySubPostId.set(subPostId, source);
+        });
+        renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+    }
+
+    function getSubPostSourceSnapshot(): Promise<Map<number, string>> {
+        if (!subPostSourcePromise) {
+            subPostSourcePromise = fetchSubPostSourceSnapshot({
+                tid,
+                fid: getForumId(),
+                pn: PageData.pager.cur_page,
+                lzOnly: PageData.special.lz_only,
+            }).catch(err => {
+                console.warn("[thread-agree-count] 拉取楼中楼来源数据失败:", err);
+                return new Map();
+            });
+        }
+        return subPostSourcePromise;
+    }
+
+    function scheduleSubPostsSync(): void {
+        if (subPostSyncScheduled) return;
+        subPostSyncScheduled = true;
+        requestAnimationFrame(() => {
+            subPostSyncScheduled = false;
+            void runSubPostsSync();
+        });
+    }
+
+    async function runSubPostsSync(): Promise<void> {
+        if (subPostSyncRunning) {
+            subPostSyncPending = true;
+            return;
+        }
+
+        subPostSyncRunning = true;
+        try {
+            await syncSubPosts();
+        } finally {
+            subPostSyncRunning = false;
+        }
+
+        if (!subPostSyncPending) return;
+        subPostSyncPending = false;
+        scheduleSubPostsSync();
     }
 
     function getSubPostSnapshot(parentId: number, rn: number): Promise<SubPostAgreeSnapshot | undefined> {
@@ -149,6 +235,7 @@ async function main(): Promise<void> {
             if (portrait && userIpByPortrait?.has(portrait)) return;
 
             const userId = snapshot?.subPostAuthorIdById.get(ids.subPostId);
+            if (userId != null && resolvedProfileIpByUserId.has(userId)) return;
             if (userId != null) userIds.add(userId);
         });
 
@@ -244,8 +331,10 @@ function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot, acti
     });
 }
 
-function renderSubPostAgree(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, userIpByPortrait: Map<string, string> | undefined, profileIpByUserId: Map<number, string>, actionStateByKey: Map<string, AgreeActionState>): void {
-    const sourceByPortrait = collectFloorSourceByPortrait(threadList);
+function renderSubPostAgree(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, userIpByPortrait: Map<string, string> | undefined, profileIpByUserId: Map<number, string>, sourceByPortrait: Map<string, string>, sourceBySubPostId: Map<number, string>, actionStateByKey: Map<string, AgreeActionState>): void {
+    collectFloorSourceByPortrait(threadList).forEach((source, portrait) => {
+        sourceByPortrait.set(portrait, source);
+    });
     const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
     posts.forEach(post => {
         const rendered = post.hasAttribute(SUB_POST_FLAG);
@@ -260,7 +349,7 @@ function renderSubPostAgree(threadList: HTMLElement, snapshotsByParentId: Map<nu
         renderSubPostTailInfo(
             tail,
             getSubPostLocation(post, snapshot, userIpByPortrait, profileIpByUserId),
-            getSubPostSource(post, snapshot, sourceByPortrait),
+            getSubPostSource(post, snapshot, sourceByPortrait, sourceBySubPostId),
         );
         if (!snapshot || rendered) return;
 
@@ -296,9 +385,9 @@ function renderSubPostTailInfo(tail: HTMLElement, location: string | undefined, 
     const sourceItem = upsertTailItem(tail, "tbr-lzl-source", source);
     if (!sourceItem) return;
 
-    if (isMobileSource(source)) {
+    if (isMobileSource(source) && sourceItem.dataset.tbrPlatform !== "mobile") {
         sourceItem.dataset.tbrPlatform = "mobile";
-    } else {
+    } else if (!isMobileSource(source) && sourceItem.dataset.tbrPlatform != null) {
         delete sourceItem.dataset.tbrPlatform;
     }
 }
@@ -313,10 +402,11 @@ function getSubPostLocation(post: HTMLElement, snapshot: SubPostAgreeSnapshot | 
     return userId != null ? profileIpByUserId.get(userId) : undefined;
 }
 
-function getSubPostSource(post: HTMLElement, snapshot: SubPostAgreeSnapshot | undefined, sourceByPortrait: Map<string, string>): string | undefined {
+function getSubPostSource(post: HTMLElement, snapshot: SubPostAgreeSnapshot | undefined, sourceByPortrait: Map<string, string>, sourceBySubPostId: Map<number, string>): string | undefined {
     const ids = getSubPostIds(post);
     const portrait = getSubPostPortrait(post) ?? (ids ? snapshot?.subPostPortraitById.get(ids.subPostId) : undefined);
-    return portrait ? sourceByPortrait.get(portrait) : undefined;
+    const portraitSource = portrait ? sourceByPortrait.get(portrait) : undefined;
+    return portraitSource ?? (ids ? sourceBySubPostId.get(ids.subPostId) : undefined);
 }
 
 function getSubPostPortrait(post: HTMLElement): string | undefined {
@@ -336,8 +426,8 @@ function upsertTailItem(tail: HTMLElement, className: string, text: string | und
         insertTailItem(tail, item);
     }
 
-    item.textContent = text;
-    item.title = text;
+    if (item.textContent !== text) item.textContent = text;
+    if (item.title !== text) item.title = text;
     return item;
 }
 
@@ -354,14 +444,13 @@ function insertTailItem(tail: HTMLElement, item: HTMLElement): void {
     tail.insertBefore(item, tail.querySelector(".lzl_s_r, .lzl_jb"));
 }
 
-function collectSubPostGroups(threadList: HTMLElement): Map<number, number> {
+function collectSubPostGroups(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>): Map<number, number> {
     const groups = new Map<number, number>();
     const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
     posts.forEach(post => {
-        if (post.hasAttribute(SUB_POST_FLAG)) return;
-
         const ids = getSubPostIds(post);
         if (!ids) return;
+        if (post.hasAttribute(SUB_POST_FLAG) && snapshotsByParentId.has(ids.parentId)) return;
 
         const rn = getSubPostFetchSize(post);
         groups.set(ids.parentId, Math.max(groups.get(ids.parentId) ?? 0, rn));

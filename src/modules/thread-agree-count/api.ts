@@ -4,6 +4,7 @@ import { md5 } from "@/modules/poll-display/md5";
 const PB_PAGE_API_URL = "https://tiebac.baidu.com/c/f/pb/page";
 const PB_FLOOR_API_URL = "https://tiebac.baidu.com/c/f/pb/floor";
 const USER_PROFILE_API_URL = "https://tiebac.baidu.com/c/u/user/profile";
+const TOTAL_COMMENT_URL = "/p/totalComment";
 const SIGN_SALT = "tiebaclient!!!";
 
 interface AgreeInfo {
@@ -56,6 +57,23 @@ interface UserProfileResponse {
     };
 }
 
+interface TotalCommentInfo {
+    comment_id?: number | string;
+    post_from?: number | string;
+}
+
+interface TotalCommentGroup {
+    comment_info?: TotalCommentInfo[];
+}
+
+interface TotalCommentResponse {
+    errno: number | string;
+    errmsg?: string;
+    data?: {
+        comment_list?: Record<string, TotalCommentGroup>;
+    };
+}
+
 export interface AgreeSnapshot {
     threadAgree?: number;
     threadHasAgree: boolean;
@@ -83,6 +101,13 @@ export interface FetchSubPostAgreeSnapshotOptions {
     pid: number | string;
     pn?: number;
     rn?: number;
+}
+
+export interface FetchSubPostSourceSnapshotOptions {
+    tid: number | string;
+    fid: number | string;
+    pn: number;
+    lzOnly: boolean;
 }
 
 function createClientForm(form: Record<string, string>): Record<string, string> {
@@ -279,6 +304,42 @@ export async function fetchUserProfileIp(uid: number | string): Promise<string |
     }
 
     return parseText(body.user?.ip_address);
+}
+
+export async function fetchSubPostSourceSnapshot(opts: FetchSubPostSourceSnapshotOptions): Promise<Map<number, string>> {
+    const res = await fetch(`${TOTAL_COMMENT_URL}?${buildFormBody({
+        t: String(Date.now()),
+        tid: String(opts.tid),
+        fid: String(opts.fid),
+        pn: String(opts.pn),
+        see_lz: String(Number(opts.lzOnly)),
+    })}`, {
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        throw new Error(`totalComment request failed (status=${res.status})`);
+    }
+
+    const body = await res.json() as TotalCommentResponse | null;
+    if (!body) {
+        throw new Error(`totalComment returned empty body (status=${res.status})`);
+    }
+
+    const errno = typeof body.errno === "string" ? Number(body.errno) : body.errno;
+    if (errno !== 0) {
+        throw new Error(`totalComment error ${errno}: ${body.errmsg || "unknown"}`);
+    }
+
+    const result = new Map<number, string>();
+    Object.values(body.data?.comment_list ?? {}).forEach(group => {
+        group.comment_info?.forEach(comment => {
+            const id = parseCount(comment.comment_id);
+            const postFrom = parseCount(comment.post_from);
+            if (id != null && postFrom != null && postFrom > 0) result.set(id, "移动端");
+        });
+    });
+    return result;
 }
 
 const OP_AGREE_URL = "/mo/q/submit/opAgree";

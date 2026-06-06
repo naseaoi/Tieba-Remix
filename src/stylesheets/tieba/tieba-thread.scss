@@ -643,6 +643,9 @@ span.tP {
     /* 加载回复 */
     background: none;
     background-color: var(--very-light-background);
+    min-height: 0 !important;
+    height: 0 !important;
+    overflow: hidden;
 }
 
 .core_reply_wrapper .loading_reply {

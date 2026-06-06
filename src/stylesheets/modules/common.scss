@@ -24,10 +24,7 @@
     }
 
     html[data-symbol-font="failed"] & {
-        content: "!" !important;
-        font-family: system-ui, sans-serif !important;
-        font-feature-settings: normal;
-        font-weight: 700;
+        color: transparent !important;
     }
 }
 
@@ -55,10 +52,7 @@
     }
 
     html[data-symbol-font="failed"] & {
-        content: "!" !important;
-        font-family: system-ui, sans-serif !important;
-        font-feature-settings: normal;
-        font-weight: 700;
+        color: transparent !important;
     }
 }
 
