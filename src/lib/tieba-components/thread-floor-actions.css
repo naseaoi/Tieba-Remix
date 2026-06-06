@@ -215,23 +215,45 @@
     white-space: nowrap;
 }
 
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
+.lzl_content_reply .tbr-lzl-source,
 .tail-info[data-tbr-platform],
 .tbr-lzl-source[data-tbr-platform] {
     display: inline-flex !important;
+    overflow: hidden;
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    height: 14px;
+    min-height: 14px;
+    max-height: 14px;
     align-items: center;
     font-size: 0 !important;
     line-height: 1;
+    white-space: nowrap;
 }
 
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
+.lzl_content_reply .tbr-lzl-source {
+    font-size: 0 !important;
+}
+
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .tail-info[data-tbr-platform]::before,
 .tbr-lzl-source[data-tbr-platform]::before {
     display: inline-block;
+    flex: 0 0 14px;
     width: 14px;
     height: 14px;
     background-color: currentcolor;
     content: "";
 }
 
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .tail-info[data-tbr-platform="mobile"]::before,
 .tbr-lzl-source[data-tbr-platform="mobile"]::before {
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%23000' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 1H7C5.9 1 5 1.9 5 3v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2Zm0 17H7V4h10v14Zm-4 3h-2v-1h2v1Z'/%3E%3C/svg%3E") center / contain no-repeat;

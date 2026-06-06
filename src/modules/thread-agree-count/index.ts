@@ -8,7 +8,6 @@ import "./style.css";
 
 const FLOOR_FLAG = "data-thread-agree-count-rendered";
 const SUB_POST_FLAG = "data-thread-agree-count-sub-post-rendered";
-const THREAD_BADGE_CLASS = "thread-agree-count-badge";
 const FLOOR_BADGE_CLASS = "floor-agree-count-badge";
 const LZL_BADGE_CLASS = "lzl-agree-count-badge";
 const CONFIRMED_STATE_TTL = 5 * 60 * 1000;
@@ -96,7 +95,6 @@ async function main(): Promise<void> {
 
         snapshot = next;
         loadedKey = key;
-        renderThreadAgree(snapshot, actionStateByKey);
         renderFloorAgree(threadList, snapshot, actionStateByKey);
     }
 
@@ -225,6 +223,17 @@ async function main(): Promise<void> {
 
     async function resolveSubPostProfileIps(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, userIpByPortrait: Map<string, string> | undefined): Promise<Map<number, string>> {
         const userIds = new Set<number>();
+        snapshotsByParentId.forEach(snapshot => {
+            snapshot.subPostAuthorIdById.forEach((userId, subPostId) => {
+                if (resolvedProfileIpByUserId.has(userId)) return;
+
+                const portrait = snapshot.subPostPortraitById.get(subPostId);
+                if (portrait && userIpByPortrait?.has(portrait)) return;
+
+                userIds.add(userId);
+            });
+        });
+
         const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
         posts.forEach(post => {
             const ids = getSubPostIds(post);
@@ -263,32 +272,6 @@ async function main(): Promise<void> {
             profileIpByUserId.set(userId, promise);
         }
         return promise;
-    }
-}
-
-function renderThreadAgree(snapshot: AgreeSnapshot, actionStateByKey: Map<string, AgreeActionState>): void {
-    const count = snapshot.threadAgree;
-    if (count == null) return;
-
-    const title = document.querySelector<HTMLElement>("#title-wrapper .thread-title, .core_title_txt");
-    if (!title) return;
-    if (title.querySelector(`.${THREAD_BADGE_CLASS}`)) return;
-
-    const badge = createAgreeBadge(THREAD_BADGE_CLASS);
-    setBadgeCount(badge, count);
-    title.appendChild(badge);
-
-    if (canAgree()) {
-        setupAgreeAction(badge, {
-            tid: PageData.thread.thread_id,
-            fid: getForumId(),
-            objType: AGREE_OBJ_TYPE_THREAD,
-            tbs: PageData.tbs,
-            liked: snapshot.threadHasAgree,
-            count,
-            state: getAgreeActionState(actionStateByKey, threadAgreeKey(), snapshot.threadHasAgree, count),
-            refresh: refreshThreadAgreeState,
-        });
     }
 }
 
@@ -446,6 +429,10 @@ function insertTailItem(tail: HTMLElement, item: HTMLElement): void {
 
 function collectSubPostGroups(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>): Map<number, number> {
     const groups = new Map<number, number>();
+    collectFloorSubPostGroups(threadList, snapshotsByParentId).forEach((rn, parentId) => {
+        groups.set(parentId, Math.max(groups.get(parentId) ?? 0, rn));
+    });
+
     const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
     posts.forEach(post => {
         const ids = getSubPostIds(post);
@@ -454,6 +441,21 @@ function collectSubPostGroups(threadList: HTMLElement, snapshotsByParentId: Map<
 
         const rn = getSubPostFetchSize(post);
         groups.set(ids.parentId, Math.max(groups.get(ids.parentId) ?? 0, rn));
+    });
+    return groups;
+}
+
+function collectFloorSubPostGroups(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>): Map<number, number> {
+    const groups = new Map<number, number>();
+    threadList.querySelectorAll<HTMLElement>(".l_post").forEach(floor => {
+        const parentId = getFloorPostId(floor);
+        if (parentId == null) return;
+        if (snapshotsByParentId.has(parentId)) return;
+
+        const count = getFloorSubPostCount(floor);
+        if (count == null || count <= 0) return;
+
+        groups.set(parentId, Math.max(LZL_FETCH_RN_MIN, Math.min(LZL_FETCH_RN_MAX, count + 20)));
     });
     return groups;
 }
@@ -639,6 +641,26 @@ function getFloorPostId(floor: HTMLElement): number | undefined {
     return parsePostId(content?.id.replace("post_content_", ""));
 }
 
+function getFloorSubPostCount(floor: HTMLElement): number | undefined {
+    const dataField = floor.getAttribute("data-field");
+    if (dataField) {
+        try {
+            const parsed = JSON.parse(dataField) as {
+                content?: {
+                    comment_num?: number | string;
+                };
+            };
+            const count = parsePostId(parsed.content?.comment_num);
+            if (count != null) return count;
+        } catch (err) {
+            void err;
+        }
+    }
+
+    return getDataFieldNumber(floor.querySelector<HTMLElement>(".j_lzl_container")?.getAttribute("data-field") ?? "", "total_num")
+        ?? getDataFieldNumber(floor.querySelector<HTMLElement>(".j_lzl_r")?.getAttribute("data-field") ?? "", "total_num");
+}
+
 function getSubPostIds(post: HTMLElement): { parentId: number; subPostId: number } | undefined {
     const dataField = post.getAttribute("data-field") ?? "";
     const parentId = getDataFieldNumber(dataField, "pid") ?? getClosestFloorPostId(post);
@@ -649,7 +671,7 @@ function getSubPostIds(post: HTMLElement): { parentId: number; subPostId: number
 }
 
 function getDataFieldNumber(dataField: string, key: string): number | undefined {
-    const match = dataField.match(new RegExp(`["']${key}["']\\s*:\\s*["']?(\\d+)`));
+    const match = dataField.match(new RegExp(`(?:["']${key}["']|${key})\\s*:\\s*["']?(\\d+)`));
     return parsePostId(match?.[1]);
 }
 

@@ -85,15 +85,6 @@ html[${THREAD_LAYOUT_STATUS_ATTR}="${THREAD_LAYOUT_STATUS_LOADING}"] .left_secti
     background: none !important;
 }
 
-html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] #title-wrapper .thread-title:not(:has(.thread-agree-count-badge))::after,
-html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .core_title_txt:not(:has(.thread-agree-count-badge))::after {
-    display: inline-flex !important;
-    flex: 0 0 58px !important;
-    height: 24px !important;
-    margin-left: 8px !important;
-    content: "" !important;
-}
-
 html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .post-tail-wrap:not(:has(.floor-agree-count-badge))::after,
 html[${THREAD_AGREE_COUNT_ATTR}="${THREAD_AGREE_COUNT_ENABLED}"] .core_reply_tail:not(.clearfix):not(:has(.floor-agree-count-badge))::after {
     display: inline-flex !important;
