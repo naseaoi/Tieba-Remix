@@ -1,7 +1,8 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
-import { threadFloorsObserver } from "@/lib/observers";
+import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { shieldList } from "@/modules/shield/shield";
+import { installLzlReplyToggle } from "./lzl-reply-toggle";
 import "./thread-floor-actions.css";
 
 const REPLY_CLASS = "tbr-floor-reply";
@@ -16,6 +17,7 @@ export function installThreadFloorActions(): void {
     if (installed) return;
     if (currentPageType() !== "thread") return;
     installed = true;
+    installLzlReplyToggle();
 
     const run = (): void => {
         renderReplyControls();
@@ -24,6 +26,7 @@ export function installThreadFloorActions(): void {
         renderPlatformIcons();
     };
     threadFloorsObserver.addEvent(run);
+    threadCommentsObserver.addEvent(run);
     run();
 }
 
@@ -40,6 +43,12 @@ function renderReplyControls(): void {
         link.setAttribute("aria-label", "回复");
         link.title = "回复";
     });
+
+    document.querySelectorAll<HTMLElement>(".lzl_content_reply .lzl_s_r").forEach(link => {
+        link.classList.add(REPLY_CLASS);
+        link.setAttribute("aria-label", "回复");
+        link.title = "回复";
+    });
 }
 
 function renderFloorMenus(): void {
@@ -50,6 +59,19 @@ function renderFloorMenus(): void {
         menu.setAttribute("aria-label", "更多操作");
         menu.title = "更多操作";
         setupFloorMenu(menu, menu.querySelector<HTMLAnchorElement>("a"));
+    });
+
+    document.querySelectorAll<HTMLElement>(".lzl_content_reply .lzl_jb").forEach(menu => {
+        if (menu.hasAttribute(MENU_BOUND)) return;
+
+        const reportLink = menu.querySelector<HTMLAnchorElement>("a");
+        if (!reportLink) return;
+
+        menu.setAttribute(MENU_BOUND, "");
+        menu.classList.add(MENU_CLASS);
+        menu.setAttribute("aria-label", "更多操作");
+        menu.title = "更多操作";
+        setupFloorMenu(menu, reportLink);
     });
 }
 
@@ -147,14 +169,20 @@ function positionPopup(popup: HTMLElement, owner: HTMLElement): void {
 }
 
 function blockFloorAuthor(menu: HTMLElement): void {
-    const post = menu.closest<HTMLElement>(".l_post");
-    const name = post?.querySelector<HTMLElement>(".p_author_name")?.textContent?.trim();
+    const name = getMenuAuthorName(menu);
     if (!name) return;
 
     const list = shieldList.get();
     if (list.some(rule => rule.scope === "username" && rule.content === name)) return;
 
     shieldList.set([...list, { content: name, type: "text", scope: "username", toggle: true }]);
+}
+
+function getMenuAuthorName(menu: HTMLElement): string | undefined {
+    const subPostName = menu.closest<HTMLElement>(".lzl_single_post")?.querySelector<HTMLElement>(".at")?.textContent?.trim();
+    if (subPostName) return subPostName.replace(/:$/, "");
+
+    return menu.closest<HTMLElement>(".l_post")?.querySelector<HTMLElement>(".p_author_name")?.textContent?.trim();
 }
 
 function normalizeLocationText(): void {

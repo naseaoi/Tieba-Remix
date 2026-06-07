@@ -144,28 +144,87 @@ body[hide-bottom-editor] .editor_wrap_bright {
 .islike_focus {
     background-color: var(--tieba-theme-color) !important;
     background-image: none !important;
+    border-radius: 8px;
+    margin-top: 4px !important;
+    color: var(--elem-color);
+    font-size: 14px;
+    line-height: 28px;
+    text-align: center;
+}
+
+.islike_focus::after {
+    content: "关注";
 }
 
 .cancel_focus {
+    width: 72px;
     background: none !important;
     background-color: var(--tieba-theme-background) !important;
+    border: 2px solid var(--trans-tieba-theme-color);
+    border-radius: 8px;
+    color: var(--tieba-theme-fore);
+    font-size: 14px;
+    line-height: 28px;
+    text-align: center;
+}
+
+.cancel_focus::after {
+    content: "已关注";
+}
+
+.card_top_right {
+    margin-top: 20px;
 }
 
 .sign_box_bright,
 .sign_box_bright_hover {
+    width: 140px !important;
+    height: 40px !important;
     background: none !important;
     background-color: var(--tieba-theme-color) !important;
+    border: 2px solid var(--trans-tieba-theme-color);
+    border-radius: 8px;
+    color: var(--default-background);
+    font-size: 18px;
+    line-height: 40px;
+    text-align: center;
+}
+
+.sign_btn_bright::before {
+    color: var(--elem-color);
+    content: "签到";
 }
 
 .sign_box_bright_signed,
 .sign_box_bright_noclass_hover {
     background: none !important;
     background-color: var(--tieba-theme-background) !important;
+    text-align: unset;
+}
+
+.sign_today_date,
+.sign_month_lack_days {
+    display: none;
+}
+
+.sign_keep_span {
+    width: 140px !important;
+    height: 40px;
 }
 
 .sign_mod_bright .sign_keep_span {
     margin: unset !important;
+    color: var(--tieba-theme-fore);
+    font-size: 12px;
     text-align: center !important;
+}
+
+.sign_box_bright_signed::before {
+    content: none !important;
+}
+
+.sign_mod_bright .sign_keep_span::before {
+    content: "已签到 | ";
 }
 
 .forum_content {

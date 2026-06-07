@@ -27,7 +27,7 @@ $float-bar-default-left: calc(50% + var(--content-max) / 2 + $float-bar-layout-m
         left: calc(100% - $float-bar-width - var(--scrollbar-width));
     }
 
-    li.tbui_aside_fbar_button {
+    > li.tbui_aside_fbar_button {
         overflow: hidden;
         border: 1px solid rgb(0 0 0 / 10%);
         border-radius: 12px;
@@ -48,9 +48,9 @@ $float-bar-default-left: calc(50% + var(--content-max) / 2 + $float-bar-layout-m
             transform: translateY(0);
         }
 
-        a {
+        > a {
             border: none !important;
-            border-radius: 12px;
+            border-radius: inherit;
             box-shadow: none !important;
             outline: none;
             background: none !important;

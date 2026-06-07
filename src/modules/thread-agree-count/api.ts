@@ -1,7 +1,10 @@
 import { gmRequest } from "@/lib/monkey";
 import { md5 } from "@/modules/poll-display/md5";
 
-const API_URL = "https://tiebac.baidu.com/c/f/pb/page";
+const PB_PAGE_API_URL = "https://tiebac.baidu.com/c/f/pb/page";
+const PB_FLOOR_API_URL = "https://tiebac.baidu.com/c/f/pb/floor";
+const USER_PROFILE_API_URL = "https://tiebac.baidu.com/c/u/user/profile";
+const TOTAL_COMMENT_URL = "/p/totalComment";
 const SIGN_SALT = "tiebaclient!!!";
 
 interface AgreeInfo {
@@ -14,6 +17,13 @@ interface PbPost {
     agree?: AgreeInfo;
 }
 
+interface PbUser {
+    id?: number | string;
+    name?: string;
+    portrait?: string;
+    ip_address?: string;
+}
+
 interface PbPageResponse {
     error_code: number | string;
     error_msg?: string;
@@ -21,6 +31,47 @@ interface PbPageResponse {
         agree?: AgreeInfo;
     };
     post_list?: PbPost[];
+    user_list?: PbUser[];
+}
+
+interface PbSubPost {
+    id?: number | string;
+    agree?: AgreeInfo;
+    author?: {
+        id?: number | string;
+        portrait?: string;
+    };
+}
+
+interface PbFloorResponse {
+    error_code: number | string;
+    error_msg?: string;
+    subpost_list?: PbSubPost[];
+}
+
+interface UserProfileResponse {
+    error_code: number | string;
+    error_msg?: string;
+    user?: {
+        ip_address?: string;
+    };
+}
+
+interface TotalCommentInfo {
+    comment_id?: number | string;
+    post_from?: number | string;
+}
+
+interface TotalCommentGroup {
+    comment_info?: TotalCommentInfo[];
+}
+
+interface TotalCommentResponse {
+    errno: number | string;
+    errmsg?: string;
+    data?: {
+        comment_list?: Record<string, TotalCommentGroup>;
+    };
 }
 
 export interface AgreeSnapshot {
@@ -28,6 +79,7 @@ export interface AgreeSnapshot {
     threadHasAgree: boolean;
     postAgreeById: Map<number, number>;
     postHasAgreeById: Map<number, boolean>;
+    userIpByPortrait: Map<string, string>;
 }
 
 export interface FetchAgreeSnapshotOptions {
@@ -35,6 +87,40 @@ export interface FetchAgreeSnapshotOptions {
     pn: number;
     rn: number;
     lzOnly: boolean;
+}
+
+export interface SubPostAgreeSnapshot {
+    subPostAgreeById: Map<number, number>;
+    subPostHasAgreeById: Map<number, boolean>;
+    subPostAuthorIdById: Map<number, number>;
+    subPostPortraitById: Map<number, string>;
+}
+
+export interface FetchSubPostAgreeSnapshotOptions {
+    tid: number | string;
+    pid: number | string;
+    pn?: number;
+    rn?: number;
+}
+
+export interface FetchSubPostSourceSnapshotOptions {
+    tid: number | string;
+    fid: number | string;
+    pn: number;
+    lzOnly: boolean;
+}
+
+function createClientForm(form: Record<string, string>): Record<string, string> {
+    return {
+        _client_id: genClientId(),
+        _client_type: "2",
+        _client_version: "12.50.1.0",
+        _phone_imei: "000000000000000",
+        from: "baidu_appstore",
+        net_type: "1",
+        timestamp: String(Date.now()),
+        ...form,
+    };
 }
 
 function signForm(form: Record<string, string>): string {
@@ -66,26 +152,30 @@ function parseBool(value: unknown): boolean {
     return false;
 }
 
+function parseText(value: unknown): string | undefined {
+    if (typeof value !== "string") return undefined;
+    const text = value.trim();
+    return text.length > 0 ? text : undefined;
+}
+
+function normalizePortrait(value: unknown): string | undefined {
+    const text = parseText(value);
+    return text ? text.replace(/\?.*$/, "") : undefined;
+}
+
 export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promise<AgreeSnapshot> {
-    const form: Record<string, string> = {
-        _client_id: genClientId(),
-        _client_type: "2",
-        _client_version: "12.50.1.0",
-        _phone_imei: "000000000000000",
-        from: "baidu_appstore",
+    const form = createClientForm({
         kz: String(opts.tid),
-        net_type: "1",
         pn: String(opts.pn),
         rn: String(opts.rn),
         see_lz: String(Number(opts.lzOnly)),
         st_type: "pb_page",
-        timestamp: String(Date.now()),
-    };
+    });
     form.sign = signForm(form);
 
     const res = await gmRequest<"json">({
         method: "POST",
-        url: API_URL,
+        url: PB_PAGE_API_URL,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },
@@ -114,18 +204,149 @@ export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promi
         postHasAgreeById.set(id, parseBool(post.agree?.has_agree));
     }
 
+    const userIpByPortrait = new Map<string, string>();
+    for (const user of body.user_list ?? []) {
+        const portrait = normalizePortrait(user.portrait);
+        const ip = parseText(user.ip_address);
+        if (portrait && ip) userIpByPortrait.set(portrait, ip);
+    }
+
     return {
         threadAgree: parseCount(body.thread?.agree?.agree_num),
         threadHasAgree: parseBool(body.thread?.agree?.has_agree),
         postAgreeById,
         postHasAgreeById,
+        userIpByPortrait,
     };
+}
+
+export async function fetchSubPostAgreeSnapshot(opts: FetchSubPostAgreeSnapshotOptions): Promise<SubPostAgreeSnapshot> {
+    const form = createClientForm({
+        kz: String(opts.tid),
+        pid: String(opts.pid),
+        pn: String(opts.pn ?? 1),
+        rn: String(opts.rn ?? 100),
+    });
+    form.sign = signForm(form);
+
+    const res = await gmRequest<"json">({
+        method: "POST",
+        url: PB_FLOOR_API_URL,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: buildFormBody(form),
+        responseType: "json",
+        timeout: 10_000,
+    });
+
+    const body = res.response as PbFloorResponse | null;
+    if (!body) {
+        throw new Error(`pb/floor returned empty body (status=${res.status})`);
+    }
+
+    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
+    if (errno !== 0) {
+        throw new Error(`pb/floor error ${errno}: ${body.error_msg || "unknown"}`);
+    }
+
+    const subPostAgreeById = new Map<number, number>();
+    const subPostHasAgreeById = new Map<number, boolean>();
+    const subPostAuthorIdById = new Map<number, number>();
+    const subPostPortraitById = new Map<number, string>();
+    for (const post of body.subpost_list ?? []) {
+        const id = parseCount(post.id);
+        if (id == null) continue;
+        const count = parseCount(post.agree?.agree_num);
+        if (count != null) subPostAgreeById.set(id, count);
+        subPostHasAgreeById.set(id, parseBool(post.agree?.has_agree));
+
+        const authorId = parseCount(post.author?.id);
+        if (authorId != null) subPostAuthorIdById.set(id, authorId);
+
+        const portrait = normalizePortrait(post.author?.portrait);
+        if (portrait) subPostPortraitById.set(id, portrait);
+    }
+
+    return {
+        subPostAgreeById,
+        subPostHasAgreeById,
+        subPostAuthorIdById,
+        subPostPortraitById,
+    };
+}
+
+export async function fetchUserProfileIp(uid: number | string): Promise<string | undefined> {
+    const form = createClientForm({
+        uid: String(uid),
+    });
+    form.sign = signForm(form);
+
+    const res = await gmRequest<"json">({
+        method: "POST",
+        url: USER_PROFILE_API_URL,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: buildFormBody(form),
+        responseType: "json",
+        timeout: 10_000,
+    });
+
+    const body = res.response as UserProfileResponse | null;
+    if (!body) {
+        throw new Error(`user/profile returned empty body (status=${res.status})`);
+    }
+
+    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
+    if (errno !== 0) {
+        throw new Error(`user/profile error ${errno}: ${body.error_msg || "unknown"}`);
+    }
+
+    return parseText(body.user?.ip_address);
+}
+
+export async function fetchSubPostSourceSnapshot(opts: FetchSubPostSourceSnapshotOptions): Promise<Map<number, string>> {
+    const res = await fetch(`${TOTAL_COMMENT_URL}?${buildFormBody({
+        t: String(Date.now()),
+        tid: String(opts.tid),
+        fid: String(opts.fid),
+        pn: String(opts.pn),
+        see_lz: String(Number(opts.lzOnly)),
+    })}`, {
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        throw new Error(`totalComment request failed (status=${res.status})`);
+    }
+
+    const body = await res.json() as TotalCommentResponse | null;
+    if (!body) {
+        throw new Error(`totalComment returned empty body (status=${res.status})`);
+    }
+
+    const errno = typeof body.errno === "string" ? Number(body.errno) : body.errno;
+    if (errno !== 0) {
+        throw new Error(`totalComment error ${errno}: ${body.errmsg || "unknown"}`);
+    }
+
+    const result = new Map<number, string>();
+    Object.values(body.data?.comment_list ?? {}).forEach(group => {
+        group.comment_info?.forEach(comment => {
+            const id = parseCount(comment.comment_id);
+            const postFrom = parseCount(comment.post_from);
+            if (id != null && postFrom != null && postFrom > 0) result.set(id, "移动端");
+        });
+    });
+    return result;
 }
 
 const OP_AGREE_URL = "/mo/q/submit/opAgree";
 
 export const AGREE_OBJ_TYPE_THREAD = 3;
 export const AGREE_OBJ_TYPE_FLOOR = 1;
+export const AGREE_OBJ_TYPE_SUB_POST = 2;
 
 export interface OpAgreeOptions {
     tid: number | string;

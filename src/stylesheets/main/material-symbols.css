@@ -73,11 +73,7 @@ html[data-symbol-font="failed"] .filled-icon:not(:has(svg))::before,
 html[data-symbol-font="failed"] .user-icon::before,
 html[data-symbol-font="failed"] .user-icon-outline::before,
 html[data-symbol-font="failed"] .user-icon-filled::before {
-    color: var(--default-fore, currentColor);
-    content: "!" !important;
-    font-family: system-ui, sans-serif !important;
-    font-feature-settings: normal;
-    font-weight: 700;
+    content: none !important;
 }
 
 html[data-symbol-font="failed"] .tbui_aside_float_bar li a::after,
@@ -88,9 +84,5 @@ html[data-symbol-font="failed"] .p_tools .tb_icon_turnright::before,
 html[data-symbol-font="failed"] .search_internal_btn::after,
 html[data-symbol-font="failed"] .icon_author::after,
 html[data-symbol-font="failed"] .icon_replyer::after {
-    color: var(--default-fore, currentColor);
-    content: "!" !important;
-    font-family: system-ui, sans-serif !important;
-    font-feature-settings: normal;
-    font-weight: 700;
+    color: transparent !important;
 }

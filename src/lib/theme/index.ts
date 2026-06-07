@@ -1,38 +1,166 @@
+import { currentPageType, getResource } from "../api/remixed";
 import { GM_addStyle } from "@/lib/monkey";
-import "@/stylesheets/main/animations.scss";
-import baseStyle from "@/stylesheets/main/base.scss?inline";
-import "@/stylesheets/main/material-symbols.css";
-import "@/stylesheets/main/palette.scss";
-import "@/stylesheets/main/palette-vercel.scss";
-import universalStyle from "@/stylesheets/main/universal.scss?inline";
-import "@/stylesheets/main/variables.scss";
-import tiebaErrorStyle from "@/stylesheets/tieba/tieba-error.scss?inline";
-import tiebaForumStyle from "@/stylesheets/tieba/tieba-forum.scss?inline";
-import tiebaForumSearchStyle from "@/stylesheets/tieba/tieba-forum-search.scss?inline";
-import tiebaHomeStyle from "@/stylesheets/tieba/tieba-home.scss?inline";
-import tiebaMainStyle from "@/stylesheets/tieba/tieba-main.scss?inline";
-import tiebaThreadStyle from "@/stylesheets/tieba/tieba-thread.scss?inline";
-import vercelErrorStyle from "@/stylesheets/tieba-vercel/tieba-error.scss?inline";
-import vercelForumStyle from "@/stylesheets/tieba-vercel/tieba-forum.scss?inline";
-import vercelHomeStyle from "@/stylesheets/tieba-vercel/tieba-home.scss?inline";
-import vercelMainStyle from "@/stylesheets/tieba-vercel/tieba-main.scss?inline";
-import vercelSettingsStyle from "@/stylesheets/tieba-vercel/settings.scss?inline";
-import vercelThreadStyle from "@/stylesheets/tieba-vercel/tieba-thread.scss?inline";
-import _ from "@/lib/utils/_";
-import { getResource } from "../api/remixed";
 import { domrd } from "../elemental";
 import { injectCSSRule, overwriteCSS, parseMultiCSS } from "../elemental/styles";
 import { scrollbarWidth } from "../render";
-import { customBackground, customStyle, fontWeights, monospaceFonts, themeColor, userFonts } from "../user-values";
+import { customBackground, customStyle, fontWeights, monospaceFonts, styleTheme, themeColor, userFonts } from "../user-values";
 import { waitUntil } from "../utils";
 import { hexToRGBA, rgbaToHSLA } from "../utils/color";
 
 export const darkPrefers = matchMedia("(prefers-color-scheme: dark)");
 
-/** 主题色专用 style 元素，可反复替换内容 */
+type ThemeStyle = "remixed" | "vercel";
+type InlineStyleModule = { default: string };
+type StyleBucketLoader = () => Promise<string[]>;
+
+const loadedStyleBuckets = new Map<string, Promise<HTMLStyleElement[]>>();
+
+const inlineStyleLoaders = {
+    "base": () => import("@/stylesheets/main/base.scss?inline"),
+    "universal": () => import("@/stylesheets/main/universal.scss?inline"),
+    "animations": () => import("@/stylesheets/main/animations.scss?inline"),
+    "material-symbols": () => import("@/stylesheets/main/material-symbols.css?inline"),
+    "palette": () => import("@/stylesheets/main/palette.scss?inline"),
+    "palette-vercel": () => import("@/stylesheets/main/palette-vercel.scss?inline"),
+    "variables": () => import("@/stylesheets/main/variables.scss?inline"),
+    "tieba-error": () => import("@/stylesheets/tieba/tieba-error.scss?inline"),
+    "tieba-forum": () => import("@/stylesheets/tieba/tieba-forum.scss?inline"),
+    "tieba-forum-search": () => import("@/stylesheets/tieba/tieba-forum-search.scss?inline"),
+    "tieba-home": () => import("@/stylesheets/tieba/tieba-home.scss?inline"),
+    "tieba-main": () => import("@/stylesheets/tieba/tieba-main.scss?inline"),
+    "tieba-thread": () => import("@/stylesheets/tieba/tieba-thread.scss?inline"),
+    "vercel-error": () => import("@/stylesheets/tieba-vercel/tieba-error.scss?inline"),
+    "vercel-forum": () => import("@/stylesheets/tieba-vercel/tieba-forum.scss?inline"),
+    "vercel-home": () => import("@/stylesheets/tieba-vercel/tieba-home.scss?inline"),
+    "vercel-main": () => import("@/stylesheets/tieba-vercel/tieba-main.scss?inline"),
+    "vercel-settings": () => import("@/stylesheets/tieba-vercel/settings.scss?inline"),
+    "vercel-thread": () => import("@/stylesheets/tieba-vercel/tieba-thread.scss?inline"),
+} satisfies Record<string, () => Promise<InlineStyleModule>>;
+
+function pageBucketKey() {
+    switch (currentPageType()) {
+        case "index":
+            return "page:index";
+
+        case "forum":
+            return "page:forum";
+
+        case "thread":
+            return "page:thread";
+
+        default:
+            return "page:error";
+    }
+}
+
+function themeBucketKey(theme: ThemeStyle) {
+    return `theme:${theme}:${pageBucketKey()}`;
+}
+
+async function loadInlineStyles(keys: Array<keyof typeof inlineStyleLoaders>) {
+    const styles = await Promise.all(keys.map(key => inlineStyleLoaders[key]()));
+    return styles.map(style => style.default);
+}
+
+function ensureStyleBucket(key: string, loader: StyleBucketLoader) {
+    const cached = loadedStyleBuckets.get(key);
+    if (cached) return cached;
+
+    const pending = loader().then(style => overwriteCSS(...style));
+    loadedStyleBuckets.set(key, pending);
+    return pending;
+}
+
+async function ensureBaseCSS() {
+    return ensureStyleBucket("base", () => loadInlineStyles([
+        "animations",
+        "material-symbols",
+        "palette",
+        "variables",
+        "base",
+        "universal",
+    ]));
+}
+
+async function ensureThemePaletteCSS(theme: ThemeStyle) {
+    if (theme !== "vercel") return [];
+
+    return ensureStyleBucket(`theme-palette:${theme}`, () => loadInlineStyles([
+        "palette-vercel",
+    ]));
+}
+
+async function ensurePageCSS() {
+    const pageType = currentPageType();
+
+    if (pageType === "index") {
+        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+            "tieba-main",
+            "tieba-home",
+        ]));
+    }
+
+    if (pageType === "forum") {
+        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+            "tieba-main",
+            "tieba-forum",
+            "tieba-forum-search",
+        ]));
+    }
+
+    if (pageType === "thread") {
+        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+            "tieba-main",
+            "tieba-thread",
+        ]));
+    }
+
+    return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+        "tieba-error",
+    ]));
+}
+
+async function ensureThemeCSS(theme: ThemeStyle) {
+    if (theme !== "vercel") return [];
+
+    const pageType = currentPageType();
+
+    if (pageType === "index") {
+        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+            "vercel-main",
+            "vercel-home",
+        ]));
+    }
+
+    if (pageType === "forum") {
+        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+            "vercel-main",
+            "vercel-forum",
+        ]));
+    }
+
+    if (pageType === "thread") {
+        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+            "vercel-main",
+            "vercel-thread",
+        ]));
+    }
+
+    return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+        "vercel-error",
+    ]));
+}
+
+export async function ensureSettingsCSS() {
+    if (styleTheme.get() !== "vercel") return [];
+
+    return ensureStyleBucket("settings:vercel", () => loadInlineStyles([
+        "vercel-settings",
+    ]));
+}
+
 let themeColorStyleEl: HTMLStyleElement | undefined;
 
-/** 实时应用主题色到 CSS 变量（同时覆盖 dark/light 两种模式） */
 export function applyThemeColor() {
     const theme = themeColor.get();
     const darkRGBA = hexToRGBA(theme.dark);
@@ -60,7 +188,6 @@ export function applyThemeColor() {
             "--tieba-theme-active": darkActive,
             "--tieba-theme-background": darkBack,
             "--tieba-theme-fore": darkFore,
-            // 桥接 user-view 内部变量，使聚焦/激活态跟随主题色
             "--user-theme": theme.dark,
             "--user-theme-transp": darkTransp,
             "--user-theme-hover": darkHover,
@@ -92,12 +219,9 @@ export function applyThemeColor() {
     themeColorStyleEl.textContent = css;
 }
 
-/** 动态字体/字重样式专用 style 元素 */
 let dynFontStyleEl: HTMLStyleElement | undefined;
-/** 自定义样式专用 style 元素 */
 let customStyleEl: HTMLStyleElement | undefined;
 
-/** 实时应用字体与字重 CSS 变量 */
 export function applyDynamicFonts() {
     const css = parseMultiCSS({
         ":root": {
@@ -117,7 +241,6 @@ export function applyDynamicFonts() {
     dynFontStyleEl.textContent = css;
 }
 
-/** 实时应用自定义样式 */
 export function applyCustomStyle() {
     const customCSS = customStyle.get();
     if (!customStyleEl) {
@@ -128,11 +251,8 @@ export function applyCustomStyle() {
     customStyleEl.textContent = customCSS;
 }
 
-/** 动态样式 */
 export async function loadDynamicCSS() {
     applyDynamicFonts();
-
-    // 主题色通过独立 <style> 标签注入，支持实时替换
     applyThemeColor();
 
     window.addEventListener("load", function () {
@@ -149,24 +269,12 @@ export async function loadDynamicCSS() {
 }
 
 export async function loadMainCSS() {
-    overwriteCSS(
-        baseStyle,
-        universalStyle,
-        tiebaErrorStyle,
-        tiebaForumStyle,
-        tiebaHomeStyle,
-        tiebaMainStyle,
-        tiebaThreadStyle,
-        // Vercel 主题样式（仅 html.style-vercel 时通过选择器作用域生效）
-        vercelMainStyle,
-        vercelForumStyle,
-        vercelThreadStyle,
-        vercelHomeStyle,
-        vercelErrorStyle,
-        vercelSettingsStyle,
-        // 吧首页搜索栏改造（放在最后，覆盖前面所有主题对 #head / .search_top 的样式）
-        tiebaForumSearchStyle,
-    );
+    await Promise.all([
+        ensureBaseCSS(),
+        ensurePageCSS(),
+        ensureThemePaletteCSS(styleTheme.get()),
+        ensureThemeCSS(styleTheme.get()),
+    ]);
 
     document.addEventListener("DOMContentLoaded", function () {
         document.head.appendChild(domrd("link", {
@@ -177,14 +285,12 @@ export async function loadMainCSS() {
     }, { once: true });
 }
 
-/**
- * 设置样式风格主题（Remixed / Vercel）
- * 通过切换 <html> 的 class 控制 CSS 选择器作用域，无需重新加载
- */
 export function setStyleTheme(value: "remixed" | "vercel") {
     const html = document.documentElement;
     html.classList.toggle("style-vercel", value === "vercel");
     html.classList.toggle("style-remixed", value === "remixed");
+    void ensureThemePaletteCSS(value);
+    void ensureThemeCSS(value);
 }
 
 let customBackgroundElement: Maybe<HTMLStyleElement> = undefined;

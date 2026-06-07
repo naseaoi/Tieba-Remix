@@ -4,22 +4,23 @@ import { forumThreadsObserver } from "@/lib/observers";
 
 let installed = false;
 let pendingRestoreTimer: Maybe<number>;
+let lastRestoreTime = 0;
 let pageObserver: Maybe<MutationObserver>;
 let rootObserver: Maybe<MutationObserver>;
 let observedRoot: Maybe<Element>;
 
 const ROOT_SELECTOR = "#pagelet_frs-list\\/pagelet\\/thread";
 const IMAGE_SELECTOR = ".threadlist_media img";
-const URL_ATTRS = [
+const REAL_URL_ATTRS = [
     "data-original",
     "data-src",
     "data-url",
     "original",
     "bpic",
-    "attr",
-    "src",
 ];
-const OBSERVED_ATTRS = [...URL_ATTRS, "style", "srcset"];
+const OBSERVED_ATTRS = [...REAL_URL_ATTRS, "src", "style", "srcset"];
+const RESTORE_DEBOUNCE_MS = 16;
+const RESTORE_MAX_WAIT_MS = 300;
 
 function isPlaceholderUrl(url: string): boolean {
     const lower = url.toLowerCase();
@@ -47,10 +48,16 @@ function normalizeImageUrl(value: Maybe<string | null>): Maybe<string> {
     return undefined;
 }
 
-function markImageVisible(img: HTMLImageElement): void {
+function markRestored(img: HTMLImageElement): void {
     img.dataset.trexThumbnailRestored = "1";
-    img.style.opacity = "1";
-    img.style.visibility = "visible";
+}
+
+function setBackgroundFallback(img: HTMLImageElement, url: string): void {
+    const quotedUrl = url.replaceAll("\"", "%22");
+    img.style.backgroundImage = `url("${quotedUrl}")`;
+    img.style.backgroundRepeat = "no-repeat";
+    img.style.backgroundPosition = "center";
+    img.style.backgroundSize = "cover";
 }
 
 function clearBackgroundFallback(img: HTMLImageElement): void {
@@ -60,15 +67,11 @@ function clearBackgroundFallback(img: HTMLImageElement): void {
     img.style.removeProperty("background-size");
 }
 
-function getImageUrl(img: HTMLImageElement): Maybe<string> {
-    const current = normalizeImageUrl(img.currentSrc || img.src);
-    if (current && !isPlaceholderUrl(current)) return current;
-
-    for (const attr of URL_ATTRS) {
+function getRealImageUrl(img: HTMLImageElement): Maybe<string> {
+    for (const attr of REAL_URL_ATTRS) {
         const url = normalizeImageUrl(img.getAttribute(attr));
         if (url && !isPlaceholderUrl(url)) return url;
     }
-
     return undefined;
 }
 
@@ -83,33 +86,33 @@ function bindImage(img: HTMLImageElement): void {
 
 function restoreImage(img: HTMLImageElement): void {
     bindImage(img);
+    markRestored(img);
 
-    const url = getImageUrl(img);
-    const current = normalizeImageUrl(img.currentSrc || img.getAttribute("src"));
-    const loaded = img.complete && img.naturalWidth > 0;
+    const real = getRealImageUrl(img);
 
-    if (!url && !loaded) return;
-
-    markImageVisible(img);
-
-    if (url && (!current || isPlaceholderUrl(current)) && img.getAttribute("src") !== url) {
-        img.src = url;
-    }
-
-    if (loaded || !url) {
-        clearBackgroundFallback(img);
+    if (real && img.getAttribute("src") !== real) {
+        img.src = real;
+        setBackgroundFallback(img, real);
         return;
     }
 
-    const quotedUrl = url.replaceAll("\"", "%22");
-    img.style.backgroundImage = `url("${quotedUrl}")`;
-    img.style.backgroundRepeat = "no-repeat";
-    img.style.backgroundPosition = "center";
-    img.style.backgroundSize = "cover";
+    if (img.complete && img.naturalWidth > 0) {
+        clearBackgroundFallback(img);
+    }
 }
 
 function restoreAll(): void {
     dom<"img">(IMAGE_SELECTOR, []).forEach(restoreImage);
+}
+
+function connectRoot(): void {
+    if (!observedRoot || !rootObserver) return;
+    rootObserver.observe(observedRoot, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: OBSERVED_ATTRS,
+    });
 }
 
 function observeRoot(): void {
@@ -118,32 +121,47 @@ function observeRoot(): void {
 
     observedRoot = root;
     rootObserver?.disconnect();
-    rootObserver = new MutationObserver(() => scheduleRestore(16));
-    rootObserver.observe(root, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: OBSERVED_ATTRS,
-    });
+    rootObserver = new MutationObserver(() => scheduleRestore());
+    connectRoot();
 }
 
-function scheduleRestore(delay = 0): void {
+function runRestore(): void {
+    pendingRestoreTimer = undefined;
+    lastRestoreTime = performance.now();
+    observeRoot();
+
+    rootObserver?.disconnect();
+    restoreAll();
+    connectRoot();
+}
+
+function scheduleRestore(): void {
     if (pendingRestoreTimer != null) {
         window.clearTimeout(pendingRestoreTimer);
+        pendingRestoreTimer = undefined;
     }
 
-    pendingRestoreTimer = window.setTimeout(() => {
+    if (performance.now() - lastRestoreTime >= RESTORE_MAX_WAIT_MS) {
+        runRestore();
+        return;
+    }
+
+    pendingRestoreTimer = window.setTimeout(runRestore, RESTORE_DEBOUNCE_MS);
+}
+
+function flushRestore(): void {
+    if (pendingRestoreTimer != null) {
+        window.clearTimeout(pendingRestoreTimer);
         pendingRestoreTimer = undefined;
-        observeRoot();
-        restoreAll();
-    }, delay);
+    }
+    runRestore();
 }
 
 function startObservers(): void {
     observeRoot();
     if (!document.body || pageObserver) return;
 
-    pageObserver = new MutationObserver(() => scheduleRestore(16));
+    pageObserver = new MutationObserver(() => scheduleRestore());
     pageObserver.observe(document.body, {
         childList: true,
         subtree: true,
@@ -155,11 +173,11 @@ export function installForumThumbnailRecovery(): void {
     if (currentPageType() !== "forum") return;
     installed = true;
 
-    forumThreadsObserver.addEvent(() => scheduleRestore(0));
+    forumThreadsObserver.addEvent(() => scheduleRestore());
 
     const start = () => {
         startObservers();
-        scheduleRestore(0);
+        flushRestore();
     };
 
     if (document.readyState === "loading") {
@@ -169,8 +187,8 @@ export function installForumThumbnailRecovery(): void {
     }
 
     window.addEventListener("load", () => {
-        scheduleRestore(200);
-        scheduleRestore(1200);
-        window.setTimeout(() => scheduleRestore(0), 2500);
+        window.setTimeout(flushRestore, 200);
+        window.setTimeout(flushRestore, 1200);
+        window.setTimeout(flushRestore, 2500);
     }, { once: true });
 }

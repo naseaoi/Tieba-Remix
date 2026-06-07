@@ -25,14 +25,23 @@ $lzl-content-margin: 12px;
         // 楼中楼展开 / 折叠过渡
         &.tbr-lzl-toggling {
             transition:
-                height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-                padding 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-                margin 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+                height 0.28s ease-out,
+                padding 0.28s ease-out,
+                margin 0.28s ease-out,
                 opacity var(--fast-duration) ease;
 
             @media (prefers-reduced-motion: reduce) {
                 transition: none;
             }
+        }
+
+        &.hideLzl {
+            height: 0 !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
         }
 
         // 楼中楼容器
@@ -160,6 +169,21 @@ $lzl-content-margin: 12px;
             }
 
             // 楼中楼编辑器
+            .lzl_editor_container {
+                box-sizing: border-box;
+                width: 100% !important;
+
+                .edui-container,
+                .edui-editor,
+                .edui-editor-body,
+                .edui-editor-middle,
+                .edui-body-container,
+                .lzl_panel_wrapper {
+                    box-sizing: border-box;
+                    width: 100% !important;
+                }
+            }
+
             .edui-container {
                 width: auto !important;
                 max-height: 64px;
@@ -254,6 +278,24 @@ $lzl-content-margin: 12px;
                     z-index: 9999;
                 }
             }
+        }
+    }
+}
+
+// j_lzl_container 和 lzl_editor_container 过渡动画
+.j_lzl_container,
+.lzl_editor_container {
+    overflow: hidden;
+
+    &.tbr-lzl-toggling {
+        transition:
+            height 0.28s ease-out,
+            padding 0.28s ease-out,
+            margin 0.28s ease-out,
+            opacity var(--fast-duration) ease;
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
         }
     }
 }

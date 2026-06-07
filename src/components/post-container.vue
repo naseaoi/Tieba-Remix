@@ -95,7 +95,7 @@ async function showImage(e: MouseEvent, index: number) {
         }));
         const content = floorImages.length > 0 ? floorImages : localImages;
 
-        imagesViewer({
+        void imagesViewer({
             content,
             defaultIndex: Math.max(0, Math.min(index, content.length - 1)),
         });

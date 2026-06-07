@@ -6,13 +6,29 @@
     gap: 8px;
 }
 
+.lzl_content_reply {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center !important;
+    gap: 8px;
+}
+
 .post-tail-wrap .p_reply,
 .core_reply_tail:not(.clearfix) .p_reply,
 .post-tail-wrap .tbr-floor-menu {
     margin-left: auto !important;
 }
 
+.lzl_content_reply .lzl_s_r {
+    margin-left: auto !important;
+}
+
 .post-tail-wrap:has(.p_reply) .tbr-floor-menu {
+    margin-left: 0 !important;
+}
+
+.lzl_content_reply:has(.lzl-agree-count-badge) .lzl_s_r,
+.lzl_content_reply:has(.lzl-agree-count-badge) .tbr-floor-menu {
     margin-left: 0 !important;
 }
 
@@ -21,12 +37,38 @@
     order: 101;
 }
 
+.lzl_content_reply .lzl_time {
+    order: 1;
+}
+
+.lzl_content_reply .tbr-lzl-location {
+    order: 2;
+}
+
+.lzl_content_reply .tbr-lzl-source {
+    order: 3;
+}
+
+.lzl_content_reply .lzl_s_r {
+    order: 101 !important;
+}
+
 .post-tail-wrap .tbr-floor-menu {
     order: 102;
 }
 
+.lzl_content_reply .tbr-floor-menu {
+    order: 102 !important;
+    margin-left: 0 !important;
+}
+
+.lzl_content_reply .lzl_op_list:empty {
+    display: none !important;
+}
+
 .post-tail-wrap .j_lzl_r.p_reply,
-.core_reply_tail:not(.clearfix) .j_lzl_r.p_reply {
+.core_reply_tail:not(.clearfix) .j_lzl_r.p_reply,
+.lzl_content_reply .lzl_s_r {
     display: inline-flex !important;
     align-items: center;
     padding: 0 !important;
@@ -42,7 +84,11 @@
 .core_reply_tail:not(.clearfix) .j_lzl_r.p_reply:hover,
 .core_reply_tail:not(.clearfix) .j_lzl_r.p_reply:active,
 .core_reply_tail:not(.clearfix) .j_lzl_r.p_reply:focus,
-.core_reply_tail:not(.clearfix) .j_lzl_r.p_reply:focus-within {
+.core_reply_tail:not(.clearfix) .j_lzl_r.p_reply:focus-within,
+.lzl_content_reply .lzl_s_r:hover,
+.lzl_content_reply .lzl_s_r:active,
+.lzl_content_reply .lzl_s_r:focus,
+.lzl_content_reply .lzl_s_r:focus-within {
     background: transparent !important;
     outline: none !important;
 }
@@ -69,6 +115,10 @@
     line-height: 1 !important;
     outline: none !important;
     text-decoration: none !important;
+}
+
+.lzl_content_reply .tbr-floor-menu {
+    display: inline-flex !important;
 }
 
 .tbr-floor-menu {
@@ -156,21 +206,55 @@
     color: var(--error-color, #c00);
 }
 
-.tail-info[data-tbr-platform] {
+.tbr-lzl-tail-item {
+    display: inline-flex;
+    align-items: center;
+    color: var(--light-fore, #8a8f99);
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
+.lzl_content_reply .tbr-lzl-source,
+.tail-info[data-tbr-platform],
+.tbr-lzl-source[data-tbr-platform] {
     display: inline-flex !important;
+    overflow: hidden;
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    height: 14px;
+    min-height: 14px;
+    max-height: 14px;
     align-items: center;
     font-size: 0 !important;
     line-height: 1;
+    white-space: nowrap;
 }
 
-.tail-info[data-tbr-platform]::before {
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
+.lzl_content_reply .tbr-lzl-source {
+    font-size: 0 !important;
+}
+
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.tail-info[data-tbr-platform]::before,
+.tbr-lzl-source[data-tbr-platform]::before {
     display: inline-block;
+    flex: 0 0 14px;
     width: 14px;
     height: 14px;
     background-color: currentcolor;
     content: "";
 }
 
-.tail-info[data-tbr-platform="mobile"]::before {
+.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
+.tail-info[data-tbr-platform="mobile"]::before,
+.tbr-lzl-source[data-tbr-platform="mobile"]::before {
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%23000' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 1H7C5.9 1 5 1.9 5 3v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2Zm0 17H7V4h10v14Zm-4 3h-2v-1h2v1Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }

@@ -1,0 +1,41 @@
+import { renderDialog } from "@/lib/render";
+import type { ImagesViewerOpts } from "./images-viewer.vue";
+
+export async function imagesViewer(opts: ImagesViewerOpts) {
+    // 进入看图模式时把 body 钉成 fixed，并整体上移 scrollY
+    const savedX = window.scrollX;
+    const savedY = window.scrollY;
+    const body = document.body;
+    const prev = {
+        position: body.style.position,
+        top: body.style.top,
+        left: body.style.left,
+        right: body.style.right,
+        width: body.style.width,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${savedY}px`;
+    body.style.left = `-${savedX}px`;
+    body.style.right = "0";
+    body.style.width = "100%";
+
+    const restore = () => {
+        body.style.position = prev.position;
+        body.style.top = prev.top;
+        body.style.left = prev.left;
+        body.style.right = prev.right;
+        body.style.width = prev.width;
+        window.scrollTo(savedX, savedY);
+    };
+
+    try {
+        const { default: ImagesViewer } = await import("./images-viewer.vue");
+        renderDialog(ImagesViewer, opts, {
+            unloaded: restore,
+            abnormalUnload: restore,
+        });
+    } catch (error) {
+        restore();
+        throw error;
+    }
+}

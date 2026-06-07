@@ -98,60 +98,66 @@ body.special_conf_skin {
     flex-direction: column;
     gap: 16px;
 
-    // 楼层右上角 badge
-    .save_face_bg {
-        display: none;
+    &:not(.content-wrapper) {
+        .d_author {
+            display: none !important;
+        }
     }
 
-    .l_post_bright {
-        border: none;
+        // 楼层右上角 badge
+        .save_face_bg {
+            display: none;
+        }
 
-        .d_post_content_main {
-            width: 100%;
-            padding: 0;
-            background-color: unset !important;
+        .l_post_bright {
+            border: none;
 
-            .p_content {
-                min-height: unset;
+            .d_post_content_main {
+                width: 100%;
                 padding: 0;
-                margin-bottom: -42px;
-                background-color: unset;
+                background-color: unset !important;
 
-                // 该贴已被 *吧屏蔽
-                .shield-tip {
-                    background: none;
-                }
-
-                .d_post_content {
+                .p_content {
+                    min-height: unset;
                     padding: 0;
-                    background-color: unset !important;
-                    font-size: $content-font-size;
-                    grid-area: content;
-                }
+                    margin-bottom: -42px;
+                    background-color: unset;
 
-                .replace_div {
-                    width: auto !important;
-                }
+                    // 该贴已被 *吧屏蔽
+                    .shield-tip {
+                        background: none;
+                    }
 
-                .BDE_Smiley {
-                    width: 24px;
-                    height: 24px;
-                    vertical-align: text-bottom;
-                }
+                    .d_post_content {
+                        padding: 0;
+                        background-color: unset !important;
+                        font-size: $content-font-size;
+                        grid-area: content;
+                    }
 
-                .BDE_Image {
-                    display: flex;
-                    width: auto;
-                    max-width: min(100%, 320px);
-                    height: auto;
-                    max-height: 400px;
-                    border-radius: 4px;
-                    margin: 6px auto;
-                    object-fit: contain;
+                    .replace_div {
+                        width: auto !important;
+                    }
+
+                    .BDE_Smiley {
+                        width: 24px;
+                        height: 24px;
+                        vertical-align: text-bottom;
+                    }
+
+                    .BDE_Image {
+                        display: flex;
+                        width: auto;
+                        max-width: min(100%, 320px);
+                        height: auto;
+                        max-height: 400px;
+                        border-radius: 4px;
+                        margin: 6px auto;
+                        object-fit: contain;
+                    }
                 }
             }
         }
-    }
 
     div[data-po] {
         display: none;
@@ -351,6 +357,7 @@ body.special_conf_skin {
         .button-container {
             display: flex;
             align-items: center;
+            height: 22px;
 
             .forum-button {
                 padding: 0 2px;
@@ -360,6 +367,11 @@ body.special_conf_skin {
 
                 &:not(:hover, :active, :focus) {
                     background-color: transparent;
+                }
+
+                &.icon {
+                    width: 22px;
+                    height: 22px;
                 }
             }
         }
