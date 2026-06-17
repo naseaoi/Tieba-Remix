@@ -189,7 +189,7 @@ html.style-vercel {
         display: none !important;
     }
 
-    .vercel-image-grid {
+    #j_p_postlist .vercel-image-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 200px));
         grid-auto-rows: 180px;
