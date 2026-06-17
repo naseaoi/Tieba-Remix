@@ -636,7 +636,20 @@
         }
 
         .threadlist_video {
+            position: relative !important;
             border-radius: $vercel-radius-sm !important;
+
+            &.trex-video-paused::after {
+                position: absolute;
+                inset: 0;
+                width: 36px;
+                height: 36px;
+                margin: auto;
+                background: rgb(0 0 0 / 55%) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M8 5h3v14H8z M13 5h3v14h-3z"/></svg>') no-repeat center / 16px;
+                border-radius: 50%;
+                pointer-events: none;
+                content: "";
+            }
         }
 
         // 原生预览框
