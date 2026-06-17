@@ -68,7 +68,7 @@
 @mixin forum-thread-list {
     .threadlist_bright {
         display: grid !important;
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
         gap: 12px !important;
         padding: 16px !important;
         background: none !important;
@@ -660,6 +660,23 @@
             display: none !important;
             margin: 0 !important;
             min-height: 0 !important;
+        }
+
+        // 广告卡片：分开"广告"标签与关闭按钮
+        .custom-top-wrap {
+            position: static !important;
+        }
+
+        .custom-ad-tag {
+            top: 12px !important;
+            right: 38px !important;
+            margin: 0 !important;
+        }
+
+        .custom-ad-close {
+            top: 12px !important;
+            right: 10px !important;
+            margin: 0 !important;
         }
     }
 }
