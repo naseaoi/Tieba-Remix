@@ -2,6 +2,7 @@ import { gmRequest } from "@/lib/monkey";
 import { md5 } from "./md5";
 
 const API_URL = "https://tiebac.baidu.com/c/f/pb/page";
+const VOTE_API_URL = "https://tiebac.baidu.com/c/c/post/addPollPost";
 const SIGN_SALT = "tiebaclient!!!";
 
 export interface PollOption {
@@ -33,6 +34,33 @@ interface PbPageResponse {
     };
 }
 
+interface VoteResponse {
+    error_code: number | string;
+    error_msg?: string;
+    info?: {
+        needlogin?: string | number;
+    };
+}
+
+export interface SubmitPollVoteOptions {
+    threadId: number | string;
+    forumId: number | string;
+    optionIds: number[];
+}
+
+function createClientForm(form: Record<string, string>): Record<string, string> {
+    return {
+        _client_id: genClientId(),
+        _client_type: "2",
+        _client_version: "12.50.1.0",
+        _phone_imei: "000000000000000",
+        from: "baidu_appstore",
+        net_type: "1",
+        timestamp: String(Date.now()),
+        ...form,
+    };
+}
+
 function signForm(form: Record<string, string>): string {
     const keys = Object.keys(form).sort();
     let raw = "";
@@ -52,19 +80,12 @@ function genClientId(): string {
 }
 
 export async function fetchPollInfo(tid: number | string): Promise<PollInfo | null> {
-    const form: Record<string, string> = {
-        _client_id: genClientId(),
-        _client_type: "2",
-        _client_version: "12.50.1.0",
-        _phone_imei: "000000000000000",
-        from: "baidu_appstore",
+    const form = createClientForm({
         kz: String(tid),
-        net_type: "1",
         pn: "1",
         rn: "30",
         st_type: "pb_page",
-        timestamp: String(Date.now()),
-    };
+    });
     form.sign = signForm(form);
 
     const res = await gmRequest<"json">({
@@ -93,4 +114,50 @@ export async function fetchPollInfo(tid: number | string): Promise<PollInfo | nu
         return null;
     }
     return poll;
+}
+
+export async function submitPollVote(opts: SubmitPollVoteOptions): Promise<void> {
+    const ids = normalizeOptionIds(opts.optionIds);
+    if (ids.length === 0) {
+        throw new Error("请选择投票选项");
+    }
+
+    const form = createClientForm({
+        thread_id: String(opts.threadId),
+        forum_id: String(opts.forumId),
+        options: ids.join(","),
+    });
+    form.sign = signForm(form);
+
+    const res = await gmRequest<"json">({
+        method: "POST",
+        url: VOTE_API_URL,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: buildFormBody(form),
+        responseType: "json",
+        timeout: 10_000,
+    });
+
+    const body = res.response as VoteResponse | null;
+    if (!body) {
+        throw new Error(`addPollPost returned empty body (status=${res.status})`);
+    }
+
+    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
+    if (errno !== 0) {
+        throw new Error(body.error_msg || `addPollPost error ${errno}`);
+    }
+}
+
+function normalizeOptionIds(ids: number[]): number[] {
+    const result: number[] = [];
+    for (const id of ids) {
+        if (!Number.isInteger(id)) continue;
+        if (id <= 0) continue;
+        if (result.includes(id)) continue;
+        result.push(id);
+    }
+    return result;
 }
