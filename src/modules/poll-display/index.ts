@@ -24,6 +24,8 @@ async function main(): Promise<void> {
 
     const tid = PageData?.thread?.thread_id;
     if (!tid) return;
+    const fid = PageData?.forum?.forum_id || PageData?.forum?.id;
+    if (!fid) return;
 
     let poll: PollInfo | null;
     try {
@@ -45,5 +47,11 @@ async function main(): Promise<void> {
     contentMain.setAttribute(FLAG_ATTR, "");
 
     const threadTitle = _.unescape(PageData.thread.title || "").replace(/^回复：/, "");
-    appendJSX(h(PollPanel, { poll, threadTitle }), contentMain);
+    appendJSX(h(PollPanel, {
+        poll,
+        threadId: tid,
+        forumId: fid,
+        threadTitle,
+        isLoggedIn: Boolean(PageData.user?.is_login),
+    }), contentMain);
 }

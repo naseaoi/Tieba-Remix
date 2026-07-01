@@ -68,7 +68,7 @@
 @mixin forum-thread-list {
     .threadlist_bright {
         display: grid !important;
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
         gap: 12px !important;
         padding: 16px !important;
         background: none !important;
@@ -636,7 +636,20 @@
         }
 
         .threadlist_video {
+            position: relative !important;
             border-radius: $vercel-radius-sm !important;
+
+            &.trex-video-paused::after {
+                position: absolute;
+                inset: 0;
+                width: 36px;
+                height: 36px;
+                margin: auto;
+                background: rgb(0 0 0 / 55%) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M8 5h3v14H8z M13 5h3v14h-3z"/></svg>') no-repeat center / 16px;
+                border-radius: 50%;
+                pointer-events: none;
+                content: "";
+            }
         }
 
         // 原生预览框
@@ -660,6 +673,23 @@
             display: none !important;
             margin: 0 !important;
             min-height: 0 !important;
+        }
+
+        // 广告卡片：分开"广告"标签与关闭按钮
+        .custom-top-wrap {
+            position: static !important;
+        }
+
+        .custom-ad-tag {
+            top: 12px !important;
+            right: 38px !important;
+            margin: 0 !important;
+        }
+
+        .custom-ad-close {
+            top: 12px !important;
+            right: 10px !important;
+            margin: 0 !important;
         }
     }
 }
