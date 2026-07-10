@@ -1,7 +1,7 @@
 import type { UserModuleEx } from "@/ex";
 import { dom } from "@/lib/elemental";
 import { TbObserver, forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
-import _ from "@/lib/utils/_";
+
 import { markRaw } from "vue";
 import moduleShieldVue from "./module.shield.vue";
 import { matchShield, shieldList } from "./shield";
@@ -32,27 +32,29 @@ export default {
 
 export * from "./shield";
 
-/**
- * 通过选择器屏蔽元素
- * @param observer 监控
- * @param parentSelector 父元素选择器
- * @param subSelector 子元素选择器
- */
-function shieldBySelector(
+interface ShieldCheck {
+    scope: ShieldRule["scope"];
+    subSelector: string;
+}
+
+function shieldByMultiScope(
     observer: TbObserver,
-    scope: ShieldRule["scope"],
     parentSelector: string,
-    subSelector: string
+    checks: ShieldCheck[],
 ) {
     observer.addEvent(() => {
+        const rules = shieldList.get();
         dom(parentSelector, []).forEach(elem => {
             let isMatch = false;
-            const content = dom(subSelector, elem, []).map(el => el.textContent ?? "").join("\n");
 
-            for (const rule of shieldList.get()) {
-                if (matchShield(rule, content, scope)) {
-                    isMatch = true;
-                    break;
+            for (const check of checks) {
+                if (isMatch) break;
+                const content = dom(check.subSelector, elem, []).map(el => el.textContent ?? "").join("\n");
+                for (const rule of rules) {
+                    if (matchShield(rule, content, check.scope)) {
+                        isMatch = true;
+                        break;
+                    }
                 }
             }
 
@@ -63,16 +65,24 @@ function shieldBySelector(
 
 function main() {
     // 看贴页面
-    shieldBySelector(threadFloorsObserver, "content", ".l_post_bright", ".d_post_content");
-    shieldBySelector(threadFloorsObserver, "username", ".l_post_bright", ".p_author_name");
-    shieldBySelector(threadCommentsObserver, "content", ".lzl_single_post", ".lzl_content_main");
-    shieldBySelector(threadCommentsObserver, "username", ".lzl_single_post", ".lzl_cnt .j_user_card");
+    shieldByMultiScope(threadFloorsObserver, ".l_post_bright", [
+        { scope: "content", subSelector: ".d_post_content" },
+        { scope: "username", subSelector: ".p_author_name" },
+    ]);
+    shieldByMultiScope(threadCommentsObserver, ".lzl_single_post", [
+        { scope: "content", subSelector: ".lzl_content_main" },
+        { scope: "username", subSelector: ".lzl_cnt .j_user_card" },
+    ]);
     // 首页动态
-    shieldBySelector(legacyIndexFeedsObserver, "content", ".j_feed_li", ".title, .n_txt");
-    shieldBySelector(legacyIndexFeedsObserver, "username", ".j_feed_li", ".post_author");
+    shieldByMultiScope(legacyIndexFeedsObserver, ".j_feed_li", [
+        { scope: "content", subSelector: ".title, .n_txt" },
+        { scope: "username", subSelector: ".post_author" },
+    ]);
     // 进吧页面
-    shieldBySelector(forumThreadsObserver, "content", ".j_thread_list", ".threadlist_title a");
-    shieldBySelector(forumThreadsObserver, "username", ".j_thread_list", ".frs-author-name-wrap");
+    shieldByMultiScope(forumThreadsObserver, ".j_thread_list", [
+        { scope: "content", subSelector: ".threadlist_title a" },
+        { scope: "username", subSelector: ".frs-author-name-wrap" },
+    ]);
 
     // 规则变更时实时生效
     shieldList.on("setter", () => {
