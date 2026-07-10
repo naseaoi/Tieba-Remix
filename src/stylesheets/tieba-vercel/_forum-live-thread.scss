@@ -1,0 +1,643 @@
+@use "./tokens" as *;
+@use "./mixins" as *;
+
+@mixin forum-live-thread {
+    #pagelet_live\/pagelet\/live_thread .interview {
+        @include vercel-card;
+        padding: 0 !important;
+        margin: 12px 16px 0px !important;
+        overflow: visible !important;
+        width: auto !important;
+        box-sizing: border-box !important;
+
+        dl.threadListGroupCnt {
+            padding: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            background: none !important;
+        }
+
+        // 标题栏
+        dt.listTitleCnt {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 14px 16px !important;
+            margin: 0 !important;
+            border: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            background: none !important;
+            float: none !important;
+
+            &::after {
+                content: none !important;
+                display: none !important;
+            }
+        }
+
+        .listReplyNum {
+            @include mono-meta($vercel-fs-sm);
+            display: inline-flex !important;
+            align-items: center !important;
+            order: 2 !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            background: none !important;
+            background-image: none !important;
+            color: var(--default-fore) !important;
+            font-weight: var(--font-weight-bold) !important;
+            gap: 4px !important;
+            line-height: 1 !important;
+
+            &::before {
+                content: "";
+                width: 14px;
+                height: 14px;
+                flex: 0 0 14px;
+                background-color: var(--minimal-fore);
+                mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
+                -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
+            }
+        }
+
+        .listThreadTitle {
+            order: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+
+            &::before {
+                content: "播";
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                padding: 1px 6px;
+                border-radius: $vercel-radius-xs;
+                background-color: var(--error-color);
+                color: #fff;
+                font-size: $vercel-fs-xs;
+                font-weight: var(--font-weight-normal);
+                line-height: 1.4;
+            }
+
+            #liveIcon {
+                display: none !important;
+            }
+
+            a.word_live_title {
+                color: var(--default-fore) !important;
+                font-size: $vercel-fs-lg !important;
+                font-weight: var(--font-weight-bold) !important;
+                line-height: $vercel-lh-tight !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+
+                &:hover {
+                    color: var(--light-fore) !important;
+                }
+            }
+        }
+
+        .listUser {
+            order: 3 !important;
+            flex-shrink: 0 !important;
+
+            a {
+                @include mono-meta($vercel-fs-xs);
+                text-decoration: none !important;
+
+                &:hover {
+                    color: var(--default-fore) !important;
+                }
+            }
+        }
+
+        // 描述
+        dd.listDescCnt {
+            padding: 10px 16px !important;
+            margin: 0 !important;
+            color: var(--light-fore) !important;
+            font-size: $vercel-fs-sm !important;
+            line-height: $vercel-lh-normal !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            background: none !important;
+        }
+
+        // 按钮栏
+        dd.listBtnCnt {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            padding: 8px 16px !important;
+            margin: 0 !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            background: none !important;
+            position: relative !important;
+            min-height: 40px !important;
+            box-sizing: border-box !important;
+
+            .list_announcement_cnt {
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                right: auto !important;
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                font-size: $vercel-fs-sm !important;
+                color: var(--light-fore) !important;
+                line-height: 22px !important;
+                height: auto !important;
+                width: auto !important;
+                max-width: 100% !important;
+                padding: 0 0 0 22px !important;
+                margin: 0 !important;
+                order: 1 !important;
+                box-sizing: border-box !important;
+                background-image: url("https://tb2.bdstatic.com/tb/img/interview_announce_dad7451.png") !important;
+                background-repeat: no-repeat !important;
+                background-position: 0 center !important;
+                background-size: 16px 16px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+
+                .orange-text {
+                    color: var(--default-fore) !important;
+                    font-weight: var(--font-weight-bold) !important;
+                    margin-right: 2px !important;
+                }
+            }
+
+            #interview-share-wrapper {
+                display: none !important;
+            }
+
+            #slideBtn {
+                @include mono-meta($vercel-fs-xs);
+                position: static !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex: 0 0 auto !important;
+                min-width: 60px !important;
+                height: 24px !important;
+                line-height: 24px !important;
+                padding: 0 12px !important;
+                margin: 0 0 0 auto !important;
+                border: none !important;
+                border-radius: $vercel-radius-xs !important;
+                background: var(--default-hover) !important;
+                background-image: none !important;
+                background-color: var(--default-hover) !important;
+                color: var(--default-fore) !important;
+                text-decoration: none !important;
+                text-indent: 0 !important;
+                font-size: 0 !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                transition: background-color $vercel-trans-fast $vercel-ease !important;
+                order: 2 !important;
+                box-sizing: border-box !important;
+
+                &::before {
+                    content: "展开" !important;
+                    display: inline !important;
+                    font-size: $vercel-fs-xs !important;
+                    font-family: $vercel-font-mono !important;
+                    color: var(--default-fore) !important;
+                    line-height: 24px !important;
+                    background: none !important;
+                }
+
+                &.down::before {
+                    content: "收起" !important;
+                }
+
+                &:hover {
+                    background-color: var(--minimal-fore) !important;
+                }
+            }
+        }
+
+        // 隐藏 talk 区
+        dd.listTalkCnt {
+            display: none !important;
+        }
+        // 回复列表
+        dd.listPostCnt {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: none !important;
+            border: none !important;
+
+            > .listTitle {
+                display: none !important;
+            }
+        }
+
+        .listGroupScrollCnt {
+            max-height: 320px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        ul.listGroupCnt {
+            list-style: none !important;
+            padding: 0 16px !important;
+            margin: 0 !important;
+        }
+
+        li.listItemCnt {
+            padding: 10px 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            border-bottom: 1px solid var(--light-border-color) !important;
+            border-radius: 0 !important;
+            background: none !important;
+            box-shadow: none !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            transition: background-color $vercel-trans-fast $vercel-ease !important;
+
+            &:last-child {
+                border-bottom: none !important;
+            }
+
+            &:hover {
+                background-color: var(--default-hover) !important;
+            }
+        }
+
+        .listItem {
+            display: grid !important;
+            grid-template-columns: 32px minmax(0, 1fr) !important;
+            grid-template-rows: auto auto !important;
+            grid-template-areas:
+                "avatar content"
+                "avatar meta" !important;
+            gap: 2px 10px !important;
+            float: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+
+            &::after {
+                content: none !important;
+                display: none !important;
+            }
+        }
+
+        .uIconCnt {
+            grid-area: avatar !important;
+            align-self: start !important;
+            width: 32px !important;
+            height: 32px !important;
+            float: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            .uIcon {
+                width: 32px !important;
+                height: 32px !important;
+                border-radius: 50% !important;
+                object-fit: cover !important;
+            }
+        }
+        .pTitleCnt {
+            grid-area: content !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: $vercel-fs-sm !important;
+            line-height: $vercel-lh-normal !important;
+
+            .uName {
+                color: var(--default-fore) !important;
+                font-weight: var(--font-weight-bold) !important;
+                text-decoration: none !important;
+                font-size: $vercel-fs-sm !important;
+
+                &:hover {
+                    color: var(--light-fore) !important;
+                }
+            }
+
+            .pTitle {
+                color: var(--light-fore) !important;
+                text-decoration: none !important;
+                font-size: $vercel-fs-sm !important;
+
+                &:hover {
+                    color: var(--default-fore) !important;
+                }
+            }
+        }
+
+        .pInfoCnt {
+            grid-area: meta !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            .pDate {
+                @include mono-meta($vercel-fs-xs);
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            .pReply {
+                position: static !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 20px !important;
+                height: 20px !important;
+                border-radius: $vercel-radius-xs !important;
+                font-size: 0 !important;
+                color: var(--light-fore) !important;
+                text-decoration: none !important;
+                opacity: 0;
+                transition: opacity $vercel-trans-fast $vercel-ease;
+
+                &::before {
+                    content: "";
+                    display: block;
+                    width: 14px;
+                    height: 14px;
+                    background: currentColor;
+                    mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+                    -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+                }
+
+                &:hover {
+                    color: var(--default-fore) !important;
+                }
+            }
+        }
+
+        li.listItemCnt:hover .pReply {
+            opacity: 1;
+        }
+
+        .pTail {
+            display: none !important;
+        }
+
+        // 编辑器
+        dd.listEditorCnt {
+            padding: 12px 16px !important;
+            margin: 0 !important;
+            border: none !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: none !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 60px !important;
+
+            &.mini .placeholder {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 6px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                min-height: 36px !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 8px 12px !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: $vercel-radius-sm !important;
+                background-color: var(--default-background) !important;
+                cursor: text !important;
+                color: var(--minimal-fore) !important;
+                font-size: $vercel-fs-sm !important;
+                line-height: $vercel-lh-normal !important;
+                transition: border-color $vercel-trans-normal $vercel-ease !important;
+
+                &:hover {
+                    border-color: var(--minimal-fore) !important;
+                }
+
+                .faceIcon {
+                    display: none !important;
+                }
+            }
+
+            &:not(.mini) .placeholder {
+                display: none !important;
+            }
+
+            // 展开态编辑器
+            .interviewEditorCnt {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+
+                .qp_wrap {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+
+                .edui-container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                    border: 1px solid var(--border-color) !important;
+                    border-radius: $vercel-radius-sm !important;
+                    background-color: var(--default-background) !important;
+                    overflow: hidden !important;
+                }
+
+                .edui-editor-body {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                    background: var(--default-background) !important;
+                }
+
+                .edui-editor-top,
+                .edui-editor-bottom,
+                .edui-editor-msg,
+                .wordlimit-holder {
+                    display: none !important;
+                }
+
+                .edui-editor-middle {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+
+                .qp_editor_container,
+                .j_ed_container,
+                .edui-body-container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-height: 80px !important;
+                    max-height: 200px !important;
+                    overflow-y: auto !important;
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--border-color) transparent;
+                    box-sizing: border-box !important;
+                    padding: 8px 12px !important;
+                    margin: 0 !important;
+                    border: none !important;
+                    border-color: var(--border-color) !important;
+                    background-color: var(--default-background) !important;
+                    color: var(--default-fore) !important;
+                    font-size: $vercel-fs-sm !important;
+                    line-height: 20px !important;
+                    outline: none !important;
+
+                    &:focus {
+                        outline: none !important;
+                        box-shadow: none !important;
+                    }
+
+                    p {
+                        margin: 0 !important;
+                        color: var(--default-fore) !important;
+                        line-height: 20px !important;
+                    }
+                }
+
+                .edui-container:focus-within {
+                    border-color: var(--default-fore) !important;
+                    box-shadow: 0 0 0 1px var(--default-fore) !important;
+                }
+
+                .qp_footer {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: flex-end !important;
+                    gap: 8px !important;
+                    margin-top: 8px !important;
+                    padding: 0 !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    float: none !important;
+                    clear: both !important;
+                }
+
+                .qp_btn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: flex-end !important;
+                    gap: 6px !important;
+                    float: none !important;
+                    margin: 0 !important;
+                }
+
+                .qp_submit,
+                #listSubmitBtn {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    order: 1 !important;
+                    width: 28px !important;
+                    height: 28px !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    background: var(--default-hover) !important;
+                    color: var(--default-fore) !important;
+                    font-size: 0 !important;
+                    line-height: 1 !important;
+                    min-width: 0 !important;
+                    float: none !important;
+                    cursor: pointer !important;
+                    text-indent: -9999px !important;
+                    transition: background-color $vercel-trans-fast $vercel-ease !important;
+
+                    &::before {
+                        content: "" !important;
+                        display: block !important;
+                        width: 16px !important;
+                        height: 16px !important;
+                        background: currentColor !important;
+                        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+                        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+                    }
+
+                    &:hover:not([disabled]) {
+                        background-color: var(--minimal-fore) !important;
+                    }
+                }
+
+                .qp_smile {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 28px !important;
+                    height: 28px !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    background: var(--default-hover) !important;
+                    cursor: pointer !important;
+                    float: none !important;
+                    margin: 0 !important;
+                    font-size: 0 !important;
+                    color: var(--default-fore) !important;
+                    transition: background-color $vercel-trans-fast $vercel-ease !important;
+
+                    &::after {
+                        content: "" !important;
+                        display: block !important;
+                        width: 16px !important;
+                        height: 16px !important;
+                        background: currentColor !important;
+                        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+                        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+                    }
+
+                    img {
+                        display: none !important;
+                    }
+
+                    .qp_insertsmiley_holder {
+                        width: 0 !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
+                    }
+
+                    &:hover {
+                        background-color: var(--minimal-fore) !important;
+                    }
+                }
+
+                .qp_type,
+                .qp_error,
+                .qp_bannedTip {
+                    display: none !important;
+                }
+
+                .qp_edui_dialog_container {
+                    z-index: 100 !important;
+                }
+            }
+        }
+    }
+}

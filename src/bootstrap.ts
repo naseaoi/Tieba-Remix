@@ -15,6 +15,7 @@ import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
+import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
@@ -55,6 +56,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     installForumThumbnailRecovery();
 
     installForumVideoFit();
+
+    installForumLiveThreadCollapse();
 
     installForumAuthorFullId();
 
