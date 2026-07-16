@@ -24,6 +24,20 @@
 - 设置面板可视化配置
 - 自动更新检测
 
+## 界面预览
+
+### 吧页列表
+
+![吧页列表](assets/images/screenshots/forum-list.webp)
+
+### 设置面板
+
+![设置面板](assets/images/screenshots/settings-panel.webp)
+
+### 帖子页
+
+![帖子页](assets/images/screenshots/thread-view.webp)
+
 ## 安装
 
 > 需要浏览器安装用户脚本管理器，推荐 [Tampermonkey](https://www.tampermonkey.net/)
