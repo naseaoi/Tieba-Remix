@@ -36,7 +36,6 @@ export function installForumImageTakeover(): void {
             void (async () => {
                 const allImages = await fetchThreadImages(tid);
                 const filtered = allImages.slice(0, Math.max(thumbCount, 1));
-                if (filtered.length === 0) return;
                 void imagesViewer({
                     content: filtered,
                     defaultIndex: Math.max(0, Math.min(index, filtered.length - 1)),

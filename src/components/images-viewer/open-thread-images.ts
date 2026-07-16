@@ -5,7 +5,7 @@ import { imagesViewer } from "./viewer";
 
 export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
     const cache = currentStorage.get(HOME_FEED_IMAGES);
-    if (!(cache == null) && !(cache[tid] == null)) return cache[tid];
+    if (cache?.[tid]?.length > 0) return cache[tid];
 
     try {
         const response: GetThreadImagesResponse = await (await tiebaAPI.getThreadImages(tid, true)).json();
@@ -27,10 +27,6 @@ export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
         });
         return pictureList;
     } catch (err) {
-        currentStorage.set(HOME_FEED_IMAGES, {
-            ...currentStorage.get(HOME_FEED_IMAGES),
-            [tid]: [],
-        });
         console.warn("[Tieba-Remix] 拉取帖子图片失败:", err);
         return [];
     }
@@ -39,7 +35,6 @@ export async function fetchThreadImages(tid: number): Promise<ThreadPicture[]> {
 export function openThreadImages(tid: number, defaultIndex = 0): void {
     void (async () => {
         const list = await fetchThreadImages(tid);
-        if (list.length === 0) return;
         void imagesViewer({ content: list, defaultIndex });
     })();
 }

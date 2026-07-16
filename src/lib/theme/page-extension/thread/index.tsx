@@ -1,4 +1,4 @@
-import { imagesViewer } from "@/components/images-viewer";
+import { imagesViewer, notifyImageViewerFailure } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
@@ -360,6 +360,7 @@ export default async function () {
                         allImages = await getAllThreadImages({ threadId: PageData.thread.thread_id, lzOnly: false });
                     } catch (err) {
                         console.warn("[Tieba-Remix] 拉取帖子图片失败:", err);
+                        notifyImageViewerFailure("fetch");
                         return;
                     }
 
@@ -368,12 +369,10 @@ export default async function () {
                         const floorPics = allImages.filter(p => p.postId === pid);
                         const floorImages = dom<"img">(".BDE_Image", postContent!, []);
                         const localIndex = Math.max(0, floorImages.findIndex(img => img === newEl));
-                        if (floorPics.length > 0) {
-                            void imagesViewer({
-                                content: floorPics,
-                                defaultIndex: Math.min(localIndex, floorPics.length - 1),
-                            });
-                        }
+                        void imagesViewer({
+                            content: floorPics,
+                            defaultIndex: Math.max(0, Math.min(localIndex, floorPics.length - 1)),
+                        });
                         return;
                     }
 

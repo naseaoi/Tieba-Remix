@@ -1,7 +1,13 @@
 import { renderDialog } from "@/lib/render";
 import type { ImagesViewerOpts } from "./images-viewer.vue";
+import { notifyImageViewerFailure } from "./image-feedback";
 
-export async function imagesViewer(opts: ImagesViewerOpts) {
+export async function imagesViewer(opts: ImagesViewerOpts): Promise<boolean> {
+    if (!hasAvailableImage(opts.content)) {
+        notifyImageViewerFailure("empty");
+        return false;
+    }
+
     // 进入看图模式时把 body 钉成 fixed，并整体上移 scrollY
     const savedX = window.scrollX;
     const savedY = window.scrollY;
@@ -34,8 +40,21 @@ export async function imagesViewer(opts: ImagesViewerOpts) {
             unloaded: restore,
             abnormalUnload: restore,
         });
+        return true;
     } catch (error) {
         restore();
-        throw error;
+        console.warn("[Tieba-Remix] 打开看图模式失败:", error);
+        notifyImageViewerFailure("viewer");
+        return false;
     }
+}
+
+function hasAvailableImage(content: ImagesViewerOpts["content"]): boolean {
+    if (typeof content === "string") return content.trim().length > 0;
+    if (Array.isArray(content)) {
+        return content.some(image => typeof image === "string"
+            ? image.trim().length > 0
+            : !!(image.original || image.thumbnail));
+    }
+    return content.images.some(image => !!(image.original || image.thumb));
 }
