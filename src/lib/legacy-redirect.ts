@@ -210,7 +210,8 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         if (bootstrapped || redirectTriggered) return;
         if (handleSecurityPage()) return;
 
-        const isNewVersion = document.body?.classList.contains("cos-tieba") === true;
+        const isNewVersion = document.body?.classList.contains("cos-tieba") === true
+            || isForumPageWithoutPageData();
 
         if (isNewVersion) {
             clearSecurityRetry();
@@ -223,6 +224,10 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         bootstrapped = true;
         bootstrap({ onReady: removeCloak });
     }
+}
+
+function isForumPageWithoutPageData(): boolean {
+    return location.pathname.toLowerCase() === "/f" && typeof PageData === "undefined";
 }
 
 function applyCloak(): void {

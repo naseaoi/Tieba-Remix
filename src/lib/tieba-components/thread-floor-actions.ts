@@ -173,9 +173,9 @@ function blockFloorAuthor(menu: HTMLElement): void {
     if (!name) return;
 
     const list = shieldList.get();
-    if (list.some(rule => rule.scope === "username" && rule.content === name)) return;
+    if (list.some(rule => rule.scopes.includes("username") && rule.content === name)) return;
 
-    shieldList.set([...list, { content: name, type: "text", scope: "username", toggle: true }]);
+    shieldList.set([...list, { content: name, type: "text", scopes: ["username"], toggle: true }]);
 }
 
 function getMenuAuthorName(menu: HTMLElement): string | undefined {

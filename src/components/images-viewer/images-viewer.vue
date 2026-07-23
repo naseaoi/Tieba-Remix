@@ -3,8 +3,13 @@
         <div ref="imagesViewer" class="images-viewer" @click="clickModal">
             <div ref="imageContainer" class="image-container dialog-toggle">
                 <div v-show="loading" class="image-loading-spinner"></div>
-                <img ref="currImage" class="curr-image changing" :class="{ 'loading-img': loading }"
+                <img ref="currImage" class="curr-image changing"
+                    :class="{ 'loading-img': loading, 'failed-img': imageFailed }"
                     :src="imageArray[curr]" :style="parseCSSRule(imageStyle)">
+                <div v-if="imageFailed" class="image-error-state">
+                    <span class="icon">broken_image</span>
+                    <span>图片加载失败</span>
+                </div>
             </div>
 
             <div class="control-panel head-controls" :class="{ 'hide': !showControls.top }">
@@ -64,6 +69,7 @@ import { styleTheme } from "@/lib/user-values";
 import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { notifyImageViewerFailure } from "./image-feedback";
 
 export interface ImagesViewerOpts {
     content: string | string[] | TiebaPost | ThreadPicture[];
@@ -136,6 +142,7 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
     bottom: false,
 });
 const loading = ref(true);
+const imageFailed = ref(false);
 const disableImageTransition = ref(false);
 const isScrollDragging = ref(false);
 
@@ -239,6 +246,7 @@ onMounted(async () => {
 
     evproxy.on(currImage.value, "load", function () {
         if (!currImage.value) return;
+        imageFailed.value = false;
 
         naturalSize.value = {
             width: currImage.value.naturalWidth,
@@ -268,6 +276,13 @@ onMounted(async () => {
         nextTick(() => {
             currImage.value?.classList.remove("changing");
         });
+    });
+
+    evproxy.on(currImage.value, "error", function () {
+        loading.value = false;
+        imageFailed.value = true;
+        naturalSize.value = { width: 0, height: 0 };
+        notifyImageViewerFailure("resource");
     });
 
     evproxy.on(currImage.value, "transitionend", function () {
@@ -335,6 +350,7 @@ onUnmounted(function () {
 
 watch(curr, function () {
     loading.value = true;
+    imageFailed.value = false;
     currImage.value?.classList.add("changing");
     deg.value = 0;
     disableImageTransition.value = false;
@@ -656,9 +672,9 @@ $scroll-bar-height: 6px;
         }
 
         .head-sep {
+            margin: 0 2px;
             color: var(--minimal-fore);
             font-family: var(--code-monospace);
-            margin: 0 2px;
         }
 
         .zoom-size {
@@ -722,6 +738,10 @@ $scroll-bar-height: 6px;
                 opacity: 0;
             }
 
+            &.failed-img {
+                opacity: 0;
+            }
+
             &.changing {
                 transition: none !important;
             }
@@ -732,10 +752,26 @@ $scroll-bar-height: 6px;
             width: 48px;
             height: 48px;
             border: 3px solid rgb(255 255 255 / 15%);
-            border-top-color: rgb(255 255 255 / 90%);
             border-radius: 50%;
+            border-top-color: rgb(255 255 255 / 90%);
             animation: kf-spin 0.8s linear infinite;
             pointer-events: none;
+        }
+
+        .image-error-state {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--light-fore);
+            font-size: 14px;
+            gap: 8px;
+            pointer-events: none;
+
+            .icon {
+                font-size: 42px;
+            }
         }
     }
 
@@ -809,8 +845,8 @@ $scroll-bar-height: 6px;
             height: $scroll-bar-height;
             border-radius: $scroll-bar-height * 0.5;
             background-color: var(--light-fore);
-            opacity: 0.35;
             cursor: grab;
+            opacity: 0.35;
             transition: opacity var(--default-duration);
 
             &:hover {
@@ -832,15 +868,15 @@ html.style-vercel .images-viewer {
     --viewer-border: #2A2A2A;
     --viewer-fore: #EDEDED;
     --viewer-light-fore: #A1A1A1;
-    --viewer-accent: #FFFFFF;
+    --viewer-accent: #FFF;
 
     .icon {
         color: var(--viewer-light-fore);
     }
 
     .control-panel {
-        backdrop-filter: none;
         border: 1px solid var(--viewer-border);
+        backdrop-filter: none;
         background-color: var(--viewer-bg);
         box-shadow: none;
     }

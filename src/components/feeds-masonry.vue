@@ -112,8 +112,8 @@ async function addFeeds(newFeeds?: TiebaPost[]) {
             newFeeds = newFeeds.filter(feed => {
                 for (const rule of ruleList) {
                     if (matchShield(rule, feed.author.name, "username") ||
-                        matchShield(rule, feed.title, "content") ||
-                        matchShield(rule, feed.content, "content")) {
+                        matchShield(rule, feed.title, "thread-title") ||
+                        matchShield(rule, feed.content, "post-content")) {
                         return false;
                     }
                 }

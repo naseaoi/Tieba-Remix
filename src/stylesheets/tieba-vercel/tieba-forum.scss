@@ -2,12 +2,14 @@
 @use "./forum-title-card" as title;
 @use "./forum-nav-sidebar" as nav;
 @use "./forum-thread-list" as threads;
+@use "./forum-live-thread" as live;
 @use "./forum-footer" as footer;
 
 html.style-vercel {
     @include header.forum-header;
     @include title.forum-title-card;
     @include nav.forum-nav-sidebar;
+    @include live.forum-live-thread;
     @include threads.forum-thread-list;
     @include footer.forum-footer;
 }

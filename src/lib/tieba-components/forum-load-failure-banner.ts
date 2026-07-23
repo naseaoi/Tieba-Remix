@@ -88,7 +88,8 @@ function showBanner(): void {
 }
 
 function detect(): void {
-    if (document.querySelector(".threadlist_bright")) return;
+    const threadList = document.querySelector(".threadlist_bright");
+    if (threadList?.querySelector(".j_thread_list[data-tid]")) return;
     showBanner();
 }
 

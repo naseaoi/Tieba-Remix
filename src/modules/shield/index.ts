@@ -1,26 +1,23 @@
 import type { UserModuleEx } from "@/ex";
 import { dom } from "@/lib/elemental";
 import { TbObserver, forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
-import _ from "@/lib/utils/_";
+
 import { markRaw } from "vue";
 import moduleShieldVue from "./module.shield.vue";
 import { matchShield, shieldList } from "./shield";
-import type { ShieldRule } from "./shield";
+import type { ShieldScope } from "./shield";
 
 export default {
     id: "shield",
     name: "贴吧屏蔽",
     author: "锯条",
-    version: "1.2",
+    version: "1.3",
     brief: "眼不见为净",
-    description: `用户自定义屏蔽规则，符合规则的贴子和楼层将不会显示在首页、看贴页面和进吧页面。支持正则匹配`,
+    description: `用户自定义屏蔽规则，可分别应用于帖子标题、楼层内容和用户名。支持多范围与正则匹配`,
     scope: true,
     runAt: "immediately",
     settings: {
         "shield-controls": {
-            title: "管理屏蔽规则",
-            description:
-                `这些屏蔽规则将会在首页、看贴页面生效，会自动隐藏所有符合匹配规则的贴子和楼层。`,
             widgets: [{
                 type: "component",
                 component: markRaw(moduleShieldVue),
@@ -32,27 +29,29 @@ export default {
 
 export * from "./shield";
 
-/**
- * 通过选择器屏蔽元素
- * @param observer 监控
- * @param parentSelector 父元素选择器
- * @param subSelector 子元素选择器
- */
-function shieldBySelector(
+interface ShieldCheck {
+    scope: ShieldScope;
+    subSelector: string;
+}
+
+function shieldByMultiScope(
     observer: TbObserver,
-    scope: ShieldRule["scope"],
     parentSelector: string,
-    subSelector: string
+    checks: ShieldCheck[],
 ) {
     observer.addEvent(() => {
+        const rules = shieldList.get();
         dom(parentSelector, []).forEach(elem => {
             let isMatch = false;
-            const content = dom(subSelector, elem, []).map(el => el.textContent ?? "").join("\n");
 
-            for (const rule of shieldList.get()) {
-                if (matchShield(rule, content, scope)) {
-                    isMatch = true;
-                    break;
+            for (const check of checks) {
+                if (isMatch) break;
+                const content = dom(check.subSelector, elem, []).map(el => el.textContent ?? "").join("\n");
+                for (const rule of rules) {
+                    if (matchShield(rule, content, check.scope)) {
+                        isMatch = true;
+                        break;
+                    }
                 }
             }
 
@@ -63,16 +62,25 @@ function shieldBySelector(
 
 function main() {
     // 看贴页面
-    shieldBySelector(threadFloorsObserver, "content", ".l_post_bright", ".d_post_content");
-    shieldBySelector(threadFloorsObserver, "username", ".l_post_bright", ".p_author_name");
-    shieldBySelector(threadCommentsObserver, "content", ".lzl_single_post", ".lzl_content_main");
-    shieldBySelector(threadCommentsObserver, "username", ".lzl_single_post", ".lzl_cnt .j_user_card");
+    shieldByMultiScope(threadFloorsObserver, ".l_post_bright", [
+        { scope: "post-content", subSelector: ".d_post_content" },
+        { scope: "username", subSelector: ".p_author_name" },
+    ]);
+    shieldByMultiScope(threadCommentsObserver, ".lzl_single_post", [
+        { scope: "post-content", subSelector: ".lzl_content_main" },
+        { scope: "username", subSelector: ".lzl_cnt .j_user_card" },
+    ]);
     // 首页动态
-    shieldBySelector(legacyIndexFeedsObserver, "content", ".j_feed_li", ".title, .n_txt");
-    shieldBySelector(legacyIndexFeedsObserver, "username", ".j_feed_li", ".post_author");
+    shieldByMultiScope(legacyIndexFeedsObserver, ".j_feed_li", [
+        { scope: "thread-title", subSelector: ".title" },
+        { scope: "post-content", subSelector: ".n_txt" },
+        { scope: "username", subSelector: ".post_author" },
+    ]);
     // 进吧页面
-    shieldBySelector(forumThreadsObserver, "content", ".j_thread_list", ".threadlist_title a");
-    shieldBySelector(forumThreadsObserver, "username", ".j_thread_list", ".frs-author-name-wrap");
+    shieldByMultiScope(forumThreadsObserver, ".j_thread_list", [
+        { scope: "thread-title", subSelector: ".threadlist_title a" },
+        { scope: "username", subSelector: ".frs-author-name-wrap" },
+    ]);
 
     // 规则变更时实时生效
     shieldList.on("setter", () => {
