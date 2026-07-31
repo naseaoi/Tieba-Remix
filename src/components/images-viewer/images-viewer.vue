@@ -208,7 +208,9 @@ let lastControlTimeout: ControlDirectionMap<number> = {
     top: 0,
     bottom: 0,
 };
-let thumbLazyloadObserver: IntersectionObserver;
+let thumbLazyloadObserver: IntersectionObserver | undefined;
+let imageMoveHandler: ((event: MouseEvent) => void) | undefined;
+let scrollDragCleanup: (() => void) | undefined;
 
 onMounted(async () => {
     await nextTick();
@@ -236,12 +238,12 @@ onMounted(async () => {
 
         offsetX = e.clientX - currImage.value.offsetLeft;
         offsetY = e.clientY - currImage.value.offsetTop;
-        document.addEventListener("mousemove", moveHandler);
+        if (imageMoveHandler) document.addEventListener("mousemove", imageMoveHandler);
     });
 
     evproxy.on(document, "mouseup", (e: MouseEvent) => {
         e.preventDefault();
-        document.removeEventListener("mousemove", moveHandler);
+        stopImageDragging();
     });
 
     evproxy.on(currImage.value, "load", function () {
@@ -298,14 +300,14 @@ onMounted(async () => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
                 (entry.target as HTMLImageElement).src = (entry.target as HTMLImageElement).dataset.lazyload ?? "";
-                thumbLazyloadObserver.unobserve(entry.target);
+                thumbLazyloadObserver?.unobserve(entry.target);
             }
         });
     });
 
     if (bottomPanel.value) {
         dom("img", bottomPanel.value, []).forEach((img) => {
-            thumbLazyloadObserver.observe(img);
+            thumbLazyloadObserver?.observe(img);
         });
     }
 
@@ -328,11 +330,11 @@ onMounted(async () => {
         }
     }, { passive: false });
 
-    function moveHandler(e: MouseEvent) {
+    imageMoveHandler = (e: MouseEvent) => {
         if (!currImage.value) return;
         imageLeft.value = e.clientX - offsetX;
         imageTop.value = e.clientY - offsetY;
-    }
+    };
 
     // 兜底：首张图若已在缓存中，load 事件可能早于监听绑定触发，主动同步一次
     if (currImage.value?.complete && currImage.value.naturalHeight > 0) {
@@ -342,11 +344,18 @@ onMounted(async () => {
 
 onUnmounted(function () {
     evproxy.release();
-    thumbLazyloadObserver.disconnect();
+    thumbLazyloadObserver?.disconnect();
+    stopImageDragging();
+    scrollDragCleanup?.();
     if (imageTransitionTimer) {
         clearTimeout(imageTransitionTimer);
     }
+    Object.values(lastControlTimeout).forEach(timer => clearTimeout(timer));
 });
+
+function stopImageDragging() {
+    if (imageMoveHandler) document.removeEventListener("mousemove", imageMoveHandler);
+}
 
 watch(curr, function () {
     loading.value = true;
@@ -502,6 +511,7 @@ function onScrollBarMouseDown(e: MouseEvent) {
 
     e.preventDefault();
     e.stopPropagation();
+    scrollDragCleanup?.();
     isScrollDragging.value = true;
     lockControls.value.bottom = true;
 
@@ -526,11 +536,15 @@ function onScrollBarMouseDown(e: MouseEvent) {
 
     const onMove = (ev: MouseEvent) => setScrollFromClientX(ev.clientX);
     const onUp = () => {
+        scrollDragCleanup?.();
         isScrollDragging.value = false;
         lockControls.value.bottom = false;
         showControls.value = verifyPos();
+    };
+    scrollDragCleanup = () => {
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
+        scrollDragCleanup = undefined;
     };
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
@@ -560,7 +574,7 @@ function lockControlsTemporarily(
             clearTimeout(lastControlTimeout[direction]);
         }
         showControls.value[direction] = true;
-        lastControlTimeout[direction] = setTimeout(() => {
+        lastControlTimeout[direction] = window.setTimeout(() => {
             lockControls.value[direction] = false;
             showControls.value = verifyPos();
         }, timeout);

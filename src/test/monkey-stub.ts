@@ -1,0 +1,9 @@
+export const GM_addStyle = undefined;
+export const GM_deleteValue = undefined;
+export const GM_getValue = undefined;
+export const GM_info = undefined;
+export const GM_listValues = undefined;
+export const GM_openInTab = undefined;
+export const GM_registerMenuCommand = undefined;
+export const GM_setValue = undefined;
+export const GM_xmlhttpRequest = undefined;

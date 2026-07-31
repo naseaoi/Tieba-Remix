@@ -15,7 +15,7 @@ export function delayedRef<T>(value: T, delay = 500) {
         },
         set(newValue) {
             clearTimeout(timeout);
-            timeout = setTimeout(() => {
+            timeout = window.setTimeout(() => {
                 trigger();
                 value = newValue;
             }, delay);

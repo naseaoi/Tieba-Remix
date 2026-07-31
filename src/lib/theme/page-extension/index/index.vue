@@ -196,7 +196,7 @@ a {
 
     :deep(.sticky-header) {
         position: sticky;
-        top: var(--sticky-top, 0px);
+        top: var(--sticky-top, 0);
         z-index: 5;
         box-sizing: border-box;
         padding: 8px 12px;

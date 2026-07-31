@@ -47,12 +47,8 @@ function main(): void {
         threadFloorsObserver.addEvent(() => {
             dom<"div">(".d_badge_lv", []).forEach(elem => {
                 if (elem.textContent === "") {
-                    let parent = elem as HTMLElement;
-                    while (!parent.classList.contains("l_badge")) {
-                        if (parent.parentElement)
-                            parent = parent.parentElement;
-                    }
-                    parent.style.display = "none";
+                    const badge = elem.closest<HTMLElement>(".l_badge");
+                    if (badge) badge.style.display = "none";
                 }
             });
         });

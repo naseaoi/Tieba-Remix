@@ -13,22 +13,24 @@ export class TbObserver {
     private observer: MutationObserver | undefined;
     private observedElement: Element | undefined;
     private initEventObserved = false;
+    private initEventFired = false;
 
     readonly events: (() => void)[] = [];
 
     /** 手动触发所有已注册的事件 */
     public emit() {
-        this.events.forEach(func => func());
+        this.events.forEach(func => this.runEvent(func));
     }
 
     public observe() {
         const obsElem = dom(this.selector);
         if (this.observer && this.observedElement === obsElem) return;
 
-        if (typeof this.initEvent === "undefined") {
-            this.emit();
-        } else if (!this.initEventObserved) {
-            window.addEventListener(this.initEvent, () => this.emit());
+        if (typeof this.initEvent !== "undefined" && !this.initEventObserved) {
+            window.addEventListener(this.initEvent, () => {
+                this.initEventFired = true;
+                this.emit();
+            }, { once: true });
             this.initEventObserved = true;
         }
 
@@ -47,12 +49,20 @@ export class TbObserver {
         events.forEach(event => {
             if (this.events.includes(event)) return;
             if (typeof this.initEvent === "undefined") {
-                event();
-            } else {
-                window.addEventListener(this.initEvent, event);
+                this.runEvent(event);
+            } else if (this.initEventFired) {
+                this.runEvent(event);
             }
             this.events.push(event);
         });
+    }
+
+    private runEvent(event: () => void) {
+        try {
+            event();
+        } catch (error) {
+            console.error(`[Tieba Remix] Observer 回调执行失败: ${this.selector}`, error);
+        }
     }
 }
 

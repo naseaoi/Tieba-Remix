@@ -32,12 +32,14 @@ export class UserKey<T, LegacyType = unknown> {
     public defaultValue: T;
     private listeners: UserKeyEventsListeners<T>;
     protected migration?: (maybeLegacy: T | LegacyType) => T;
+    private validator?: (value: unknown) => boolean;
 
     constructor(
         key: string,
         defaultValue: T,
         listeners?: Partial<UserKeyEventsListener<T>>,
         migration?: (maybeLegacy: T | LegacyType) => T,
+        validator?: (value: unknown) => boolean,
     ) {
         this.key = key;
         this.defaultValue = defaultValue;
@@ -46,6 +48,7 @@ export class UserKey<T, LegacyType = unknown> {
             setter: listeners?.setter ? [listeners.setter] : [],
         };
         this.migration = migration;
+        this.validator = validator;
         UserKey.backupRegistry.add(this as UserKey<unknown>);
     }
 
@@ -55,6 +58,22 @@ export class UserKey<T, LegacyType = unknown> {
 
     public static getBackupableKeys(): UserKey<unknown>[] {
         return Array.from(UserKey.backupRegistry);
+    }
+
+    public restore(value: unknown): boolean {
+        try {
+            const normalized = isLiteralObject(value) && isLiteralObject(this.defaultValue)
+                ? _.merge({}, this.defaultValue, value)
+                : value;
+            const restored = this.migration
+                ? this.migration(normalized as T | LegacyType)
+                : normalized as T;
+            if (!this.isValid(restored)) return false;
+            this.set(restored);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     protected dispatchEvent(event: UserKeyEvent, value: T) {
@@ -69,7 +88,7 @@ export class UserKey<T, LegacyType = unknown> {
         let value = GM_getValue<T>(this.key, this.defaultValue);
         if (isLiteralObject(value) && isLiteralObject(this.defaultValue) &&
             Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
-            value = _.merge(this.defaultValue, value);
+            value = _.merge({}, this.defaultValue, value);
         }
         if (this.migration) {
             const migrated = this.migration(value);
@@ -95,16 +114,18 @@ export class UserKey<T, LegacyType = unknown> {
         if (isLiteralObject(value)) {
             const merged = { ...this.get(), ...value };
             this.set(merged);
-            this.dispatchEvent("setter", merged);
         }
     }
 
     public mergeDeeply(value: Partial<T>) {
         if (isLiteralObject(value)) {
-            const merged = _.merge(this.get(), value);
+            const merged = _.merge({}, this.get(), value);
             this.set(merged);
-            this.dispatchEvent("setter", merged);
         }
+    }
+
+    private isValid(value: unknown): value is T {
+        return this.validator?.(value) ?? isValueCompatible(value, this.defaultValue);
     }
 }
 
@@ -128,7 +149,7 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
         let value = getUserValueTS<T>(this.key, this.defaultValue);
         if (isLiteralObject(value) && isLiteralObject(this.defaultValue) &&
             Object.keys(value as object).length < Object.keys(this.defaultValue as object).length) {
-            value = _.merge(this.defaultValue, value);
+            value = _.merge({}, this.defaultValue, value);
         }
         if (this.migration) value = this.migration(value);
         this.dispatchEvent("getter", value);
@@ -149,17 +170,29 @@ export class UserKeyTS<T, LegacyType = unknown> extends UserKey<T, LegacyType> {
         if (isLiteralObject(value)) {
             const merged = { ...this.get(), ...value };
             this.set(merged, invalidTime ? invalidTime : this.defaultInvalid());
-            this.dispatchEvent("setter", merged);
         }
     }
 
     public mergeDeeply(value: Partial<T>, invalidTime?: number) {
         if (isLiteralObject(value)) {
-            const merged = _.merge(this.get(), value);
+            const merged = _.merge({}, this.get(), value);
             this.set(merged, invalidTime ? invalidTime : this.defaultInvalid());
-            this.dispatchEvent("setter", merged);
         }
     }
+}
+
+function isValueCompatible(value: unknown, template: unknown): boolean {
+    if (template === undefined) return value === undefined;
+    if (template === null) return value === null;
+    if (Array.isArray(template)) return Array.isArray(value);
+    if (isLiteralObject(template)) {
+        if (!isLiteralObject(value)) return false;
+        const objectValue = value as Record<string, unknown>;
+        return Object.entries(template).every(([key, nestedTemplate]) =>
+            !(key in objectValue) || isValueCompatible(objectValue[key], nestedTemplate)
+        );
+    }
+    return typeof value === typeof template;
 }
 
 export interface UpdateConfig {
@@ -170,7 +203,10 @@ export interface UpdateConfig {
 }
 
 /** 用户禁用的所有模块的 id */
-export const disabledModules = new UserKey<string[]>("disabledModules", []);
+export const disabledModules = new UserKey<string[]>(
+    "disabledModules", [], undefined, undefined,
+    value => Array.isArray(value) && value.every(item => typeof item === "string"),
+);
 /** 未读推送 */
 export const unreadFeeds = new UserKeyTS<TiebaPost[]>("unreadFeeds", []);
 /** 最新发行版相关信息（正式通道缓存） */
@@ -182,6 +218,12 @@ export const updateConfig = new UserKey<UpdateConfig>("updateConfig", {
     time: "6h",
     notify: true,
     channel: "stable",
+}, undefined, undefined, value => {
+    if (!isLiteralObject(value)) return false;
+    const config = value as Partial<UpdateConfig>;
+    return ["1h", "3h", "6h", "never"].includes(config.time ?? "")
+        && typeof config.notify === "boolean"
+        && ["stable", "preview"].includes(config.channel ?? "");
 });
 /** 今日是否提醒用户更新 */
 export const showUpdateToday = new UserKeyTS("showUpdateToday", true, () => new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000);
@@ -195,7 +237,7 @@ export const themeType = new UserKey<"auto" | "dark" | "light">(
         setter(value) {
             setTheme(value);
         },
-    });
+    }, undefined, value => ["auto", "dark", "light"].includes(String(value)));
 /** 样式风格（Remixed / Vercel） */
 export const styleTheme = new UserKey<"remixed" | "vercel">(
     "styleTheme",
@@ -204,7 +246,7 @@ export const styleTheme = new UserKey<"remixed" | "vercel">(
         setter(value) {
             setStyleTheme(value);
         },
-    });
+    }, undefined, value => ["remixed", "vercel"].includes(String(value)));
 /** 紧凑布局 */
 export const compactLayout = new UserKey("compactLayout", false);
 /** 磨砂玻璃质感（导航栏、首页标题栏等模糊背景） */
@@ -223,6 +265,10 @@ export const forumPinnedVisitedAt = new UserKey<Record<string, number>>("forumPi
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",
     dark: "#589AFE",
+}, undefined, undefined, value => {
+    if (!isLiteralObject(value)) return false;
+    const colors = value as Record<string, unknown>;
+    return typeof colors.light === "string" && typeof colors.dark === "string";
 });
 /** 用户自定义背景图 */
 export const customBackground = new UserKey<Maybe<string>>(
@@ -232,7 +278,9 @@ export const customBackground = new UserKey<Maybe<string>>(
         setter() {
             setCustomBackground();
         },
-    }
+    },
+    undefined,
+    value => value === undefined || typeof value === "string",
 );
 /** 页面扩展 */
 export const pageExtension = new UserKey("pageExtension", {
@@ -242,21 +290,25 @@ export const pageExtension = new UserKey("pageExtension", {
 /** 是否显示吧首页底部贴吧原生发帖模块 */
 export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */
-export const userFonts = new UserKey<string[]>("userFonts", ["Microsoft YaHei"], {
-    setter() { applyDynamicFonts(); },
-});
+export const userFonts = new UserKey<string[]>(
+    "userFonts",
+    ["Microsoft YaHei"],
+    { setter() { applyDynamicFonts(); } },
+    undefined,
+    value => Array.isArray(value) && value.every(font => typeof font === "string"),
+);
 /** 自定义等宽字体组合 */
 export const monospaceFonts = new UserKey<string[]>("monospaceFonts", [
     "Consolas", "JetBrains Mono", "Fira Code", "Menlo", "monospace",
 ], {
     setter() { applyDynamicFonts(); },
-});
+}, undefined, value => Array.isArray(value) && value.every(font => typeof font === "string"));
 /** 导航栏模式 */
 export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "fold", {
     setter(value) {
         document.documentElement.dataset.navBarMode = value;
     },
-});
+}, undefined, value => ["fold", "alwaysFold", "never"].includes(String(value)));
 /** 自定义样式 */
 export const customStyle = new UserKey<string>("customStyle", "", {
     setter() { applyCustomStyle(); },
@@ -269,7 +321,10 @@ export const fontWeights = new UserKey("fontWeights", {
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
 /** 看图模式队列范围：full = 全帖所有图片；floor = 仅当前楼层 */
-export const threadImageQueueScope = new UserKey<"full" | "floor">("threadImageQueueScope", "floor");
+export const threadImageQueueScope = new UserKey<"full" | "floor">(
+    "threadImageQueueScope", "floor", undefined, undefined,
+    value => value === "full" || value === "floor",
+);
 
 export const SymbolFont = "Material Symbols";
 

@@ -1,12 +1,8 @@
 module.exports = {
     extends: [
         "stylelint-config-standard",
-        "stylelint-config-idiomatic-order",
         "stylelint-config-recommended-vue",
         "stylelint-config-standard-scss"
-    ],
-    plugins: [
-        "stylelint-order"
     ],
     overrides: [
         {
@@ -24,6 +20,20 @@ module.exports = {
         "scss/dollar-variable-pattern": null,
         "scss/dollar-variable-empty-line-before": null,
         "no-empty-source": null,
-        "scss/double-slash-comment-empty-line-before": null
+        "scss/double-slash-comment-empty-line-before": null,
+        "at-rule-empty-line-before": null,
+        "declaration-block-no-redundant-longhand-properties": null,
+        "declaration-property-value-keyword-no-deprecated": null,
+        "media-feature-range-notation": null,
+        "property-no-deprecated": null,
+        "property-no-vendor-prefix": null,
+        "selector-not-notation": null,
+        "selector-pseudo-class-no-unknown": [true, {
+            "ignorePseudoClasses": ["deep"]
+        }],
+        "value-keyword-case": null,
+        "color-function-alias-notation": null,
+        "color-function-notation": null,
+        "alpha-value-notation": null
     }
 };
