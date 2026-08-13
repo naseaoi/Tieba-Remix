@@ -245,9 +245,6 @@ body.special_conf_skin {
 
 // https://tieba.baidu.com/f?kw=c%E8%AF%AD%E8%A8%80&ie=utf-8
 .core_reply_tail:not(.clearfix) {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-
     .p_tail li,
     .p_tail_txt,
     .p_mtail a,

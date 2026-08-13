@@ -15,7 +15,8 @@
 
 .post-tail-wrap .p_reply,
 .core_reply_tail:not(.clearfix) .p_reply,
-.post-tail-wrap .tbr-floor-menu {
+.post-tail-wrap .tbr-floor-menu,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu {
     margin-left: auto !important;
 }
 
@@ -23,7 +24,8 @@
     margin-left: auto !important;
 }
 
-.post-tail-wrap:has(.p_reply) .tbr-floor-menu {
+.post-tail-wrap:has(.p_reply) .tbr-floor-menu,
+.core_reply_tail:not(.clearfix):has(.p_reply) .tbr-floor-menu {
     margin-left: 0 !important;
 }
 
@@ -53,7 +55,8 @@
     order: 101 !important;
 }
 
-.post-tail-wrap .tbr-floor-menu {
+.post-tail-wrap .tbr-floor-menu,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu {
     order: 102;
 }
 
@@ -136,7 +139,8 @@
 }
 
 .tbr-floor-reply::before,
-.tbr-floor-menu > a::before {
+.tbr-floor-menu > a::before,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu::before {
     display: inline-block;
     width: 14px;
     height: 14px;
@@ -148,7 +152,8 @@
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-.tbr-floor-menu > a::before {
+.tbr-floor-menu > a::before,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu::before {
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='5' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='12' cy='19' r='2'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
@@ -157,10 +162,34 @@
     display: none !important;
 }
 
+.core_reply_tail:not(.clearfix) .tbr-floor-menu::after,
+.core_reply_tail:not(.clearfix) .p_tail_txt {
+    display: none;
+}
+
+.core_reply_tail:not(.clearfix) .p_tail {
+    order: 0;
+}
+
+.core_reply_tail:not(.clearfix) .ip-location {
+    order: 1;
+}
+
+.core_reply_tail:not(.clearfix) .p_mtail {
+    order: 2;
+}
+
+.core_reply_tail:not(.clearfix) .p_mtail li {
+    display: flex;
+    align-items: center;
+}
+
 .tbr-floor-reply:hover,
 .tbr-floor-reply:focus-visible,
 .tbr-floor-menu:hover > a,
-.tbr-floor-menu > a:focus-visible {
+.tbr-floor-menu > a:focus-visible,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu:hover,
+.core_reply_tail:not(.clearfix) .tbr-floor-menu:focus-visible {
     border-color: var(--border-color, #e5e7eb) !important;
     color: var(--default-fore, #1f2937) !important;
 }
@@ -219,6 +248,7 @@
 .core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
 .lzl_content_reply .tbr-lzl-source,
 .tail-info[data-tbr-platform],
+.p_tail_wap[data-tbr-platform],
 .tbr-lzl-source[data-tbr-platform] {
     display: inline-flex !important;
     overflow: hidden;
@@ -243,6 +273,7 @@
 .post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .tail-info[data-tbr-platform]::before,
+.p_tail_wap[data-tbr-platform]::before,
 .tbr-lzl-source[data-tbr-platform]::before {
     display: inline-block;
     flex: 0 0 14px;
@@ -255,6 +286,7 @@
 .post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"])::before,
 .tail-info[data-tbr-platform="mobile"]::before,
+.p_tail_wap[data-tbr-platform="mobile"]::before,
 .tbr-lzl-source[data-tbr-platform="mobile"]::before {
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%23000' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 1H7C5.9 1 5 1.9 5 3v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2Zm0 17H7V4h10v14Zm-4 3h-2v-1h2v1Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }

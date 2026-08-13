@@ -25,9 +25,14 @@ export function installThreadFloorActions(): void {
         normalizeLocationText();
         renderPlatformIcons();
     };
-    threadFloorsObserver.addEvent(run);
-    threadCommentsObserver.addEvent(run);
+    const refresh = (): void => {
+        run();
+        window.setTimeout(run, 100);
+    };
+    threadFloorsObserver.addEvent(refresh);
+    threadCommentsObserver.addEvent(refresh);
     run();
+    window.setTimeout(run, 100);
 }
 
 function renderReplyControls(): void {
@@ -52,13 +57,18 @@ function renderReplyControls(): void {
 }
 
 function renderFloorMenus(): void {
-    document.querySelectorAll<HTMLElement>(".post-tail-wrap .j_jb_ele").forEach(menu => {
+    document.querySelectorAll<HTMLElement>(".post-tail-wrap .j_jb_ele, .core_reply_tail:not(.clearfix) .j_jb_ele").forEach(menu => {
         if (menu.hasAttribute(MENU_BOUND)) return;
+
+        const legacyTail = menu.closest<HTMLElement>(".core_reply_tail:not(.clearfix)");
+        const reportLink = menu.querySelector<HTMLAnchorElement>("a");
+        if (legacyTail) legacyTail.appendChild(menu);
+
         menu.setAttribute(MENU_BOUND, "");
         menu.classList.add(MENU_CLASS);
         menu.setAttribute("aria-label", "更多操作");
         menu.title = "更多操作";
-        setupFloorMenu(menu, menu.querySelector<HTMLAnchorElement>("a"));
+        setupFloorMenu(menu, reportLink ?? menu);
     });
 
     document.querySelectorAll<HTMLElement>(".lzl_content_reply .lzl_jb").forEach(menu => {
@@ -75,11 +85,11 @@ function renderFloorMenus(): void {
     });
 }
 
-function setupFloorMenu(menu: HTMLElement, reportLink: HTMLAnchorElement | null): void {
+function setupFloorMenu(menu: HTMLElement, reportTarget: HTMLElement | null): void {
     let allowReport = false;
 
-    if (reportLink) {
-        reportLink.addEventListener("click", event => {
+    if (reportTarget && reportTarget !== menu) {
+        reportTarget.addEventListener("click", event => {
             if (allowReport) {
                 allowReport = false;
                 return;
@@ -91,8 +101,12 @@ function setupFloorMenu(menu: HTMLElement, reportLink: HTMLAnchorElement | null)
     }
 
     menu.addEventListener("click", event => {
+        if (allowReport) {
+            allowReport = false;
+            return;
+        }
         const target = event.target as Node;
-        if (reportLink && (target === reportLink || reportLink.contains(target))) return;
+        if (reportTarget && reportTarget !== menu && (target === reportTarget || reportTarget.contains(target))) return;
         event.preventDefault();
         event.stopPropagation();
         toggle();
@@ -108,9 +122,9 @@ function setupFloorMenu(menu: HTMLElement, reportLink: HTMLAnchorElement | null)
 
     function doReport(): void {
         closeMenu();
-        if (!reportLink) return;
+        if (!reportTarget) return;
         allowReport = true;
-        reportLink.click();
+        reportTarget.click();
     }
 
     function doBlock(): void {
@@ -186,7 +200,7 @@ function getMenuAuthorName(menu: HTMLElement): string | undefined {
 }
 
 function normalizeLocationText(): void {
-    document.querySelectorAll<HTMLElement>(".post-tail-wrap > span, .post-tail-wrap .tail-info, .core_reply_tail .ip-location, .core_reply_tail .p_tail_txt").forEach(elem => {
+    document.querySelectorAll<HTMLElement>(".post-tail-wrap > span, .post-tail-wrap .tail-info, .core_reply_tail .ip-location, .core_reply_tail .ip-location span, .core_reply_tail .p_tail_txt").forEach(elem => {
         elem.childNodes.forEach(node => {
             if (node.nodeType !== Node.TEXT_NODE) return;
             const text = node.textContent ?? "";
@@ -196,7 +210,7 @@ function normalizeLocationText(): void {
 }
 
 function renderPlatformIcons(): void {
-    document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info").forEach(elem => {
+    document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info, .core_reply_tail .p_tail_wap").forEach(elem => {
         if (elem.dataset.tbrPlatform === "mobile") return;
         const text = (elem.textContent ?? "").trim();
         if (!text.includes("客户端")) return;

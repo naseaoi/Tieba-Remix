@@ -171,7 +171,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "紧凑布局",
                         widgets: [{
                             type: "toggle",
-                            content: `对部分页面应用更紧凑的布局以提高信息密度。受到影响的页面有：新版看帖页面`,
+                            content: `对帖子页应用更紧凑的布局以提高信息密度，兼容新旧楼层模板。`,
                             init() {
                                 return compactLayout.get();
                             },
