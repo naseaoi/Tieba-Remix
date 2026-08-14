@@ -3,9 +3,8 @@
 
 import { GM_getValue } from "./monkey";
 
-const SECURITY_RETRY_KEY = "tiebaRemix:securityRetry";
-const SECURITY_MAX_RETRIES = 5;
-const SECURITY_RELOAD_DELAY_MS = 600;
+const LEGACY_SWITCH_ATTEMPT_KEY = "tiebaRemix:legacySwitchAttempt";
+const LEGACY_SWITCH_ATTEMPT_TTL_MS = 30_000;
 const SWITCH_SAFETY_RELOAD_MS = 5000;
 const SECURITY_PAGE_TITLE = "百度安全验证";
 const CLOAK_SAFETY_MS = 8000;
@@ -214,13 +213,17 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
             || isForumPageWithoutPageData();
 
         if (isNewVersion) {
-            clearSecurityRetry();
+            if (hasRecentLegacySwitchAttempt()) {
+                removeCloak();
+                return;
+            }
+            markLegacySwitchAttempt();
             redirectTriggered = true;
             void redirectToLegacy();
             return;
         }
 
-        clearSecurityRetry();
+        clearLegacySwitchAttempt();
         bootstrapped = true;
         bootstrap({ onReady: removeCloak });
     }
@@ -300,15 +303,7 @@ function handleSecurityPage(): boolean {
     if (securityHandled) return true;
     if (!isSecurityPage()) return false;
     securityHandled = true;
-
-    const count = readSecurityRetry();
-    if (count >= SECURITY_MAX_RETRIES) {
-        // 已达上限，撤掉遮罩，让用户看到安全验证页手动处理
-        removeCloak();
-        return true;
-    }
-    writeSecurityRetry(count + 1);
-    window.setTimeout(() => window.location.reload(), SECURITY_RELOAD_DELAY_MS);
+    removeCloak();
     return true;
 }
 
@@ -319,18 +314,19 @@ function isSecurityPage(): boolean {
     return false;
 }
 
-function readSecurityRetry(): number {
+function hasRecentLegacySwitchAttempt(): boolean {
     try {
-        return Number(sessionStorage.getItem(SECURITY_RETRY_KEY) ?? "0") || 0;
-    } catch { return 0; }
+        const timestamp = Number(sessionStorage.getItem(LEGACY_SWITCH_ATTEMPT_KEY));
+        return Number.isFinite(timestamp) && Date.now() - timestamp < LEGACY_SWITCH_ATTEMPT_TTL_MS;
+    } catch { return false; }
 }
 
-function writeSecurityRetry(value: number): void {
-    try { sessionStorage.setItem(SECURITY_RETRY_KEY, String(value)); } catch { /* ignore */ }
+function markLegacySwitchAttempt(): void {
+    try { sessionStorage.setItem(LEGACY_SWITCH_ATTEMPT_KEY, String(Date.now())); } catch { /* ignore */ }
 }
 
-function clearSecurityRetry(): void {
-    try { sessionStorage.removeItem(SECURITY_RETRY_KEY); } catch { /* ignore */ }
+function clearLegacySwitchAttempt(): void {
+    try { sessionStorage.removeItem(LEGACY_SWITCH_ATTEMPT_KEY); } catch { /* ignore */ }
 }
 
 async function redirectToLegacy(): Promise<void> {

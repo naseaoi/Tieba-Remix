@@ -131,7 +131,56 @@ export const tiebaAPI = {
     addFavoritePost: (tbs: string, tid: number, fid: number, encoding = "utf-8") =>
         fetch("/i/submit/open_storethread", {
             method: "POST",
-            body: JSON.stringify({ tbs, tid, fid, encoding }),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: requestBody({ tbs, tid, fid, type: 0, datatype: "json", ie: encoding }),
+        }),
+
+    /** 取消收藏帖子 */
+    cancelFavoritePost: (tbs: string, tid: number, fid: number, encoding = "utf-8") =>
+        fetch("/i/submit/cancel_storethread", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: requestBody({ tbs, tid, fid, type: 0, datatype: "json", ie: encoding }),
+        }),
+
+    /** 获取帖子推荐标签 */
+    favoriteTagRecommendations: (tid: number, offset = 0, limit = 3) =>
+        fetch(`/ugctag/getThreadRecTag?${requestBody({ tid, offset, limit })}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        }),
+
+    /** 添加帖子标签 */
+    addFavoriteTags: (tbs: string, tid: number, tags: string[], encoding = "utf-8") => {
+        const body = new URLSearchParams();
+        body.set("tid", String(tid));
+        tags.forEach(tag => body.append("tags[]", tag));
+        body.set("tbs", tbs);
+        body.set("ie", encoding);
+        return fetch("/ugctag/addStorThreadTags", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body,
+        });
+    },
+
+    /** 清理帖子收藏标签 */
+    deleteFavoriteTags: (tbs: string, tid: number, encoding = "utf-8") =>
+        fetch("/ugctag/delStorThread", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: requestBody({ tid, tbs, ie: encoding }),
         }),
 
     forumSignInfo: (forumName: string, encoding = "utf-8") =>
@@ -334,9 +383,20 @@ export interface FavUpdateNumResponse extends TiebaResponse2 {
     num: number
 }
 
-export interface TBSResponse {
-    tbs: string
-    is_login: number
+export interface AddFavoritePostResponse {
+    is_done: boolean
+    error_no: number
+    msg: unknown[] | Record<string, unknown>
+    _info?: string
+    ret?: { type?: number | string } | unknown[]
+}
+
+interface FavoriteTagResponse {
+    no: number
+    error?: string
+    data?: {
+        output?: unknown
+    }
 }
 
 interface LikeForum {
@@ -545,9 +605,76 @@ export function addFloorInstance(content: string) {
     return tiebaAPI.addFloor(PageData.tbs, PageData.forum.name, parseInt(PageData.forum.id), PageData.thread.thread_id, content, PageData.thread.reply_num + 1, true);
 }
 
-export async function addFavorInstance(tid: number, fid: number) {
-    const tbs: string = await requestInstance(tiebaAPI.tbs());
-    return await requestInstance(tiebaAPI.addFavoritePost(tbs, tid, fid));
+const followSignCache = new Map<number, Promise<string>>();
+
+async function fetchThreadFollowSign(tid: number): Promise<string> {
+    const response = await fetch(`/p/${tid}`, { credentials: "same-origin" });
+    if (!response.ok) throw new Error(`获取帖子凭证失败（状态码 ${response.status}）`);
+
+    const match = (await response.text()).match(/\bfollow_sign\s*:\s*["']([^"']+)["']/);
+    if (!match) throw new Error("帖子凭证不存在");
+    return match[1];
+}
+
+function getThreadFollowSign(tid: number): Promise<string> {
+    const cached = followSignCache.get(tid);
+    if (cached) return cached;
+
+    const request = fetchThreadFollowSign(tid).catch(error => {
+        followSignCache.delete(tid);
+        throw error;
+    });
+    followSignCache.set(tid, request);
+    return request;
+}
+
+export function prefetchThreadFollowSign(tid: number): Promise<string> {
+    return getThreadFollowSign(tid);
+}
+
+async function favoritePostInstance(
+    tid: number,
+    fid: number,
+    request: (tbs: string, tid: number, fid: number) => Promise<Response>,
+    action: string,
+) {
+    const pageFollowSign = typeof PageData.follow_sign === "string" ? PageData.follow_sign.trim() : "";
+    const followSign = pageFollowSign || await getThreadFollowSign(tid);
+
+    const result = await requestInstance(request(followSign, tid, fid)) as AddFavoritePostResponse | undefined;
+    if (!result) throw new Error(`${action}请求未完成`);
+
+    const errorNo = Number(result.error_no);
+    if (!Number.isFinite(errorNo) || errorNo !== 0 || result.is_done !== true) {
+        throw new Error(result._info || `${action}失败（错误码 ${result.error_no}）`);
+    }
+
+    return result;
+}
+
+export function addFavorInstance(tid: number, fid: number) {
+    return favoritePostInstance(tid, fid, tiebaAPI.addFavoritePost, "收藏");
+}
+
+export async function cancelFavorInstance(tid: number, fid: number) {
+    const result = await favoritePostInstance(tid, fid, tiebaAPI.cancelFavoritePost, "取消收藏");
+    await requestInstance(tiebaAPI.deleteFavoriteTags(PageData.tbs, tid));
+    return result;
+}
+
+export async function getFavoriteTagRecommendations(tid: number): Promise<string[]> {
+    const result = await requestInstance(tiebaAPI.favoriteTagRecommendations(tid)) as FavoriteTagResponse | undefined;
+    if (!result || Number(result.no) !== 0) throw new Error(result?.error || "获取推荐标签失败");
+
+    return Array.isArray(result.data?.output)
+        ? result.data.output.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
+        : [];
+}
+
+export async function addFavoriteTags(tid: number, tags: string[]) {
+    const result = await requestInstance(tiebaAPI.addFavoriteTags(PageData.tbs, tid, tags)) as FavoriteTagResponse | undefined;
+    if (!result || Number(result.no) !== 0) throw new Error(result?.error || "添加标签失败");
+    return result;
 }
 
 /**

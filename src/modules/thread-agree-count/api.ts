@@ -28,6 +28,7 @@ interface PbPageResponse {
     error_code: number | string;
     error_msg?: string;
     thread?: {
+        id?: number | string;
         agree?: AgreeInfo;
     };
     post_list?: PbPost[];
@@ -190,7 +191,11 @@ export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promi
     }
 
     const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
-    if (errno !== 0) {
+    const threadId = parseCount(body.thread?.id);
+    const threadAgree = parseCount(body.thread?.agree?.agree_num);
+    const requestedThreadId = parseCount(opts.tid);
+    const hasUsableThread = threadId === requestedThreadId && threadAgree != null;
+    if (errno !== 0 && !hasUsableThread) {
         throw new Error(`pb/page error ${errno}: ${body.error_msg || "unknown"}`);
     }
 
@@ -212,7 +217,7 @@ export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promi
     }
 
     return {
-        threadAgree: parseCount(body.thread?.agree?.agree_num),
+        threadAgree,
         threadHasAgree: parseBool(body.thread?.agree?.has_agree),
         postAgreeById,
         postHasAgreeById,

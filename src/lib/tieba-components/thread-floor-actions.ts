@@ -8,6 +8,7 @@ import "./thread-floor-actions.css";
 const REPLY_CLASS = "tbr-floor-reply";
 const MENU_CLASS = "tbr-floor-menu";
 const MENU_BOUND = "data-tbr-floor-menu";
+const NATIVE_REPORT_FLAG = "data-tbr-native-report";
 
 let installed = false;
 let popupEl: HTMLElement | undefined;
@@ -90,6 +91,7 @@ function setupFloorMenu(menu: HTMLElement, reportTarget: HTMLElement | null): vo
 
     if (reportTarget && reportTarget !== menu) {
         reportTarget.addEventListener("click", event => {
+            if (reportTarget.hasAttribute(NATIVE_REPORT_FLAG)) return;
             if (allowReport) {
                 allowReport = false;
                 return;

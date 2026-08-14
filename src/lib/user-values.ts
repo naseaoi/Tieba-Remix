@@ -287,6 +287,8 @@ export const pageExtension = new UserKey("pageExtension", {
     index: true,
     thread: true,
 });
+/** 帖子列表新版布局 */
+export const forumThreadModernLayout = new UserKey<boolean>("forumThreadModernLayout", true);
 /** 是否显示吧首页底部贴吧原生发帖模块 */
 export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */

@@ -404,6 +404,8 @@ async function openSettings() {
 }
 
 function loadNavMenuContent() {
+    const favoriteThreadsHref = `/i/i/storethread?un=${encodeURIComponent(PageData.user.user_name)}`;
+
     messageMenu.value = [
         {
             title: "查看私信",
@@ -429,7 +431,7 @@ function loadNavMenuContent() {
         "separator",
         {
             title: "我的收藏",
-            href: `/i/sys/jump?u=${userPortrait.value}&type=storethread`,
+            href: favoriteThreadsHref,
         },
         {
             title: "我的通知",
@@ -463,7 +465,7 @@ function loadNavMenuContent() {
         },
         {
             title: "我的收藏",
-            href: `/i/sys/jump?un=${PageData.user.user_name}${PageData.user.name_url}&type=storethread&st_mod=userbar&fr=tb0_pb`,
+            href: favoriteThreadsHref,
         },
     ];
 

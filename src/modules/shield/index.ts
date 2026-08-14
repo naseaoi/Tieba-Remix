@@ -79,7 +79,7 @@ function main() {
     // 进吧页面
     shieldByMultiScope(forumThreadsObserver, ".j_thread_list", [
         { scope: "thread-title", subSelector: ".threadlist_title a" },
-        { scope: "username", subSelector: ".frs-author-name-wrap" },
+        { scope: "username", subSelector: ".frs-author-name-wrap, .thread-modern-author-name" },
     ]);
 
     // 规则变更时实时生效
