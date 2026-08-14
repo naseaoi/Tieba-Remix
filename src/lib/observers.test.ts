@@ -22,4 +22,25 @@ describe("TbObserver", () => {
         expect(errorSpy).toHaveBeenCalledTimes(2);
         errorSpy.mockRestore();
     });
+
+    it("waits for a late target and processes its existing children", async () => {
+        document.body.innerHTML = "";
+        const observer = new TbObserver("#late-target", { childList: true });
+        let calls = 0;
+
+        observer.addEvent(() => { calls++; });
+        observer.observe();
+        expect(calls).toBe(1);
+
+        const target = document.createElement("div");
+        target.id = "late-target";
+        target.appendChild(document.createElement("span"));
+        document.body.appendChild(target);
+        await new Promise(resolve => window.setTimeout(resolve, 0));
+
+        expect(calls).toBe(2);
+        target.appendChild(document.createElement("span"));
+        await new Promise(resolve => window.setTimeout(resolve, 0));
+        expect(calls).toBe(3);
+    });
 });

@@ -12,6 +12,8 @@ export class TbObserver {
     private readonly initEvent: keyof WindowEventMap | undefined;
     private observer: MutationObserver | undefined;
     private observedElement: Element | undefined;
+    private elementWaiter: MutationObserver | undefined;
+    private waitingForElement = false;
     private initEventObserved = false;
     private initEventFired = false;
 
@@ -25,6 +27,23 @@ export class TbObserver {
     public observe() {
         const obsElem = dom(this.selector);
         if (this.observer && this.observedElement === obsElem) return;
+
+        if (!obsElem) {
+            this.observer?.disconnect();
+            this.observer = undefined;
+            this.observedElement = undefined;
+            this.waitingForElement = true;
+            if (!this.elementWaiter && document.documentElement) {
+                this.elementWaiter = new MutationObserver(() => this.observe());
+                this.elementWaiter.observe(document.documentElement, { childList: true, subtree: true });
+            }
+            return;
+        }
+
+        const shouldEmitAfterAttach = this.waitingForElement;
+        this.waitingForElement = false;
+        this.elementWaiter?.disconnect();
+        this.elementWaiter = undefined;
 
         if (typeof this.initEvent !== "undefined" && !this.initEventObserved) {
             window.addEventListener(this.initEvent, () => {
@@ -43,6 +62,7 @@ export class TbObserver {
         this.observer = new MutationObserver(() => this.emit());
         this.observer.observe(obsElem, this.options);
         this.observedElement = obsElem;
+        if (shouldEmitAfterAttach && (typeof this.initEvent === "undefined" || this.initEventFired)) this.emit();
     }
 
     public addEvent(...events: (() => void)[]) {
