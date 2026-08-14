@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_listValues } from "@/lib/monkey";
 import type { NavBarHideMode } from "@/components/nav-bar.vue";
 import type { MainSettingKey, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
+import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, forumThreadModernLayout, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "@/lib/utils/_";
 import { UserSelectItem, messageBox } from "user-view";
@@ -129,6 +129,22 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
+                    "forum-thread-modern": {
+                        title: "新版帖子列表",
+                        description: "控制吧首页帖子列表的作者信息、正文和互动栏布局",
+                        widgets: [{
+                            type: "toggle",
+                            content: "关闭后恢复贴吧原生帖子列表布局",
+                            init() {
+                                return forumThreadModernLayout.get();
+                            },
+                            event() {
+                                forumThreadModernLayout.set(!forumThreadModernLayout.get());
+                                return forumThreadModernLayout.get();
+                            },
+                        }],
+                    },
+
                     "nav-bar-mode": {
                         title: "导航栏隐藏模式",
                         description:
@@ -171,7 +187,7 @@ export const getUserSettings = _.once((): UserSettings => ({
                         title: "紧凑布局",
                         widgets: [{
                             type: "toggle",
-                            content: `对部分页面应用更紧凑的布局以提高信息密度。受到影响的页面有：新版看帖页面`,
+                            content: `对帖子页应用更紧凑的布局以提高信息密度，兼容新旧楼层模板。`,
                             init() {
                                 return compactLayout.get();
                             },

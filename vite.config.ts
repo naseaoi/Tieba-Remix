@@ -9,7 +9,7 @@ import monkey, { MonkeyOption } from "vite-plugin-monkey";
 // 版本号来源：CI 从 tag 名通过 USERSCRIPT_VERSION 注入
 const USERSCRIPT_VERSION = process.env.USERSCRIPT_VERSION?.replace(/^v/, "") || "0.0.0-dev";
 
-const scriptOptions: MonkeyOption = {
+const releaseScriptOptions: MonkeyOption = {
     entry: "src/main.ts",
     userscript: {
         name: "Tieba RemixFork",
@@ -46,6 +46,19 @@ const scriptOptions: MonkeyOption = {
     build: {
         systemjs: "inline",
     },
+};
+
+const devUserscriptOptions = {
+    ...releaseScriptOptions.userscript,
+    name: "Tieba RemixFork Dev",
+    namespace: "https://github.com/naseaoi/Tieba-Remix/dev",
+};
+delete devUserscriptOptions.updateURL;
+delete devUserscriptOptions.downloadURL;
+
+const devScriptOptions: MonkeyOption = {
+    ...releaseScriptOptions,
+    userscript: devUserscriptOptions,
 };
 
 const commonConfig = defineConfig({
@@ -111,7 +124,7 @@ const devConfig = defineConfig({
         cssMinify: false,
     },
     plugins: [
-        monkey(scriptOptions),
+        monkey(devScriptOptions),
     ],
 });
 
@@ -121,7 +134,7 @@ const forkConfig = defineConfig({
         cssMinify: false,
     },
     plugins: [
-        monkey(scriptOptions),
+        monkey(releaseScriptOptions),
     ],
 });
 
@@ -146,7 +159,7 @@ const prodConfig = defineConfig({
         },
     },
     plugins: [
-        monkey(scriptOptions),
+        monkey(releaseScriptOptions),
     ],
 });
 

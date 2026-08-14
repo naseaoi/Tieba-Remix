@@ -20,9 +20,6 @@ function main() {
     //     display: "none"
     // });
 
-    // 从 a标签提取emoji index
-    const indexRegExp = /(?<=nickemoji\/).*?(?=.png)/gi;
-
     // 原 emoji
     const emojis = [
         "º", "\u25CE", "\u25AB", "\u25C6", "\u2664", "\u2640",
@@ -73,6 +70,7 @@ function main() {
         "4-11.png", "4-12.png", "4-13.png", "4-14.png", "4-15.png", "4-16.png", "4-17.png",
         "4-18.png", "4-19.png", "4-20.png", "4-21.png", "4-22.png", "4-23.png",
     ];
+    const emojiByFile = new Map(transformed.map((file, index) => [file, emojis[index]]));
 
     // 看贴页面
     threadCommentsObserver.addEvent(() => {
@@ -127,13 +125,10 @@ function main() {
     });
 
     function updateEmojis(elem: Element) {
-        const arrIndex = elem.innerHTML.match(indexRegExp);
-        arrIndex?.forEach(index => {
-            const emoji = emojis[transformed.indexOf(`${index}.png`)];
-            const arrInner = elem.innerHTML.split(RegExp(
-                `<img[^>]*?${index}.png` + `(?:[^>]*?)*>`, "g"
-            ));
-            elem.innerHTML = arrInner.join(decodeURIComponent(emoji));
+        elem.querySelectorAll<HTMLImageElement>('img[src*="nickemoji/"]').forEach(image => {
+            const file = /nickemoji\/([^/?#]+\.png)/i.exec(image.src)?.[1];
+            const emoji = file ? emojiByFile.get(file) : undefined;
+            if (emoji) image.replaceWith(document.createTextNode(emoji));
         });
     }
 }

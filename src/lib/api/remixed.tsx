@@ -1,4 +1,4 @@
-import { GM_getValue, GM_openInTab, GM_setValue, getGMInfo } from "@/lib/monkey";
+import { GM_getValue, GM_openInTab, getGMInfo } from "@/lib/monkey";
 import { GiteeRelease, GiteeReleaseNotFound, Owner, RepoName, UserKey, ignoredTag, latestPreviewRelease, latestRelease, showUpdateToday, themeType, updateConfig } from "@/lib/user-values";
 import { outputFile, selectLocalFile, spawnOffsetTS, waitUntil } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/utils/markdown";
@@ -247,7 +247,7 @@ export function resolveReleaseInstallUrl(release: GiteeRelease) {
 
 export function getResource(path: string) {
     const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-    return `https://raw.githubusercontent.com/${Owner}/${RepoName}/master/${cleanPath}`;
+    return `https://raw.githubusercontent.com/${Owner}/${RepoName}/main/${cleanPath}`;
 }
 
 export function setTheme(theme: ReturnType<typeof themeType.get>) {
@@ -331,14 +331,21 @@ export async function restoreUserConfigs() {
         return;
     }
 
-    const entries = Object.entries(configs);
-    for (const [key, value] of entries) {
-        GM_setValue(key, value);
+    const backupableKeys = new Map(UserKey.getBackupableKeys().map(userKey => [userKey.key, userKey]));
+    let restoredCount = 0;
+    let ignoredCount = 0;
+    for (const [key, value] of Object.entries(configs)) {
+        const userKey = backupableKeys.get(key);
+        if (userKey?.restore(value)) {
+            restoredCount++;
+        } else {
+            ignoredCount++;
+        }
     }
 
     if (await messageBox({
         title: "恢复完成",
-        content: `已恢复 ${entries.length} 项配置。需要刷新页面以应用所有设置，是否立即刷新？`,
+        content: `已恢复 ${restoredCount} 项配置，忽略 ${ignoredCount} 项无效配置。需要刷新页面以应用所有设置，是否立即刷新？`,
         type: "okCancel",
     }) === "positive") {
         location.reload();

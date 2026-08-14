@@ -1,5 +1,6 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { forumThreadsObserver } from "@/lib/observers";
+import { constrainForumVideoPreviewSize } from "./forum-video-layout";
 
 let installed = false;
 let playObserver: Maybe<IntersectionObserver>;
@@ -11,9 +12,9 @@ const HOVER_BOUND_FLAG = "trexVideoHoverBound";
 const OWN_FLAG = "trexVideoOwn";
 const HOVERED_ATTR = "data-trex-hovered";
 const IN_BAND_ATTR = "data-trex-in-band";
+const SIZE_LOCKED_ATTR = "data-trex-video-size-locked";
+const READY_ATTR = "data-trex-video-ready";
 const PAUSED_CLASS = "trex-video-paused";
-const BOX_MAX_W = 240;
-const BOX_MAX_H = 180;
 const VIEWPORT_BAND = "-40% 0px -40% 0px";
 
 function getPlayObserver(): IntersectionObserver {
@@ -43,25 +44,31 @@ function syncPlayback(box: HTMLElement): void {
     box.classList.toggle(PAUSED_CLASS, !shouldPlay);
 }
 
-function fitVideoToRatio(video: HTMLVideoElement): void {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    if (!vw || !vh) return;
+function resolvePreviewSize(box: HTMLElement) {
+    const rect = box.getBoundingClientRect();
+    const renderedSize = constrainForumVideoPreviewSize(rect.width, rect.height);
+    if (renderedSize) return renderedSize;
 
-    const scale = Math.min(BOX_MAX_W / vw, BOX_MAX_H / vh);
-    const width = Math.round(vw * scale);
-    const height = Math.round(vh * scale);
+    const image = box.querySelector<HTMLImageElement>("img");
+    return constrainForumVideoPreviewSize(image?.naturalWidth ?? 0, image?.naturalHeight ?? 0);
+}
 
-    video.style.setProperty("width", `${width}px`, "important");
-    video.style.setProperty("height", `${height}px`, "important");
-    video.style.setProperty("object-fit", "cover", "important");
+function lockPreviewSize(box: HTMLElement): void {
+    if (box.hasAttribute(SIZE_LOCKED_ATTR)) return;
 
+    const size = resolvePreviewSize(box);
+    if (!size) return;
+
+    box.style.setProperty("width", `${size.width}px`, "important");
+    box.style.setProperty("height", `${size.height}px`, "important");
+    box.style.setProperty("flex", "0 0 auto", "important");
+    box.toggleAttribute(SIZE_LOCKED_ATTR, true);
+}
+
+function syncVideoReady(video: HTMLVideoElement): void {
     const box = video.closest<HTMLElement>(BOX_SELECTOR);
-    if (box) {
-        box.style.setProperty("width", `${width}px`, "important");
-        box.style.setProperty("height", `${height}px`, "important");
-        box.style.setProperty("flex", "0 0 auto", "important");
-    }
+    if (!box) return;
+    box.toggleAttribute(READY_ATTR, video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
 }
 
 function bindVideo(video: HTMLVideoElement): void {
@@ -69,9 +76,13 @@ function bindVideo(video: HTMLVideoElement): void {
     video.dataset[BOUND_FLAG] = "1";
 
     video.muted = true;
+    const box = video.closest<HTMLElement>(BOX_SELECTOR);
+    if (box) lockPreviewSize(box);
 
-    if (video.videoWidth) fitVideoToRatio(video);
-    else video.addEventListener("loadedmetadata", () => fitVideoToRatio(video), { once: true });
+    syncVideoReady(video);
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        video.addEventListener("loadeddata", () => syncVideoReady(video), { once: true });
+    }
 
     getPlayObserver().observe(video);
 }
@@ -83,20 +94,21 @@ function syncCover(box: HTMLElement): void {
 
     for (const el of [img, anchor]) {
         if (!el) continue;
-        if (hasVideo) {
-            el.style.setProperty("display", "none", "important");
-        } else {
-            el.style.removeProperty("display");
-            el.style.removeProperty("opacity");
-        }
+        el.style.removeProperty("display");
+        el.style.removeProperty("opacity");
     }
 
-    if (!hasVideo) {
-        box.style.removeProperty("width");
-        box.style.removeProperty("height");
-        box.style.removeProperty("flex");
-        box.classList.remove(PAUSED_CLASS);
+    if (hasVideo) {
+        lockPreviewSize(box);
+        return;
     }
+
+    box.style.removeProperty("width");
+    box.style.removeProperty("height");
+    box.style.removeProperty("flex");
+    box.removeAttribute(SIZE_LOCKED_ATTR);
+    box.removeAttribute(READY_ATTR);
+    box.classList.remove(PAUSED_CLASS);
 }
 
 function createHoverVideo(box: HTMLElement): void {
@@ -112,6 +124,7 @@ function createHoverVideo(box: HTMLElement): void {
     video.playsInline = true;
     video.dataset[OWN_FLAG] = "1";
 
+    lockPreviewSize(box);
     box.appendChild(video);
     syncCover(box);
     bindVideo(video);

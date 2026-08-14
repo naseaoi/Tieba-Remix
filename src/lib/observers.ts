@@ -12,23 +12,44 @@ export class TbObserver {
     private readonly initEvent: keyof WindowEventMap | undefined;
     private observer: MutationObserver | undefined;
     private observedElement: Element | undefined;
+    private elementWaiter: MutationObserver | undefined;
+    private waitingForElement = false;
     private initEventObserved = false;
+    private initEventFired = false;
 
     readonly events: (() => void)[] = [];
 
     /** 手动触发所有已注册的事件 */
     public emit() {
-        this.events.forEach(func => func());
+        this.events.forEach(func => this.runEvent(func));
     }
 
     public observe() {
         const obsElem = dom(this.selector);
         if (this.observer && this.observedElement === obsElem) return;
 
-        if (typeof this.initEvent === "undefined") {
-            this.emit();
-        } else if (!this.initEventObserved) {
-            window.addEventListener(this.initEvent, () => this.emit());
+        if (!obsElem) {
+            this.observer?.disconnect();
+            this.observer = undefined;
+            this.observedElement = undefined;
+            this.waitingForElement = true;
+            if (!this.elementWaiter && document.documentElement) {
+                this.elementWaiter = new MutationObserver(() => this.observe());
+                this.elementWaiter.observe(document.documentElement, { childList: true, subtree: true });
+            }
+            return;
+        }
+
+        const shouldEmitAfterAttach = this.waitingForElement;
+        this.waitingForElement = false;
+        this.elementWaiter?.disconnect();
+        this.elementWaiter = undefined;
+
+        if (typeof this.initEvent !== "undefined" && !this.initEventObserved) {
+            window.addEventListener(this.initEvent, () => {
+                this.initEventFired = true;
+                this.emit();
+            }, { once: true });
             this.initEventObserved = true;
         }
 
@@ -41,18 +62,27 @@ export class TbObserver {
         this.observer = new MutationObserver(() => this.emit());
         this.observer.observe(obsElem, this.options);
         this.observedElement = obsElem;
+        if (shouldEmitAfterAttach && (typeof this.initEvent === "undefined" || this.initEventFired)) this.emit();
     }
 
     public addEvent(...events: (() => void)[]) {
         events.forEach(event => {
             if (this.events.includes(event)) return;
             if (typeof this.initEvent === "undefined") {
-                event();
-            } else {
-                window.addEventListener(this.initEvent, event);
+                this.runEvent(event);
+            } else if (this.initEventFired) {
+                this.runEvent(event);
             }
             this.events.push(event);
         });
+    }
+
+    private runEvent(event: () => void) {
+        try {
+            event();
+        } catch (error) {
+            console.error(`[Tieba Remix] Observer 回调执行失败: ${this.selector}`, error);
+        }
     }
 }
 

@@ -4,6 +4,7 @@
 @use "./forum-thread-list" as threads;
 @use "./forum-live-thread" as live;
 @use "./forum-footer" as footer;
+@use "./tokens" as *;
 
 html.style-vercel {
     @include header.forum-header;
@@ -12,8 +13,116 @@ html.style-vercel {
     @include live.forum-live-thread;
     @include threads.forum-thread-list;
     @include footer.forum-footer;
+
+    .thread-modern-tag-popup {
+        position: absolute !important;
+        z-index: 1000 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
+        width: min(280px, calc(100vw - 16px)) !important;
+        padding: 10px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-sm !important;
+        background: var(--default-background) !important;
+        box-shadow: 0 4px 16px rgb(0 0 0 / 12%) !important;
+    }
+
+    .thread-modern-tag-label {
+        grid-column: 1 / -1 !important;
+        color: var(--default-fore) !important;
+        font-size: $vercel-fs-xs !important;
+        line-height: 16px !important;
+    }
+
+    .thread-modern-tag-input {
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 5px 8px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-xs !important;
+        background: var(--default-background) !important;
+        color: var(--default-fore) !important;
+        font: inherit !important;
+        line-height: 18px !important;
+        outline: none !important;
+    }
+
+    .thread-modern-tag-input:focus {
+        border-color: var(--tieba-theme-color) !important;
+    }
+
+    .thread-modern-tag-add,
+    .thread-modern-tag-recommendation {
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-xs !important;
+        background: var(--default-hover) !important;
+        color: var(--default-fore) !important;
+        cursor: pointer !important;
+        font: inherit !important;
+        line-height: 18px !important;
+    }
+
+    .thread-modern-tag-add {
+        padding: 5px 10px !important;
+    }
+
+    .thread-modern-tag-add:hover,
+    .thread-modern-tag-recommendation:hover {
+        border-color: var(--tieba-theme-color) !important;
+        color: var(--tieba-theme-fore) !important;
+    }
+
+    .thread-modern-tag-recommendations {
+        display: flex !important;
+        grid-column: 1 / -1 !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+
+    .thread-modern-tag-recommendation {
+        padding: 2px 6px !important;
+        font-size: $vercel-fs-xs !important;
+    }
 }
 
 html.style-vercel[data-forum-pinned="folded"] .threadlist_bright > li.thread_top_list_folder {
     @include threads.pinned-folded-state;
+}
+
+html.style-vercel:not([data-forum-thread-modern]) {
+    .threadlist_bright {
+        > li.j_thread_list:not(.thread_top) {
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            grid-template-rows: auto auto auto !important;
+            grid-template-areas:
+                "title rep author"
+                "abs abs abs"
+                "media media media" !important;
+            grid-auto-rows: 0 !important;
+            align-items: center !important;
+            row-gap: 8px !important;
+            padding: 16px !important;
+        }
+
+        .thread-modern-author-row,
+        .thread-modern-footer {
+            display: none !important;
+        }
+
+        > li.j_thread_list:not(.thread_top) .threadlist_author,
+        > li.j_thread_list:not(.thread_top) .threadlist_rep_num {
+            display: inline-flex !important;
+        }
+
+        .threadlist_author {
+            grid-area: author !important;
+            justify-self: end !important;
+        }
+
+        .threadlist_rep_num {
+            grid-area: rep !important;
+        }
+    }
 }

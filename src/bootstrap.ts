@@ -12,10 +12,12 @@ import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-fu
 import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
+import { installForumNovelRankingFallback } from "./lib/tieba-components/forum-novel-ranking";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
 import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
+import { installForumThreadListModernizer } from "./lib/tieba-components/forum-thread-list-modernizer";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
@@ -53,11 +55,15 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     installForumLoadFailureBanner();
 
+    installForumNovelRankingFallback();
+
     installForumThumbnailRecovery();
 
     installForumVideoFit();
 
     installForumLiveThreadCollapse();
+
+    installForumThreadListModernizer();
 
     installForumAuthorFullId();
 

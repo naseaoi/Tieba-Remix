@@ -53,7 +53,7 @@
         align-items: center !important;
         height: auto !important;
         padding: 10px 14px !important;
-        margin: 0 0 -1px 0 !important;
+        margin: 0 0 -1px !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
         background: none !important;
@@ -239,6 +239,27 @@
         overflow: hidden;
     }
 
+    #novel-ranking {
+        box-sizing: border-box !important;
+        height: auto !important;
+        margin: 0 0 12px -8px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: $vercel-radius-md !important;
+        background-color: var(--default-background) !important;
+        overflow: hidden !important;
+    }
+
+    #novel-ranking .novel-ranking-frs-body {
+        box-sizing: border-box !important;
+        height: auto !important;
+        padding: 10px 14px !important;
+        background-color: var(--default-background) !important;
+    }
+
+    #novel-ranking[data-collapsed="true"] .novel-ranking-frs-title {
+        margin-bottom: 0 !important;
+    }
+
     .aside_region .region_cnt {
         margin-top: 10px !important;
         color: var(--light-fore) !important;
@@ -400,7 +421,8 @@
         opacity: 1;
     }
 
-    .aside_region .region_header {
+    .aside_region .region_header,
+    #novel-ranking .novel-ranking-frs-title {
         color: var(--default-fore) !important;
         font-weight: var(--font-weight-bold);
         cursor: pointer;
@@ -409,7 +431,8 @@
         padding-right: 24px;
     }
 
-    .aside_region .region_header::after {
+    .aside_region .region_header::after,
+    #novel-ranking .novel-ranking-frs-title::after {
         content: "▸";
         position: absolute;
         right: 10px;
@@ -422,12 +445,15 @@
         transition: transform $vercel-trans-normal $vercel-ease;
     }
 
-    .aside_region:not([data-collapsed="true"]) .region_header::after {
+    .aside_region:not([data-collapsed="true"]) .region_header::after,
+    #novel-ranking:not([data-collapsed="true"]) .novel-ranking-frs-title::after {
         transform: translateY(-50%) rotate(90deg);
     }
 
     .aside_region[data-collapsed="true"] .region_cnt,
-    .aside_region[data-collapsed="true"] .region_footer {
+    .aside_region[data-collapsed="true"] .region_footer,
+    #novel-ranking[data-collapsed="true"] .novel-ranking-last-area,
+    #novel-ranking[data-collapsed="true"] .j-novel-rank-area {
         display: none !important;
     }
 

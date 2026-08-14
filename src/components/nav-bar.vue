@@ -12,7 +12,8 @@
 
             <div class="right-container">
                 <!-- 消息 -->
-                <UserButton class="nav-icon-button menu-trigger" data-menu-trigger="message" no-border="all"
+                <UserButton class="nav-icon-button menu-trigger" data-menu-trigger="message"
+                    :aria-label="unreadMessageCount > 0 ? `消息，${unreadMessageCount} 条未读` : '消息'" no-border="all"
                     @mouseenter="handleMenuTriggerEnter($event, 'message')"
                     @mouseleave="handleMenuTriggerLeave($event, 'message')">
                     <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -20,6 +21,7 @@
                         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                     </svg>
+                    <NavMessageBadge v-if="unreadMessageCount > 0" :count="unreadMessageCount" />
                     <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'message' }" data-menu-key="message"
                         :menu-items="messageMenu" @mouseenter="handleMenuPanelEnter('message')"
                         @mouseleave="handleMenuPanelLeave($event, 'message')" @request-close="closeMenus"></DropdownMenu>
@@ -62,6 +64,9 @@
             </div>
         </div>
     </nav>
+
+    <NavMessageAlert :visible="showDetachedMessageAlert" :expanded="isDetachedMessageAlertExpanded"
+        :count="unreadMessageCount" @open="openDetachedMessageAlert" />
 </template>
 
 <script lang="ts" setup>
@@ -73,8 +78,11 @@ import { waitUntil } from "@/lib/utils";
 import _ from "@/lib/utils/_";
 import { LOGIN_POPUP_VISIBLE_ATTR } from "@/modules/no-login";
 import { messageBox, toast, UserButton } from "user-view";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import DropdownMenu from "./dropdown-menu.vue";
+import NavMessageAlert from "./nav-message-alert.vue";
+import NavMessageBadge from "./nav-message-badge.vue";
+import { useNavMessageUnreadCount } from "./nav-message-unread";
 
 export type NavBarHideMode = "fold" | "alwaysFold" | "never";
 type MenuKey = "message" | "more" | "user";
@@ -84,21 +92,29 @@ const navBar = ref<HTMLElement>();
 const navAvatar = ref<HTMLImageElement>();
 const userPortrait = ref<string>("");
 const activeMenu = ref<MenuKey | null>(null);
+const pendingMenuOpen = ref<MenuKey | null>(null);
 const isAutoFolded = ref(false);
 const isRevealActive = ref(false);
+const isDetachedMessageAlertExpanded = ref(false);
 const hideMode = ref<NavBarHideMode>(navBarHideMode.get());
 const isMenuReady = ref(hideMode.value === "never");
+let detachedMessageCollapseTimer = 0;
 
 navBarHideMode.on("setter", (value) => { hideMode.value = value; });
 
 const messageMenu = ref<DropdownMenu[]>([]);
 const moreMenu = ref<DropdownMenu[]>([]);
 const userMenu = ref<DropdownMenu[]>([]);
+const unreadMessageCount = useNavMessageUnreadCount();
 
 const isFolded = computed(() => hideMode.value === "alwaysFold" || (hideMode.value === "fold" && isAutoFolded.value));
+const showDetachedMessageAlert = computed(() =>
+    hideMode.value === "alwaysFold" && unreadMessageCount.value > 0 && !isRevealActive.value
+);
 
 watch(isFolded, (folded) => {
     activeMenu.value = null;
+    pendingMenuOpen.value = null;
     if (folded) {
         isRevealActive.value = false;
         isMenuReady.value = false;
@@ -109,6 +125,22 @@ watch(isFolded, (folded) => {
     isMenuReady.value = true;
 }, { immediate: true });
 
+watch(unreadMessageCount, (count, previousCount) => {
+    if (count <= 0) {
+        collapseDetachedMessageAlert();
+    } else if (hideMode.value === "alwaysFold" && count > previousCount) {
+        expandDetachedMessageAlert();
+    }
+});
+
+watch(hideMode, (mode, previousMode) => {
+    if (mode === "alwaysFold" && previousMode !== "alwaysFold" && unreadMessageCount.value > 0) {
+        expandDetachedMessageAlert();
+    } else if (mode !== "alwaysFold") {
+        collapseDetachedMessageAlert();
+    }
+});
+
 init();
 onMounted(async function () {
     {
@@ -118,6 +150,8 @@ onMounted(async function () {
         });
     }
 });
+
+onUnmounted(() => window.clearTimeout(detachedMessageCollapseTimer));
 
 function positionMenu(trigger: HTMLElement) {
     const menu = trigger.querySelector(".nav-menu") as HTMLElement;
@@ -135,6 +169,7 @@ function positionMenu(trigger: HTMLElement) {
 
 function revealNav() {
     if (!isFolded.value || isRevealActive.value) return;
+    collapseDetachedMessageAlert();
     isRevealActive.value = true;
     isMenuReady.value = false;
 }
@@ -178,8 +213,41 @@ function handleNavTransitionEnd(e: TransitionEvent) {
     }
     if (isRevealActive.value) {
         isMenuReady.value = true;
-        syncHoveredMenu();
+        if (pendingMenuOpen.value) {
+            openPendingMenu();
+        } else {
+            syncHoveredMenu();
+        }
     }
+}
+
+function openDetachedMessageAlert() {
+    pendingMenuOpen.value = "message";
+    revealNav();
+}
+
+function openPendingMenu() {
+    const key = pendingMenuOpen.value;
+    pendingMenuOpen.value = null;
+    if (!key) return;
+
+    const trigger = getTriggerElement(key);
+    if (!trigger) return;
+    positionMenu(trigger);
+    activeMenu.value = key;
+}
+
+function expandDetachedMessageAlert() {
+    window.clearTimeout(detachedMessageCollapseTimer);
+    isDetachedMessageAlertExpanded.value = true;
+    detachedMessageCollapseTimer = window.setTimeout(() => {
+        isDetachedMessageAlertExpanded.value = false;
+    }, 3000);
+}
+
+function collapseDetachedMessageAlert() {
+    window.clearTimeout(detachedMessageCollapseTimer);
+    isDetachedMessageAlertExpanded.value = false;
 }
 
 function handleMenuTriggerEnter(e: MouseEvent, key: MenuKey) {
@@ -336,6 +404,8 @@ async function openSettings() {
 }
 
 function loadNavMenuContent() {
+    const favoriteThreadsHref = `/i/i/storethread?un=${encodeURIComponent(PageData.user.user_name)}`;
+
     messageMenu.value = [
         {
             title: "查看私信",
@@ -361,7 +431,7 @@ function loadNavMenuContent() {
         "separator",
         {
             title: "我的收藏",
-            href: `/i/sys/jump?u=${userPortrait.value}&type=storethread`,
+            href: favoriteThreadsHref,
         },
         {
             title: "我的通知",
@@ -395,7 +465,7 @@ function loadNavMenuContent() {
         },
         {
             title: "我的收藏",
-            href: `/i/sys/jump?un=${PageData.user.user_name}${PageData.user.name_url}&type=storethread&st_mod=userbar&fr=tb0_pb`,
+            href: favoriteThreadsHref,
         },
     ];
 

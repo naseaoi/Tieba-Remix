@@ -14,9 +14,14 @@ export function installThreadFloorTag(): void {
         tagCommentTimes();
     };
 
-    threadFloorsObserver.addEvent(tag);
-    threadCommentsObserver.addEvent(tagCommentTimes);
+    const refresh = (): void => {
+        tag();
+        window.setTimeout(tag, 100);
+    };
+    threadFloorsObserver.addEvent(refresh);
+    threadCommentsObserver.addEvent(refresh);
     tag();
+    window.setTimeout(tag, 100);
 }
 
 function tagFloorTimes(): void {
@@ -25,14 +30,21 @@ function tagFloorTimes(): void {
         const text = (el.textContent ?? "").trim();
         const match = /^(\d+)楼$/.exec(text);
         if (match) {
-            el.classList.add("vercel-floor-tag");
-            el.dataset.floorNum = match[1];
             const next = el.nextElementSibling;
             if (next instanceof HTMLElement && next.classList.contains("tail-info")) {
-                next.classList.add("vercel-time-tag");
-                updateTimeText(next);
+                tagFloorTime(el, next, match[1]);
             }
         }
+    });
+
+    document.querySelectorAll<HTMLElement>(".core_reply_tail:not(.clearfix) .p_tail").forEach(tail => {
+        const items = tail.querySelectorAll<HTMLElement>("li > span");
+        const floor = items[0];
+        const time = items[1];
+        if (!floor || !time || floor.classList.contains("vercel-floor-tag")) return;
+
+        const match = /^(\d+)楼$/.exec((floor.textContent ?? "").trim());
+        if (match) tagFloorTime(floor, time, match[1]);
     });
 }
 
@@ -43,4 +55,11 @@ function tagCommentTimes(): void {
 function updateTimeText(el: HTMLElement): void {
     const humanized = humanizeTiebaTime(el.textContent ?? "");
     if (humanized) el.textContent = humanized;
+}
+
+function tagFloorTime(floor: HTMLElement, time: HTMLElement, floorNum: string): void {
+    floor.classList.add("vercel-floor-tag");
+    floor.dataset.floorNum = floorNum;
+    time.classList.add("vercel-time-tag");
+    updateTimeText(time);
 }

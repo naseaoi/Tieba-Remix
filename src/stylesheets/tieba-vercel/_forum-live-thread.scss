@@ -5,7 +5,7 @@
     #pagelet_live\/pagelet\/live_thread .interview {
         @include vercel-card;
         padding: 0 !important;
-        margin: 12px 16px 0px !important;
+        margin: 12px 16px 0 !important;
         overflow: visible !important;
         width: auto !important;
         box-sizing: border-box !important;
@@ -318,6 +318,7 @@
                 object-fit: cover !important;
             }
         }
+
         .pTitleCnt {
             grid-area: content !important;
             margin: 0 !important;

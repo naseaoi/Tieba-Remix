@@ -3,6 +3,7 @@ import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { AGREE_OBJ_TYPE_FLOOR, AGREE_OBJ_TYPE_SUB_POST, AGREE_OBJ_TYPE_THREAD, fetchAgreeSnapshot, fetchSubPostAgreeSnapshot, fetchSubPostSourceSnapshot, fetchUserProfileIp, type AgreeSnapshot, type SubPostAgreeSnapshot } from "./api";
 import { createAgreeActionState, setupAgreeAction, type AgreeActionServerState, type AgreeActionState } from "./agree-action";
 import { formatCount } from "./format";
+import { mergeRecentThreadAgreeState, saveRecentThreadAgreeState } from "./recent-state";
 import { toast } from "user-view";
 import "./style.css";
 
@@ -93,6 +94,17 @@ async function main(): Promise<void> {
         }
         if (token !== loadToken) return;
 
+        if (next.threadAgree != null) {
+            const state = mergeRecentThreadAgreeState(tid, {
+                liked: next.threadHasAgree,
+                count: next.threadAgree,
+            });
+            next = {
+                ...next,
+                threadAgree: state.count,
+                threadHasAgree: state.liked,
+            };
+        }
         snapshot = next;
         loadedKey = key;
         renderFloorAgree(threadList, snapshot, actionStateByKey);
@@ -309,6 +321,7 @@ function renderFloorAgree(threadList: HTMLElement, snapshot: AgreeSnapshot, acti
                 count,
                 state: getAgreeActionState(actionStateByKey, key, liked, count),
                 refresh: isThreadPost ? refreshThreadAgreeState : () => refreshFloorAgreeState(postId),
+                onConfirmed: isThreadPost ? state => saveRecentThreadAgreeState(PageData.thread.thread_id, state) : undefined,
             });
         }
     });

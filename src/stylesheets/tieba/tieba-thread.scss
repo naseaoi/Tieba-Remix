@@ -46,13 +46,6 @@
     margin-right: 0;
 }
 
-/* 去除无关内容 */
-#novel-ranking .novel-ranking-frs-body,
-.novel-award-aside {
-    /* 小说人气榜相关 */
-    display: none;
-}
-
 /* 吧图标 */
 .card_head,
 .plat_head_theme2 .plat_picbox {
@@ -703,8 +696,8 @@ span.tP {
 } */
 
 /* 文字链接：固定蓝色 + 链接图标前缀；:not(:has(img)) 排除图片/链接卡 */
-.d_post_content a:not(.at):not(:has(img)),
-.lzl_cnt .lzl_content_main a:not(.at):not(:has(img)) {
+.d_post_content a:not(.at):not(:empty):not(:has(img)),
+.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)) {
     margin: auto 2px;
     color: #2563eb !important;
     text-decoration: underline 1px rgb(37 99 235 / 50%);
@@ -712,8 +705,8 @@ span.tP {
     transition: 0.4s;
 }
 
-.d_post_content a:not(.at):not(:has(img))::before,
-.lzl_cnt .lzl_content_main a:not(.at):not(:has(img))::before {
+.d_post_content a:not(.at):not(:empty):not(:has(img))::before,
+.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img))::before {
     content: "";
     display: inline-block;
     width: 1em;

@@ -245,9 +245,6 @@ body.special_conf_skin {
 
 // https://tieba.baidu.com/f?kw=c%E8%AF%AD%E8%A8%80&ie=utf-8
 .core_reply_tail:not(.clearfix) {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-
     .p_tail li,
     .p_tail_txt,
     .p_mtail a,
@@ -632,4 +629,213 @@ body.special_conf_skin {
 
 .error {
     background: none;
+}
+
+html.style-vercel .recommend_outtest_container {
+    position: fixed !important;
+    z-index: 1200 !important;
+    box-sizing: border-box !important;
+    width: min(320px, calc(100vw - 24px)) !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    background: var(--default-background) !important;
+    box-shadow: 0 16px 40px rgb(0 0 0 / 14%) !important;
+    color: var(--default-fore) !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+html.style-vercel .recommend_outtest_container .arrow_top {
+    display: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .success_tip {
+    display: flex !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-height: 24px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 12px !important;
+}
+
+html.style-vercel .recommend_outtest_container .success_tip hr {
+    display: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .collect_success {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    margin: 0 !important;
+    color: var(--default-fore) !important;
+    font-weight: var(--font-weight-bold) !important;
+    gap: 6px !important;
+}
+
+html.style-vercel .recommend_outtest_container .collect_tip {
+    display: inline-flex !important;
+    width: 18px !important;
+    height: 18px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    background: none !important;
+    background-image: none !important;
+    color: var(--tieba-theme-color) !important;
+    font-family: var(--symbol-font, "Material Symbols") !important;
+    font-size: 18px !important;
+}
+
+html.style-vercel .recommend_outtest_container .collect_tip::before {
+    content: "check_circle";
+}
+
+html.style-vercel .recommend_outtest_container .delete_collect {
+    position: relative !important;
+    display: inline-flex !important;
+    width: 24px !important;
+    height: 24px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    float: none !important;
+    clear: none !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    background: none !important;
+    color: var(--light-fore) !important;
+    cursor: pointer !important;
+}
+
+html.style-vercel .recommend_outtest_container .delete_collect::before {
+    content: "close";
+    font-family: var(--symbol-font, "Material Symbols") !important;
+    font-size: 18px !important;
+}
+
+html.style-vercel .recommend_outtest_container .delete_collect:hover {
+    color: var(--default-fore) !important;
+}
+
+html.style-vercel .recommend_outtest_container .rules_tip {
+    position: static !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    left: auto !important;
+    right: auto !important;
+    margin-bottom: 8px !important;
+    color: var(--light-fore) !important;
+    font-size: 12px !important;
+}
+
+html.style-vercel .recommend_outtest_container .show_tag_input {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .j_add_tag {
+    box-sizing: border-box !important;
+    display: block !important;
+    width: 100% !important;
+    height: 34px !important;
+    padding: 6px 9px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    outline: none !important;
+    background: var(--default-background) !important;
+    color: var(--default-fore) !important;
+    font: inherit !important;
+    line-height: 20px !important;
+}
+
+html.style-vercel .recommend_outtest_container .j_add_tag:focus {
+    border-color: var(--tieba-theme-color) !important;
+}
+
+html.style-vercel .recommend_outtest_container .recommend_tag {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin-top: 10px !important;
+}
+
+html.style-vercel .recommend_outtest_container .recommend_tag:empty {
+    display: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .recommend_tag a,
+html.style-vercel .recommend_outtest_container .recommend_tag span {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 24px !important;
+    padding: 2px 8px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    background: var(--default-hover) !important;
+    color: var(--default-fore) !important;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    line-height: 18px !important;
+    text-decoration: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .recommend_tag a:hover,
+html.style-vercel .recommend_outtest_container .recommend_tag span:hover {
+    border-color: var(--tieba-theme-color) !important;
+}
+
+html.style-vercel .recommend_outtest_container .tag_button {
+    display: flex !important;
+    box-sizing: border-box !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin-top: 12px !important;
+    background: none !important;
+}
+
+html.style-vercel .recommend_outtest_container .tag_submit_button {
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 56px !important;
+    height: 32px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    margin: 0 !important;
+    padding: 5px 12px !important;
+    border: 1px solid var(--default-fore) !important;
+    border-radius: 6px !important;
+    background: var(--default-fore) !important;
+    color: var(--default-background) !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    line-height: 20px !important;
+}
+
+html.style-vercel .recommend_outtest_container .tag_submit_button:hover {
+    opacity: 0.85 !important;
 }

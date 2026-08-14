@@ -371,7 +371,45 @@ body[hide-bottom-editor] .editor_wrap_bright {
 }
 
 .threadlist_bright .threadlist_video {
+    overflow: hidden;
     border-radius: 4px;
+}
+
+.threadlist_bright .threadlist_video[data-trex-video-size-locked] > img {
+    transition: opacity var(--fast-duration);
+}
+
+.threadlist_bright .threadlist_video video[data-trex-video-fit-bound="1"] {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: inherit;
+    background-color: #000;
+    object-fit: contain !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--fast-duration);
+}
+
+.threadlist_bright .threadlist_video[data-trex-video-ready] > img {
+    opacity: 0 !important;
+}
+
+.threadlist_bright .threadlist_video[data-trex-video-ready] > a {
+    display: none !important;
+}
+
+.threadlist_bright .threadlist_video[data-trex-video-ready] video[data-trex-video-fit-bound="1"] {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .threadlist_bright .threadlist_video[data-trex-video-size-locked] > img,
+    .threadlist_bright .threadlist_video video[data-trex-video-fit-bound="1"] {
+        transition: none;
+    }
 }
 
 .threadlist_rep_num {

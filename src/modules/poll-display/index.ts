@@ -16,8 +16,14 @@ export default {
     description: "网页端贴吧不显示投票模块，本模块通过 App 端接口拉取投票数据，并在首楼底部以只读形式渲染选项、票数与进度条。投票操作请在贴吧 App 内进行。",
     scope: ["thread"],
     runAt: "DOMLoaded",
-    entry: main,
+    entry: start,
 } as UserModule;
+
+function start(): void {
+    void main().catch(err => {
+        console.warn("[poll-display] 初始化投票面板失败:", err);
+    });
+}
 
 async function main(): Promise<void> {
     if (PageData?.pager?.cur_page !== 1) return;
@@ -36,7 +42,8 @@ async function main(): Promise<void> {
     }
     if (!poll) return;
 
-    const threadList = await asyncdom<"div">("#j_p_postlist");
+    const threadList = await asyncdom<"div">("#j_p_postlist", undefined, 10_000);
+    if (!threadList) return;
 
     const firstPost = threadList.querySelector<HTMLDivElement>(".l_post");
     if (!firstPost) return;

@@ -268,21 +268,32 @@ export async function loadDynamicCSS() {
     applyCustomStyle();
 }
 
+function installFavicon() {
+    if (document.querySelector("#tieba-remix-favicon")) {
+        return;
+    }
+
+    document.head.appendChild(domrd("link", {
+        id: "tieba-remix-favicon",
+        type: "image/icon",
+        rel: "shortcut icon",
+        href: getResource("/assets/images/main/favicon32.ico"),
+    }));
+}
+
 export async function loadMainCSS() {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", installFavicon, { once: true });
+    } else {
+        installFavicon();
+    }
+
     await Promise.all([
         ensureBaseCSS(),
         ensurePageCSS(),
         ensureThemePaletteCSS(styleTheme.get()),
         ensureThemeCSS(styleTheme.get()),
     ]);
-
-    document.addEventListener("DOMContentLoaded", function () {
-        document.head.appendChild(domrd("link", {
-            type: "image/icon",
-            rel: "shortcut icon",
-            href: getResource("/assets/images/main/favicon32.ico"),
-        }));
-    }, { once: true });
 }
 
 export function setStyleTheme(value: "remixed" | "vercel") {

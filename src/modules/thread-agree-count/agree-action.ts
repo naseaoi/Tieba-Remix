@@ -15,6 +15,7 @@ export interface AgreeActionParams {
     count: number;
     state?: AgreeActionState;
     refresh?: () => Promise<AgreeActionServerState | undefined>;
+    onConfirmed?: (state: AgreeActionServerState) => void;
 }
 
 export interface AgreeActionState {
@@ -99,6 +100,11 @@ export function setupAgreeAction(badge: HTMLElement, params: AgreeActionParams):
                 state.confirmedAt = Date.now();
                 state.mismatchNotified = false;
                 applyAllStates();
+            }
+            try {
+                params.onConfirmed?.({ liked: state.liked, count: state.count });
+            } catch {
+                return;
             }
         } catch (err) {
             state.liked = cancel;

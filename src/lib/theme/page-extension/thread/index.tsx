@@ -12,6 +12,7 @@ import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
 import { pager } from "@/lib/tieba-components/pager";
+import { installThreadFavoriteTagPopup } from "@/lib/tieba-components/thread-favorite-tag-popup";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import { requestUEditorInit, resolveReadyUEditor, waitForReadyUEditor } from "@/lib/utils/use-ueditor";
@@ -32,6 +33,8 @@ export default async function () {
         markThreadLayoutReady();
         return;
     }
+
+    installThreadFavoriteTagPopup();
 
     overwriteCSS(
         threadStyle,

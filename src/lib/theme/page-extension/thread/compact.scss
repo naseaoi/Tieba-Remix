@@ -1,6 +1,32 @@
 body[compact-layout] {
     #j_p_postlist {
-        gap: 0;
+        gap: 4px !important;
+    }
+
+    .core_reply_tail,
+    .post-tail-wrap {
+        height: auto !important;
+        min-height: 24px;
+        line-height: 24px !important;
+    }
+
+    .core_reply_tail.clearfix {
+        min-height: 24px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .author-container .floor-avatar {
+        margin-bottom: 0 !important;
+
+        img {
+            width: 32px;
+            height: 32px;
+        }
+    }
+
+    .post-tail-wrap,
+    .core_reply_tail:not(.clearfix) {
+        gap: 6px;
     }
 
     .core_reply_content li.first_no_border {
@@ -10,5 +36,9 @@ body[compact-layout] {
     // 楼中楼单个回复
     .core_reply .core_reply_wrapper .core_reply_content .lzl_single_post {
         margin-bottom: 0;
+    }
+
+    .lzl_content_reply {
+        line-height: 24px !important;
     }
 }

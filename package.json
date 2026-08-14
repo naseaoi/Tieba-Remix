@@ -1,6 +1,7 @@
 {
     "name": "tieba-remix",
     "private": true,
+    "packageManager": "pnpm@10.7.1",
     "type": "module",
     "scripts": {
         "dev": "vite",
@@ -8,19 +9,21 @@
         "build-dev": "vite build --mode development",
         "build-fork": "vite build --mode fork",
         "preview": "vite preview",
-        "lint": "eslint src/"
+        "lint": "eslint src/",
+        "lint:styles": "stylelint \"src/**/*.{css,scss,vue}\"",
+        "test": "vitest run"
     },
     "dependencies": {
+        "dompurify": "3.4.12",
         "libelemental": "^1.0.7",
         "lodash-es": "^4.18.1",
-        "marked": "^14.1.4",
+        "marked": "^18.0.7",
         "user-view": "^0.0.11",
-        "vue": "^3.5.13"
+        "vue": "^3.5.40"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.4",
         "@types/lodash-es": "^4.17.12",
-        "@types/marked": "^5.0.2",
         "@types/node": "^22.10.5",
         "@vitejs/plugin-vue": "^5.2.4",
         "@vitejs/plugin-vue-jsx": "^4.1.1",
@@ -29,18 +32,16 @@
         "eslint": "^9.36.0",
         "eslint-plugin-vue": "^10.9.1",
         "globals": "^16.4.0",
-        "pnpm": "^8.14.3",
+        "jsdom": "^26.1.0",
         "postcss": "^8.4.49",
         "postcss-html": "^1.6.0",
         "postcss-preset-env": "^8.5.1",
         "postcss-scss": "^4.0.9",
         "sass": "^1.70.0",
         "stylelint": "^17.11.1",
-        "stylelint-config-idiomatic-order": "^10.0.0",
         "stylelint-config-recommended-vue": "^1.6.1",
         "stylelint-config-standard": "^40.0.0",
         "stylelint-config-standard-scss": "^17.0.0",
-        "stylelint-order": "^8.1.1",
         "stylelint-scss": "^7.1.1",
         "terser": "^5.27.0",
         "type-fest": "^4.32.0",
@@ -48,12 +49,14 @@
         "typescript-eslint": "^8.59.3",
         "vite": "^6.0.7",
         "vite-plugin-monkey": "^7.1.9",
+        "vitest": "^3.2.4",
         "vue-eslint-parser": "^10.4.0",
         "vue-tsc": "^2.2.0"
     },
     "pnpm": {
         "overrides": {
-            "stylelint-order": "^8.1.1",
+            "lodash": "^4.18.1",
+            "postcss": "^8.5.25",
             "stylelint-config-recommended>stylelint": "^17.11.1"
         }
     }

@@ -51,6 +51,16 @@ export function installForumAuthorFullId(): void {
     })();
 }
 
+export function getForumAuthorName(a: HTMLAnchorElement | null): string {
+    if (!a) return "";
+    const current = (a.textContent ?? "").trim();
+    return extractFullName(a) ?? current;
+}
+
+export function isTruncatedForumAuthorName(name: string): boolean {
+    return /(?:\.{3}|…)$/u.test(name.trim());
+}
+
 function extractFullName(a: HTMLAnchorElement): string | null {
     const current = (a.textContent ?? "").trim();
     if (!current) return null;

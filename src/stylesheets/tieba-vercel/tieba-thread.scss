@@ -388,8 +388,8 @@ html.style-vercel {
     }
 
     // 纯文本链接
-    .d_post_content a:not(.at):not(:has(img)),
-    .lzl_cnt .lzl_content_main a:not(.at):not(:has(img)) {
+    .d_post_content a:not(.at):not(:empty):not(:has(img)),
+    .lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)) {
         color: #2563eb !important;
         text-decoration: underline 1px rgb(37 99 235 / 50%);
         text-underline-offset: 2px;
