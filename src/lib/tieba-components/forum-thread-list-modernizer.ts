@@ -1,6 +1,6 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
-import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, prefetchThreadFollowSign, tiebaAPI } from "@/lib/api/tieba";
+import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, tiebaAPI } from "@/lib/api/tieba";
 import { forumThreadsObserver } from "@/lib/observers";
 import { forumThreadModernLayout } from "@/lib/user-values";
 import { fetchAgreeSnapshot } from "@/modules/thread-agree-count/api";
@@ -96,9 +96,6 @@ function createFooter(item: HTMLElement, tid: number, replyCount: string): void 
     favoriteLabel.className = "thread-modern-label";
     favoriteLabel.textContent = "收藏";
     favorite.append(favoriteLabel);
-    favorite.addEventListener("pointerenter", () => {
-        void prefetchThreadFollowSign(tid).catch(() => undefined);
-    }, { once: true });
     favorite.addEventListener("click", event => {
         event.preventDefault();
         event.stopPropagation();
@@ -324,7 +321,6 @@ function loadAgree(item: HTMLElement, tid: number, badge: HTMLElement): void {
         if (!entries.some(entry => entry.isIntersecting)) return;
         observer.disconnect();
         if (agreeLoading.has(tid)) return;
-        void prefetchThreadFollowSign(tid).catch(() => undefined);
         agreeLoading.add(tid);
         void fetchAgreeSnapshot({ tid, pn: 1, rn: 1, lzOnly: false }).then(snapshot => {
             const state = mergeRecentThreadAgreeState(tid, {

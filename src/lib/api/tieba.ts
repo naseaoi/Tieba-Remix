@@ -628,10 +628,6 @@ function getThreadFollowSign(tid: number): Promise<string> {
     return request;
 }
 
-export function prefetchThreadFollowSign(tid: number): Promise<string> {
-    return getThreadFollowSign(tid);
-}
-
 async function favoritePostInstance(
     tid: number,
     fid: number,
