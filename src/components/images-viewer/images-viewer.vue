@@ -50,7 +50,7 @@
                     <div ref="thumbContainer" class="thumb-container">
                         <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
                             :class="{ 'selected': index === curr }" no-border="all">
-                            <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
+                            <img class="image-list" alt="" :data-lazyload="thumb" @click="selectImage(index)">
                         </UserButton>
                     </div>
                 </div>
@@ -71,7 +71,7 @@ import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { notifyImageViewerFailure } from "./image-feedback";
-import { preloadUpcomingImages } from "./image-preloader";
+import { ensureImageReady, preloadUpcomingImages } from "./image-preloader";
 
 export interface ImagesViewerOpts {
     content: string | string[] | TiebaPost | ThreadPicture[];
@@ -213,6 +213,8 @@ let lastControlTimeout: ControlDirectionMap<number> = {
 let thumbLazyloadObserver: IntersectionObserver | undefined;
 let imageMoveHandler: ((event: MouseEvent) => void) | undefined;
 let scrollDragCleanup: (() => void) | undefined;
+let navigationRequestId = 0;
+let viewerActive = true;
 
 onMounted(async () => {
     await nextTick();
@@ -252,7 +254,7 @@ onMounted(async () => {
         if (!currImage.value) return;
         imageFailed.value = false;
         deg.value = 0;
-        disableImageTransition.value = false;
+        disableImageTransition.value = true;
         imageLeft.value = undefined;
         imageTop.value = undefined;
 
@@ -281,15 +283,19 @@ onMounted(async () => {
 
         loading.value = false;
         preloadUpcomingImages(imageArray, curr.value);
-        // 下一帧再启用过渡，避免首次加载时 width/height 从 0 动画放大
         nextTick(() => {
             currImage.value?.classList.remove("changing");
+            requestAnimationFrame(() => {
+                disableImageTransition.value = false;
+            });
         });
     });
 
     evproxy.on(currImage.value, "error", function () {
         loading.value = false;
         imageFailed.value = true;
+        disableImageTransition.value = false;
+        currImage.value?.classList.remove("changing");
         naturalSize.value = { width: 0, height: 0 };
         notifyImageViewerFailure("resource");
     });
@@ -350,6 +356,8 @@ onMounted(async () => {
 });
 
 onUnmounted(function () {
+    viewerActive = false;
+    navigationRequestId++;
     evproxy.release();
     thumbLazyloadObserver?.disconnect();
     stopImageDragging();
@@ -367,7 +375,14 @@ function stopImageDragging() {
 watch(curr, function () {
     loading.value = true;
     imageFailed.value = false;
+    disableImageTransition.value = true;
     currImage.value?.classList.add("changing");
+
+    if (currImage.value?.getAttribute("src") === imageArray[curr.value]) {
+        loading.value = false;
+        disableImageTransition.value = false;
+        currImage.value.classList.remove("changing");
+    }
 });
 
 /** 卸载组件 */
@@ -377,12 +392,33 @@ function unload() {
 
 /** 上一张照片 */
 function listBack() {
-    if (curr.value > 0) curr.value--;
+    if (curr.value > 0) void selectImage(curr.value - 1);
 }
 
 /** 下一张照片 */
 function listForward() {
-    if (curr.value < imageArray.length - 1) curr.value++;
+    if (curr.value < imageArray.length - 1) void selectImage(curr.value + 1);
+}
+
+async function selectImage(index: number): Promise<void> {
+    if (!Number.isInteger(index) || index < 0 || index >= imageArray.length || index === curr.value) return;
+
+    const requestId = ++navigationRequestId;
+    loading.value = true;
+    imageFailed.value = false;
+
+    try {
+        await ensureImageReady(imageArray[index], "high");
+    } catch {
+        if (viewerActive && requestId === navigationRequestId) {
+            loading.value = false;
+            notifyImageViewerFailure("resource");
+        }
+        return;
+    }
+
+    if (!viewerActive || requestId !== navigationRequestId) return;
+    curr.value = index;
 }
 
 /** 缩放图片 */

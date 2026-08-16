@@ -1,26 +1,58 @@
 const PRELOAD_RECORD_LIMIT = 100;
 const preloadedUrls = new Set<string>();
-const activePreloads = new Map<string, HTMLImageElement>();
+const activePreloads = new Map<string, Promise<void>>();
 
 export function preloadImageUrl(url: string | undefined, priority: "high" | "low" = "low"): void {
+    void ensureImageReady(url, priority).catch(() => undefined);
+}
+
+export function ensureImageReady(url: string | undefined, priority: "high" | "low" = "high"): Promise<void> {
     const normalizedUrl = url?.trim();
-    if (!normalizedUrl || preloadedUrls.has(normalizedUrl)) return;
+    if (!normalizedUrl || preloadedUrls.has(normalizedUrl)) return Promise.resolve();
 
-    const image = new Image();
-    const finish = () => activePreloads.delete(normalizedUrl);
+    const activeRequest = activePreloads.get(normalizedUrl);
+    if (activeRequest) return activeRequest;
 
-    image.decoding = "async";
-    image.fetchPriority = priority;
-    image.addEventListener("load", finish, { once: true });
-    image.addEventListener("error", () => {
-        preloadedUrls.delete(normalizedUrl);
-        finish();
-    }, { once: true });
+    const request = new Promise<void>((resolve, reject) => {
+        const image = new Image();
+        const cleanup = () => {
+            image.removeEventListener("load", onLoad);
+            image.removeEventListener("error", onError);
+        };
+        const onLoad = () => {
+            const decodeRequest = typeof image.decode === "function"
+                ? image.decode()
+                : Promise.resolve();
+            void decodeRequest.then(() => {
+                cleanup();
+                rememberPreloadedUrl(normalizedUrl);
+                resolve();
+            }, error => {
+                cleanup();
+                reject(error);
+            });
+        };
+        const onError = () => {
+            cleanup();
+            reject(new Error("image preload failed"));
+        };
 
-    preloadedUrls.add(normalizedUrl);
-    activePreloads.set(normalizedUrl, image);
-    image.src = normalizedUrl;
+        image.decoding = "async";
+        image.fetchPriority = priority;
+        image.addEventListener("load", onLoad, { once: true });
+        image.addEventListener("error", onError, { once: true });
+        image.src = normalizedUrl;
+    });
+    activePreloads.set(normalizedUrl, request);
+    request.then(
+        () => activePreloads.delete(normalizedUrl),
+        () => activePreloads.delete(normalizedUrl),
+    );
+    return request;
+}
 
+function rememberPreloadedUrl(url: string): void {
+    preloadedUrls.add(url);
     while (preloadedUrls.size > PRELOAD_RECORD_LIMIT) {
         const oldestUrl = preloadedUrls.values().next().value;
         if (typeof oldestUrl !== "string") break;

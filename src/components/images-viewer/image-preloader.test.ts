@@ -1,11 +1,17 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { preloadImageUrl, preloadUpcomingImages } from "./image-preloader";
+import { ensureImageReady, preloadImageUrl, preloadUpcomingImages } from "./image-preloader";
 
 describe("image preloader", () => {
     const loadedSources: string[] = [];
+    const imageInstances: TestImage[] = [];
 
     class TestImage extends EventTarget {
         decoding = "auto";
+
+        constructor() {
+            super();
+            imageInstances.push(this);
+        }
 
         set src(value: string) {
             loadedSources.push(value);
@@ -26,5 +32,20 @@ describe("image preloader", () => {
         preloadImageUrl("next-2");
 
         expect(loadedSources).toEqual(["next-1", "next-2", "next-3"]);
+    });
+
+    it("waits for the image load before resolving", async () => {
+        const request = ensureImageReady("ready-url");
+        let settled = false;
+        void request.then(() => {
+            settled = true;
+        });
+
+        await Promise.resolve();
+        expect(settled).toBe(false);
+
+        imageInstances.at(-1)?.dispatchEvent(new Event("load"));
+        await expect(request).resolves.toBeUndefined();
+        expect(settled).toBe(true);
     });
 });
