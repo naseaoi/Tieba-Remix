@@ -2,6 +2,7 @@ import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { shieldList } from "@/modules/shield/shield";
+import { installLzlFloorControls, renderLzlFloorControls } from "./lzl-floor-controls";
 import { installLzlReplyToggle } from "./lzl-reply-toggle";
 import "./thread-floor-actions.css";
 
@@ -19,8 +20,10 @@ export function installThreadFloorActions(): void {
     if (currentPageType() !== "thread") return;
     installed = true;
     installLzlReplyToggle();
+    installLzlFloorControls();
 
     const run = (): void => {
+        renderLzlFloorControls();
         renderReplyControls();
         renderFloorMenus();
         normalizeLocationText();
@@ -37,13 +40,6 @@ export function installThreadFloorActions(): void {
 }
 
 function renderReplyControls(): void {
-    document.querySelectorAll<HTMLElement>(".lzl_link_unfold, .lzl_link_fold").forEach(link => {
-        const active = link.classList.contains("lzl_link_fold");
-        link.classList.add(REPLY_CLASS);
-        link.setAttribute("aria-label", active ? "收起回复" : "回复");
-        link.title = active ? "收起回复" : "回复";
-    });
-
     document.querySelectorAll<HTMLElement>(".p_reply_first").forEach(link => {
         link.classList.add(REPLY_CLASS);
         link.setAttribute("aria-label", "回复");
