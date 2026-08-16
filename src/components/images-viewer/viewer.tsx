@@ -2,6 +2,12 @@ import { renderDialog } from "@/lib/render";
 import type { ImagesViewerOpts } from "./images-viewer.vue";
 import { notifyImageViewerFailure } from "./image-feedback";
 
+let viewerComponentRequest: ReturnType<typeof loadViewerComponent> | undefined;
+
+export function prepareImagesViewer(): void {
+    void getViewerComponent().catch(() => undefined);
+}
+
 export async function imagesViewer(opts: ImagesViewerOpts): Promise<boolean> {
     if (!hasAvailableImage(opts.content)) {
         notifyImageViewerFailure("empty");
@@ -35,7 +41,7 @@ export async function imagesViewer(opts: ImagesViewerOpts): Promise<boolean> {
     };
 
     try {
-        const { default: ImagesViewer } = await import("./images-viewer.vue");
+        const { default: ImagesViewer } = await getViewerComponent();
         renderDialog(ImagesViewer, opts, {
             unloaded: restore,
             abnormalUnload: restore,
@@ -47,6 +53,18 @@ export async function imagesViewer(opts: ImagesViewerOpts): Promise<boolean> {
         notifyImageViewerFailure("viewer");
         return false;
     }
+}
+
+function loadViewerComponent() {
+    return import("./images-viewer.vue");
+}
+
+function getViewerComponent(): ReturnType<typeof loadViewerComponent> {
+    viewerComponentRequest ??= loadViewerComponent().catch(error => {
+        viewerComponentRequest = undefined;
+        throw error;
+    });
+    return viewerComponentRequest;
 }
 
 function hasAvailableImage(content: ImagesViewerOpts["content"]): boolean {

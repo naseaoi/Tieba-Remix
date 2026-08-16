@@ -5,7 +5,8 @@
                 <div v-show="loading" class="image-loading-spinner"></div>
                 <img ref="currImage" class="curr-image changing"
                     :class="{ 'loading-img': loading, 'failed-img': imageFailed }"
-                    :src="imageArray[curr]" :style="parseCSSRule(imageStyle)">
+                    :src="imageArray[curr]" fetchpriority="high" decoding="async"
+                    :style="parseCSSRule(imageStyle)">
                 <div v-if="imageFailed" class="image-error-state">
                     <span class="icon">broken_image</span>
                     <span>图片加载失败</span>
@@ -70,6 +71,7 @@ import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { notifyImageViewerFailure } from "./image-feedback";
+import { preloadUpcomingImages } from "./image-preloader";
 
 export interface ImagesViewerOpts {
     content: string | string[] | TiebaPost | ThreadPicture[];
@@ -274,6 +276,7 @@ onMounted(async () => {
         syncImagePosition();
 
         loading.value = false;
+        preloadUpcomingImages(imageArray, curr.value);
         // 下一帧再启用过渡，避免首次加载时 width/height 从 0 动画放大
         nextTick(() => {
             currImage.value?.classList.remove("changing");
