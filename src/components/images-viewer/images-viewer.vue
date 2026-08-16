@@ -146,6 +146,7 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
 const loading = ref(true);
 const imageFailed = ref(false);
 const disableImageTransition = ref(false);
+const imageSwitching = ref(false);
 const isScrollDragging = ref(false);
 
 const imageStyle = computed<CSSRule>(() => {
@@ -157,7 +158,7 @@ const imageStyle = computed<CSSRule>(() => {
         transform: `rotate(${deg.value}deg)`,
         left: imageLeft.value === undefined ? undefined : `${imageLeft.value}px`,
         top: imageTop.value === undefined ? undefined : `${imageTop.value}px`,
-        transition: disableImageTransition.value
+        transition: disableImageTransition.value || imageSwitching.value
             ? "none"
             : "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0s",
     };
@@ -286,6 +287,7 @@ onMounted(async () => {
         nextTick(() => {
             currImage.value?.classList.remove("changing");
             requestAnimationFrame(() => {
+                imageSwitching.value = false;
                 disableImageTransition.value = false;
             });
         });
@@ -294,6 +296,7 @@ onMounted(async () => {
     evproxy.on(currImage.value, "error", function () {
         loading.value = false;
         imageFailed.value = true;
+        imageSwitching.value = false;
         disableImageTransition.value = false;
         currImage.value?.classList.remove("changing");
         naturalSize.value = { width: 0, height: 0 };
@@ -406,12 +409,14 @@ async function selectImage(index: number): Promise<void> {
     const requestId = ++navigationRequestId;
     loading.value = true;
     imageFailed.value = false;
+    imageSwitching.value = true;
 
     try {
         await ensureImageReady(imageArray[index], "high");
     } catch {
         if (viewerActive && requestId === navigationRequestId) {
             loading.value = false;
+            imageSwitching.value = false;
             notifyImageViewerFailure("resource");
         }
         return;

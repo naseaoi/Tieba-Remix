@@ -1,4 +1,4 @@
-import { imagesViewer, notifyImageViewerFailure } from "@/components/images-viewer";
+import { imagesViewer, notifyImageViewerFailure, prepareImagesViewer } from "@/components/images-viewer";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
@@ -7,7 +7,7 @@ import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
-import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
@@ -25,6 +25,8 @@ import commentsStyle from "./comments.scss?inline";
 import compactStyle from "./compact.scss?inline";
 import { threadParser } from "./parser";
 import threadStyle from "./thread.scss?inline";
+
+const THREAD_IMAGE_BOUND = "data-tbr-thread-image-bound";
 
 export default async function () {
     if (!pageExtension.get().thread) return;
@@ -248,13 +250,12 @@ export default async function () {
             }
         }, { once: true });
 
-        threadFloorsObserver.addEvent(function () {
+        addCoalescedObserverEvent(function () {
             if (dom(".d_author", threadList, []).length === 0) return;
 
-            // TODO: performance
             thread = threadParser();
             applyAuthorContainers(thread);
-        });
+        }, threadFloorsObserver);
 
         function applyAuthorContainers(sourceThread: ReturnType<typeof threadParser>) {
             sourceThread.cotents.forEach((c, i) => {
@@ -263,8 +264,8 @@ export default async function () {
 
                 const floor = postRoot.querySelector<HTMLDivElement>(".d_post_content_main");
                 if (!floor) return;
+                if (floor.querySelector(".author-container")) return;
 
-                floor.querySelector(".author-container")?.remove();
                 const authorContainer = createAuthorContainer(sourceThread, i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
@@ -333,8 +334,9 @@ export default async function () {
             }
             if (!PageData.thread.thread_id) return;
 
-            (dom<"img">(".BDE_Image", threadList, [])).forEach(el => {
+            (dom<"img">(`.BDE_Image:not([${THREAD_IMAGE_BOUND}])`, threadList, [])).forEach(el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
+                newEl.setAttribute(THREAD_IMAGE_BOUND, "");
                 const postContent = findParent(el, "d_post_content");
 
                 let ancestor: HTMLElement | null = el.parentElement;
@@ -352,11 +354,14 @@ export default async function () {
                     e.preventDefault();
                     e.stopImmediatePropagation();
                 };
+                newEl.addEventListener("pointerenter", () => prepareImagesViewer(), { once: true });
+                newEl.addEventListener("pointerdown", () => prepareImagesViewer(), { once: true });
                 newEl.addEventListener("mousedown", stop, true);
                 newEl.addEventListener("auxclick", stop, true);
                 newEl.addEventListener("click", async function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
+                    prepareImagesViewer();
 
                     let allImages: ThreadPicture[];
                     try {
@@ -391,17 +396,18 @@ export default async function () {
                 el.replaceWith(newEl);
             });
         };
-        threadFloorsObserver.addEvent(() => {
+        addCoalescedObserverEvent(() => {
             threadImagesReady = processThreadImages();
-        });
+        }, threadFloorsObserver);
 
         // 去除楼中楼用户发言的冒号
         threadCommentsObserver.addEvent(() => {
-            (dom(".lzl_cnt", [])).forEach(el => {
+            (dom(".lzl_cnt:not([data-tbr-lzl-normalized])", [])).forEach(el => {
                 el.childNodes.forEach(node => {
                     if (node)
                         node.nodeType === 3 ? node.remove() : undefined;
                 });
+                el.setAttribute("data-tbr-lzl-normalized", "");
             });
         });
 
