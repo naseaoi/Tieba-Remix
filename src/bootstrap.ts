@@ -22,6 +22,7 @@ import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
+import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
 import { installSymbolFontStatus } from "./lib/symbol-font-status";
 import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
@@ -46,6 +47,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     document.documentElement.dataset.navBarMode = navBarHideMode.get();
 
     document.documentElement.dataset.pageType = currentPageType();
+
+    installThreadImageLoading();
 
     installForumImageTakeover();
 
@@ -77,7 +80,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
 
-    const pageExtensionReady = loadPageExtension();
+    const pageExtensionReady = loadPageExtension().finally(() => refreshThreadImageLoading());
     const modulesReady = parseUserModules(
         userModuleManifests,
         module => {
