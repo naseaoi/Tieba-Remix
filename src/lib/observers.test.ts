@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { TbObserver } from "./observers";
+import { addCoalescedObserverEvent, TbObserver } from "./observers";
 
 describe("TbObserver", () => {
     it("initializes once and isolates subscriber failures", async () => {
@@ -42,5 +42,23 @@ describe("TbObserver", () => {
         target.appendChild(document.createElement("span"));
         await new Promise(resolve => window.setTimeout(resolve, 0));
         expect(calls).toBe(3);
+    });
+
+    it("runs once initially and coalesces observer events within one frame", async () => {
+        document.body.innerHTML = '<div id="first"></div><div id="second"></div>';
+        const first = new TbObserver("#first", { childList: true });
+        const second = new TbObserver("#second", { childList: true });
+        const callback = vi.fn();
+
+        addCoalescedObserverEvent(callback, first, second);
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        first.emit();
+        second.emit();
+        first.emit();
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        await new Promise(resolve => window.requestAnimationFrame(resolve));
+        expect(callback).toHaveBeenCalledTimes(2);
     });
 });

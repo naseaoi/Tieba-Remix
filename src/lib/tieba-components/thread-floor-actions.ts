@@ -1,6 +1,6 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
-import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { shieldList } from "@/modules/shield/shield";
 import { installLzlFloorControls, renderLzlFloorControls } from "./lzl-floor-controls";
 import { installLzlReplyToggle } from "./lzl-reply-toggle";
@@ -29,14 +29,7 @@ export function installThreadFloorActions(): void {
         normalizeLocationText();
         renderPlatformIcons();
     };
-    const refresh = (): void => {
-        run();
-        window.setTimeout(run, 100);
-    };
-    threadFloorsObserver.addEvent(refresh);
-    threadCommentsObserver.addEvent(refresh);
-    run();
-    window.setTimeout(run, 100);
+    addCoalescedObserverEvent(run, threadFloorsObserver, threadCommentsObserver);
 }
 
 function renderReplyControls(): void {

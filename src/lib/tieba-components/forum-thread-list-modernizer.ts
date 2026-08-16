@@ -1,7 +1,7 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
 import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, tiebaAPI } from "@/lib/api/tieba";
-import { forumThreadsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { forumThreadModernLayout } from "@/lib/user-values";
 import { fetchAgreeSnapshot } from "@/modules/thread-agree-count/api";
 import { setupAgreeAction } from "@/modules/thread-agree-count/agree-action";
@@ -10,7 +10,6 @@ import { shieldList } from "@/modules/shield/shield";
 import { getForumAuthorName, isTruncatedForumAuthorName } from "./forum-author-full-id";
 
 const ROOT_SELECTOR = "#pagelet_frs-list\\/pagelet\\/thread";
-const ITEM_SELECTOR = ".j_thread_list[data-field]:not(.thread_top)";
 const FLAG = "data-trex-modernized";
 const AGREE_FLAG = "data-trex-agree-loaded";
 const NATIVE_REPORT_FLAG = "data-tbr-native-report";
@@ -432,10 +431,7 @@ function modernize(item: HTMLElement): void {
 export function installForumThreadListModernizer(): void {
     if (currentPageType() !== "forum" || !document.documentElement.classList.contains("style-vercel")) return;
     forumThreadModernLayout.on("setter", syncForumThreadModernLayout);
-    syncForumThreadModernLayout();
-    const process = () => document.querySelectorAll<HTMLElement>(`${ROOT_SELECTOR} ${ITEM_SELECTOR}`).forEach(modernize);
-    forumThreadsObserver.addEvent(process);
-    process();
+    addCoalescedObserverEvent(syncForumThreadModernLayout, forumThreadsObserver);
 }
 
 export function syncForumThreadModernLayout(): void {

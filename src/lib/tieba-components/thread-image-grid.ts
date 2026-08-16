@@ -1,5 +1,5 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { threadFloorsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, threadFloorsObserver } from "@/lib/observers";
 import { styleTheme } from "@/lib/user-values";
 
 let installed = false;
@@ -52,8 +52,7 @@ export function installThreadImageGrid(): void {
         });
     };
 
-    threadFloorsObserver.addEvent(process);
-    process();
+    addCoalescedObserverEvent(process, threadFloorsObserver);
 }
 
 /** a → b 之间是否只夹着 <br> 与空白文本节点 */
