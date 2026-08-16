@@ -44,12 +44,12 @@ export function renderLzlFloorControls(): void {
         const more = pager.querySelector<HTMLElement>(".lzl_more");
         const hasMore = more != null && isElementVisible(more);
         const hasPagerControls = [...pager.querySelectorAll<HTMLElement>(".j_pager a, .j_pager .tP")]
-            .some(control => isElementVisible(control) && (control.textContent ?? "").trim() !== "");
+            .some(control => (control.textContent ?? "").trim() !== "" && isElementVisible(control));
         const empty = !hasMore && !hasPagerControls;
         const list = pager.parentElement;
         const posts = [...(list?.querySelectorAll<HTMLElement>(".lzl_single_post") ?? [])];
         posts.forEach(post => post.classList.remove(LAST_POST_CLASS));
-        if (empty) posts.filter(isElementVisible).at(-1)?.classList.add(LAST_POST_CLASS);
+        if (empty) findLastVisible(posts)?.classList.add(LAST_POST_CLASS);
         pager.classList.toggle(PAGER_WITH_MORE_CLASS, hasMore);
         pager.classList.toggle(EMPTY_PAGER_CLASS, empty);
         list?.classList.toggle(LIST_WITHOUT_PAGER_CLASS, empty);
@@ -136,8 +136,18 @@ function requestNativeToggle(target: HTMLElement): void {
 function isElementVisible(element: HTMLElement): boolean {
     let current: HTMLElement | null = element;
     while (current) {
-        if (getComputedStyle(current).display === "none") return false;
+        if (current.hidden
+            || current.getAttribute("aria-hidden") === "true"
+            || current.style.display === "none"
+            || current.classList.contains("hideLzl")) return false;
+        if (current.classList.contains("lzl_post_hidden") && current.style.display !== "block") return false;
         current = current.parentElement;
     }
     return true;
+}
+
+function findLastVisible(elements: HTMLElement[]): HTMLElement | undefined {
+    for (let index = elements.length - 1; index >= 0; index--) {
+        if (isElementVisible(elements[index])) return elements[index];
+    }
 }

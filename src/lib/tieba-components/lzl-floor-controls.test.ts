@@ -13,7 +13,7 @@ describe("lzl floor controls", () => {
                     <div class="core_reply_content">
                         <ul class="j_lzl_m_w">
                             <li class="lzl_single_post">楼中楼回复</li>
-                            <ul class="lzl_post_hidden">
+                            <ul class="lzl_post_hidden" style="display: block">
                                 <li class="lzl_single_post">展开后的楼中楼回复</li>
                             </ul>
                             <li class="lzl_li_pager">
