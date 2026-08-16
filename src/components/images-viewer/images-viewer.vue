@@ -251,6 +251,10 @@ onMounted(async () => {
     evproxy.on(currImage.value, "load", function () {
         if (!currImage.value) return;
         imageFailed.value = false;
+        deg.value = 0;
+        disableImageTransition.value = false;
+        imageLeft.value = undefined;
+        imageTop.value = undefined;
 
         naturalSize.value = {
             width: currImage.value.naturalWidth,
@@ -364,11 +368,6 @@ watch(curr, function () {
     loading.value = true;
     imageFailed.value = false;
     currImage.value?.classList.add("changing");
-    deg.value = 0;
-    disableImageTransition.value = false;
-    imageLeft.value = undefined;
-    imageTop.value = undefined;
-    naturalSize.value = { width: 0, height: 0 };
 });
 
 /** 卸载组件 */
@@ -751,10 +750,6 @@ $scroll-bar-height: 6px;
             object-fit: contain;
             transition: opacity 0.2s ease;
 
-            &.loading-img {
-                opacity: 0;
-            }
-
             &.failed-img {
                 opacity: 0;
             }
@@ -766,12 +761,16 @@ $scroll-bar-height: 6px;
 
         .image-loading-spinner {
             position: absolute;
+            z-index: 1;
             width: 48px;
             height: 48px;
             border: 3px solid rgb(255 255 255 / 15%);
             border-radius: 50%;
             border-top-color: rgb(255 255 255 / 90%);
-            animation: kf-spin 0.8s linear infinite;
+            opacity: 0;
+            animation:
+                kf-spin 0.8s linear infinite,
+                kf-viewer-spinner-appear 0.15s ease 0.2s forwards;
             pointer-events: none;
         }
 
@@ -794,6 +793,10 @@ $scroll-bar-height: 6px;
 
     @keyframes kf-spin {
         to { transform: rotate(360deg); }
+    }
+
+    @keyframes kf-viewer-spinner-appear {
+        to { opacity: 1; }
     }
 
     .bottom-controls-wrapper {
