@@ -4,7 +4,7 @@ const { gmRequest } = vi.hoisted(() => ({ gmRequest: vi.fn() }));
 
 vi.mock("@/lib/monkey", () => ({ gmRequest }));
 
-import { fetchAgreeSnapshot } from "./api";
+import { fetchAgreeSnapshot, fetchSubPostAgreeSnapshot } from "./api";
 
 describe("fetchAgreeSnapshot", () => {
     beforeEach(() => {
@@ -44,5 +44,36 @@ describe("fetchAgreeSnapshot", () => {
 
         await expect(fetchAgreeSnapshot({ tid: 10937623092, pn: 1, rn: 1, lzOnly: false }))
             .rejects.toThrow("pb/page error 29");
+    });
+});
+
+describe("fetchSubPostAgreeSnapshot", () => {
+    beforeEach(() => {
+        gmRequest.mockReset();
+    });
+
+    it("reuses IP locations included in the floor response", async () => {
+        gmRequest.mockResolvedValue({
+            status: 200,
+            response: {
+                error_code: 0,
+                user_list: [
+                    { id: 3, portrait: "portrait-c", ip_address: "广东" },
+                ],
+                subpost_list: [
+                    { id: 11, author: { id: 1, portrait: "portrait-a", ip_address: "江苏" } },
+                    { id: 12, author: { id: 2, portrait: "portrait-b" }, location: { name: "浙江" } },
+                    { id: 13, author: { id: 3, portrait: "portrait-c?t=1" } },
+                ],
+            },
+        });
+
+        const snapshot = await fetchSubPostAgreeSnapshot({ tid: 1, pid: 2 });
+
+        expect(snapshot.subPostIpById).toEqual(new Map([
+            [11, "江苏"],
+            [12, "浙江"],
+            [13, "广东"],
+        ]));
     });
 });
