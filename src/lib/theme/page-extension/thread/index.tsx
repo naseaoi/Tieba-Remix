@@ -1,4 +1,14 @@
 import { imagesViewer, notifyImageViewerFailure, prepareImagesViewer } from "@/components/images-viewer";
+import {
+    ArrowLeftRight,
+    Check,
+    Heart,
+    Menu,
+    MessageSquare,
+    MessageSquareWarning,
+    Plus,
+    UserRound,
+} from "@lucide/vue";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
@@ -105,7 +115,7 @@ export default async function () {
             settingsPanel = renderDialog<TogglePanelProps>(TogglePanel, {
                 toggles: [
                     {
-                        icon: "favorite",
+                        icon: Heart,
                         name: "收藏",
                         defaultValue: (function () {
                             return dom<"a">(".j_favor, #j_favthread .p_favthr_main")?.innerText === "收藏" ? false : true;
@@ -115,7 +125,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "face_6",
+                        icon: UserRound,
                         name: "只看楼主",
                         defaultValue: (function () {
                             return dom<"a">("#lzonly_cntn")?.innerText === "只看楼主" ? false : true;
@@ -125,7 +135,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "compare_arrows",
+                        icon: ArrowLeftRight,
                         name: "紧凑布局",
                         defaultValue: (() => compactLayout.get())(),
                         event() {
@@ -134,7 +144,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "feedback",
+                        icon: MessageSquareWarning,
                         name: "反馈",
                         momentary: true,
                         event() {
@@ -160,7 +170,7 @@ export default async function () {
                     settingsButton.el.classList.remove("is-open");
                 },
             });
-        }, "module-settings", "menu");
+        }, "module-settings", Menu);
         setFloatButtonTooltip(settingsButton.el, "更多");
 
         document.body.insertBefore(domrd("div", {
@@ -213,10 +223,10 @@ export default async function () {
                 </a>
                 <div class="button-container">
                     <UserButton
-                        class="icon forum-button add-forum-button"
+                        class="forum-button add-forum-button"
                         noBorder
                         onClick={() => dom<"button">("#j_head_focus_btn")?.click()}>
-                        {PageData.user.is_like ? "check" : "add"}
+                        {PageData.user.is_like ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
                     </UserButton>
                 </div>
             </div>
@@ -295,7 +305,7 @@ export default async function () {
                 </div>, badgeContainer.root);
 
             if (sourceThread.cotents[index].isLouzhu)
-                appendJSX(<div class="floor-badge">楼主</div>, badgeContainer.root);
+                appendJSX(<div class="floor-badge floor-owner-badge"><span>楼主</span></div>, badgeContainer.root);
 
             return authorContainer;
         }
@@ -468,7 +478,7 @@ export default async function () {
             button.el.style.display = "none";
             button.el.toggleAttribute("aria-hidden", true);
         });
-        const commentButton = floatBar.add("other", showEditor, "trex-comment-button", "comment", 2);
+        const commentButton = floatBar.add("other", showEditor, "trex-comment-button", MessageSquare, 2);
         setFloatButtonTooltip(commentButton.el, "评论");
 
         // 添加末尾帖子回复入口

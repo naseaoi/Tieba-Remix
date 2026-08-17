@@ -1,5 +1,7 @@
 import { currentPageType } from "@/lib/api/remixed";
+import { EllipsisVertical, MessageSquare, Smartphone, type LucideIcon } from "@lucide/vue";
 import { domrd } from "@/lib/elemental";
+import { createLucideIconElement } from "@/lib/lucide";
 import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { shieldList } from "@/modules/shield/shield";
 import { installLzlFloorControls, renderLzlFloorControls } from "./lzl-floor-controls";
@@ -33,14 +35,19 @@ export function installThreadFloorActions(): void {
 }
 
 function renderReplyControls(): void {
-    document.querySelectorAll<HTMLElement>(".p_reply_first").forEach(link => {
+    document.querySelectorAll<HTMLElement>(
+        ".p_reply_first, .j_lzl_r .lzl_link_unfold, .j_lzl_r .lzl_link_fold",
+    ).forEach(link => {
         link.classList.add(REPLY_CLASS);
-        link.setAttribute("aria-label", "回复");
-        link.title = "回复";
+        prependActionIcon(link, MessageSquare);
+        const label = link.classList.contains("lzl_link_fold") ? "收起回复" : "回复";
+        link.setAttribute("aria-label", label);
+        link.title = label;
     });
 
     document.querySelectorAll<HTMLElement>(".lzl_content_reply .lzl_s_r").forEach(link => {
         link.classList.add(REPLY_CLASS);
+        prependActionIcon(link, MessageSquare);
         link.setAttribute("aria-label", "回复");
         link.title = "回复";
     });
@@ -58,6 +65,7 @@ function renderFloorMenus(): void {
         menu.classList.add(MENU_CLASS);
         menu.setAttribute("aria-label", "更多操作");
         menu.title = "更多操作";
+        prependActionIcon(reportLink ?? menu, EllipsisVertical);
         setupFloorMenu(menu, reportLink ?? menu);
     });
 
@@ -71,6 +79,7 @@ function renderFloorMenus(): void {
         menu.classList.add(MENU_CLASS);
         menu.setAttribute("aria-label", "更多操作");
         menu.title = "更多操作";
+        prependActionIcon(reportLink, EllipsisVertical);
         setupFloorMenu(menu, reportLink);
     });
 }
@@ -201,14 +210,20 @@ function normalizeLocationText(): void {
 }
 
 function renderPlatformIcons(): void {
-    document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info, .core_reply_tail .p_tail_wap").forEach(elem => {
-        if (elem.dataset.tbrPlatform === "mobile") return;
-        const text = (elem.textContent ?? "").trim();
-        if (!text.includes("客户端")) return;
-
-        if (!/Android|iPhone|iPad/i.test(text)) return;
+    document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info, .core_reply_tail .p_tail_wap, .lzl_content_reply .tbr-lzl-source").forEach(elem => {
+        const text = (elem.title || elem.textContent || "").trim();
+        if (!/移动端|Android|iPhone|iPad/i.test(text)) return;
 
         elem.setAttribute("data-tbr-platform", "mobile");
         elem.title = text;
+        prependActionIcon(elem, Smartphone);
     });
+}
+
+function prependActionIcon(target: Element, icon: LucideIcon): void {
+    if (target.querySelector(":scope > .tbr-action-icon")) return;
+    target.prepend(createLucideIconElement(icon, {
+        class: "tbr-action-icon",
+        strokeWidth: 1.75,
+    }));
 }

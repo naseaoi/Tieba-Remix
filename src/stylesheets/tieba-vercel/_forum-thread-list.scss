@@ -1,3 +1,4 @@
+@use "@/stylesheets/modules/lucide-masks" as *;
 @use "./tokens" as *;
 @use "./mixins" as *;
 
@@ -44,14 +45,11 @@
         transition: border-color $vercel-trans-normal $vercel-ease;
 
         &::before {
-            content: "";
-            display: block;
+            @include lucide-mask-icon($lucide-chevron-down);
             width: 14px;
             height: 14px;
             background-color: var(--light-fore);
             transition: background-color $vercel-trans-normal $vercel-ease;
-            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
-            -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>') no-repeat center / contain;
         }
 
         &:hover {
@@ -220,11 +218,14 @@
         // 置顶 / 精品标签
         .thread_top_list .threadlist_title .icon-top,
         .thread_top_list .threadlist_title .icon-good {
+            box-sizing: border-box !important;
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0 !important;
-            padding: 1px 6px !important;
+            width: 20px !important;
+            height: 20px !important;
+            flex: 0 0 20px !important;
+            padding: 0 !important;
             margin-right: 6px !important;
             border-radius: $vercel-radius-xs !important;
             color: #fff !important;
@@ -233,8 +234,6 @@
             font-weight: var(--font-weight-normal) !important;
             line-height: 1.4 !important;
             background-image: none !important;
-            width: auto !important;
-            height: auto !important;
             text-indent: 0 !important;
             vertical-align: middle !important;
         }
@@ -248,7 +247,7 @@
         }
 
         .thread_top_list .threadlist_title .icon-top::before {
-            content: "置顶";
+            content: "顶";
         }
 
         .thread_top_list .threadlist_title .icon-good::before {
@@ -400,13 +399,14 @@
         }
 
         .threadlist_title .icon-good {
+            box-sizing: border-box !important;
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0 !important;
-            width: auto !important;
-            height: auto !important;
-            padding: 1px 6px !important;
+            width: 20px !important;
+            height: 20px !important;
+            flex: 0 0 20px !important;
+            padding: 0 !important;
             margin-right: 6px !important;
             border-radius: 3px !important;
             font-size: 11px !important;
@@ -466,13 +466,11 @@
             line-height: 1 !important;
 
             &::before {
-                content: "";
+                @include lucide-mask-icon($lucide-message-square);
                 width: 14px;
                 height: 14px;
                 flex: 0 0 14px;
                 background-color: var(--minimal-fore);
-                mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
-                -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H8v3.5c0 .33.39.5.63.27L12.6 15h4.9A1.5 1.5 0 0 0 19 13.5v-7A1.5 1.5 0 0 0 17.5 5h-11Z"/></svg>') no-repeat center / contain;
             }
         }
 
@@ -639,16 +637,28 @@
             position: relative !important;
             border-radius: $vercel-radius-sm !important;
 
+            &.trex-video-paused::before,
             &.trex-video-paused::after {
                 position: absolute;
                 inset: 0;
-                width: 36px;
-                height: 36px;
                 margin: auto;
-                background: rgb(0 0 0 / 55%) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M8 5h3v14H8z M13 5h3v14h-3z"/></svg>') no-repeat center / 16px;
-                border-radius: 50%;
                 pointer-events: none;
                 content: "";
+            }
+
+            &.trex-video-paused::before {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: rgb(0 0 0 / 55%);
+            }
+
+            &.trex-video-paused::after {
+                width: 16px;
+                height: 16px;
+                background-color: white;
+                mask: $lucide-pause center / contain no-repeat;
+                -webkit-mask: $lucide-pause center / contain no-repeat;
             }
         }
 
@@ -888,34 +898,18 @@
             color: var(--tieba-theme-color) !important;
         }
 
+        .thread-modern-action.is-active .thread-meta-icon,
+        .thread-modern-agree.agree-count-liked .thread-meta-icon {
+            fill: currentcolor;
+        }
+
         .thread-meta-icon {
             display: block !important;
-            direction: ltr !important;
             width: 18px !important;
             height: 18px !important;
             flex: 0 0 18px !important;
-            font-family: var(--symbol-font, "Material Symbols") !important;
-            font-feature-settings: "liga" !important;
-            font-size: 18px !important;
-            font-variation-settings:
-                "FILL" 0,
-                "wght" 400,
-                "GRAD" 0,
-                "opsz" 24 !important;
-            font-weight: normal !important;
             line-height: 1 !important;
-            text-align: center !important;
             user-select: none !important;
-            white-space: nowrap !important;
-        }
-
-        .thread-modern-action.is-active .thread-meta-icon,
-        .thread-modern-agree.agree-count-liked .thread-meta-icon {
-            font-variation-settings:
-                "FILL" 1,
-                "wght" 400,
-                "GRAD" 0,
-                "opsz" 24 !important;
         }
 
         .thread-modern-favorite:disabled {

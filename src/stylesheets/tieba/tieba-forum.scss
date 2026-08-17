@@ -272,13 +272,12 @@ body[hide-bottom-editor] .editor_wrap_bright {
 }
 
 .search_internal_btn::after {
-    @extend %icon;
+    @include lucide-mask-icon($lucide-search);
+    width: 18px;
+    height: 18px;
     color: var(--default-background);
-    content: "search";
-    font-size: 18px;
-    font-weight: var(--font-weight-bold);
-    line-height: 26px;
-    text-align: center;
+    margin: 4px auto;
+    transform: translate(-0.5px, -0.5px);
 }
 
 .aside_region {
@@ -488,8 +487,9 @@ body[hide-bottom-editor] .editor_wrap_bright {
 }
 
 .icon_author::after {
-    @extend %icon;
-    content: "person";
+    @include lucide-mask-icon($lucide-user-round);
+    width: 16px;
+    height: 16px;
     font-style: normal;
 }
 
@@ -498,7 +498,8 @@ body[hide-bottom-editor] .editor_wrap_bright {
 }
 
 .icon_replyer::after {
-    @extend %icon;
-    content: "comment";
+    @include lucide-mask-icon($lucide-message-square);
+    width: 16px;
+    height: 16px;
     font-style: normal;
 }

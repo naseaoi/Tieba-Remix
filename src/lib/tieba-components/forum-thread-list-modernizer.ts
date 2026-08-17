@@ -1,5 +1,7 @@
 import { currentPageType } from "@/lib/api/remixed";
+import { EllipsisVertical, MessageSquare, Star, ThumbsUp, type LucideIcon } from "@lucide/vue";
 import { domrd } from "@/lib/elemental";
+import { createLucideIconElement } from "@/lib/lucide";
 import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, tiebaAPI } from "@/lib/api/tieba";
 import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { forumThreadModernLayout } from "@/lib/user-values";
@@ -20,10 +22,10 @@ let moreOwner: HTMLElement | undefined;
 let favoriteTagPopup: HTMLElement | undefined;
 let favoriteTagOwner: HTMLElement | undefined;
 
-const ICON_LIKE = "favorite";
-const ICON_COMMENT = "chat_bubble";
-const ICON_FAVORITE = "star";
-const ICON_MORE = "more_vert";
+const ICON_LIKE = ThumbsUp;
+const ICON_COMMENT = MessageSquare;
+const ICON_FAVORITE = Star;
+const ICON_MORE = EllipsisVertical;
 
 type ThreadField = {
     id?: number | string;
@@ -53,12 +55,11 @@ function text(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
 }
 
-function createMetaIcon(name: string): HTMLSpanElement {
-    const icon = document.createElement("span");
-    icon.className = "thread-meta-icon material-symbols-outlined";
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = name;
-    return icon;
+function createMetaIcon(icon: LucideIcon): SVGSVGElement {
+    return createLucideIconElement(icon, {
+        class: "thread-meta-icon",
+        strokeWidth: 1.75,
+    });
 }
 
 function createFooter(item: HTMLElement, tid: number, replyCount: string): void {

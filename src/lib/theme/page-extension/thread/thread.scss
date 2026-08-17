@@ -308,7 +308,9 @@ body.special_conf_skin {
 
     .thread-title {
         display: flex;
-        max-width: 60%;
+        min-width: 0;
+        max-width: none;
+        flex: 1 1 auto;
         margin: 0;
         padding-left: 12px;
         border-left: 4px solid var(--tieba-theme-color);
@@ -324,6 +326,7 @@ body.special_conf_skin {
         overflow: hidden;
         width: max-content;
         height: max-content;
+        flex: 0 0 auto;
         align-items: center;
         padding: 3px 6px 3px 3px;
         border-radius: 8px;
@@ -357,18 +360,24 @@ body.special_conf_skin {
             height: 22px;
 
             .forum-button {
-                padding: 0 2px;
+                display: flex;
+                width: 22px;
+                height: 22px;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
                 color: var(--tieba-theme-color);
-                font-size: 14px;
-                font-weight: var(--font-weight-bold);
+                line-height: 1;
 
                 &:not(:hover, :active, :focus) {
                     background-color: transparent;
                 }
 
-                &.icon {
-                    width: 22px;
-                    height: 22px;
+                > svg {
+                    display: block;
+                    width: 14px;
+                    height: 14px;
+                    stroke-width: 2;
                 }
             }
         }
@@ -473,12 +482,22 @@ body.special_conf_skin {
                 border-radius: 3px;
                 background-color: var(--trans-light-background);
                 color: var(--light-fore);
+                font-family: inherit;
                 font-size: 11px;
                 gap: 4px;
                 line-height: 14px;
 
                 .badge-level {
                     font-weight: var(--font-weight-bold);
+                }
+            }
+
+            .floor-owner-badge {
+                background-color: #7c3aed;
+                color: #fff;
+
+                > span {
+                    transform: translateY(-0.5px);
                 }
             }
         }
@@ -526,6 +545,7 @@ body.special_conf_skin {
             margin: 0 8px 8px;
             background-color: var(--trans-light-background);
             color: var(--light-fore);
+            font-family: inherit;
             gap: 6px;
             grid-area: tags;
 
@@ -687,12 +707,12 @@ html.style-vercel .recommend_outtest_container .collect_tip {
     background: none !important;
     background-image: none !important;
     color: var(--tieba-theme-color) !important;
-    font-family: var(--symbol-font, "Material Symbols") !important;
-    font-size: 18px !important;
 }
 
 html.style-vercel .recommend_outtest_container .collect_tip::before {
-    content: "check_circle";
+    @include lucide-mask-icon($lucide-circle-check);
+    width: 18px;
+    height: 18px;
 }
 
 html.style-vercel .recommend_outtest_container .delete_collect {
@@ -716,9 +736,9 @@ html.style-vercel .recommend_outtest_container .delete_collect {
 }
 
 html.style-vercel .recommend_outtest_container .delete_collect::before {
-    content: "close";
-    font-family: var(--symbol-font, "Material Symbols") !important;
-    font-size: 18px !important;
+    @include lucide-mask-icon($lucide-x);
+    width: 18px;
+    height: 18px;
 }
 
 html.style-vercel .recommend_outtest_container .delete_collect:hover {

@@ -71,7 +71,6 @@ function main(): void {
             elem.classList.add(TAGGED);
 
             let isLouzhu = false;
-            // let isCengzhu = false;
             let isMe = false;
 
             const username = elem.getAttribute("username");
@@ -99,7 +98,6 @@ function main(): void {
 
                     if (cengzhu) {
                         if (elem.textContent === cengzhu) {
-                            // isCengzhu = true;
                             addTag(elem, CZ_TAG);
                         }
                     }

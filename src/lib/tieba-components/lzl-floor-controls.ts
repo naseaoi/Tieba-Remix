@@ -1,4 +1,6 @@
 import { domrd } from "@/lib/elemental";
+import { createLucideIconElement } from "@/lib/lucide";
+import { ChevronUp } from "@lucide/vue";
 
 const FLOOR_SELECTOR = ".l_post";
 const REPLY_SELECTOR = ".lzl_link_unfold, .lzl_link_fold";
@@ -65,6 +67,10 @@ export function renderLzlFloorControls(): void {
             "aria-label": "收起回复",
             title: "收起回复",
         });
+        button.append(createLucideIconElement(ChevronUp, {
+            class: "tbr-action-icon",
+            strokeWidth: 1.75,
+        }));
         boundary.appendChild(button);
     });
 }
