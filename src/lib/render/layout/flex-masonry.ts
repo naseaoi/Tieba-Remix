@@ -155,17 +155,9 @@ export class FlexMasonry {
     public layout() {
         if (this.fragment) {
             this.container.appendChild(this.fragment);
-            // this.removeUnusedColumns();
         } else {
             throw Error("Never conducted layout calculations before. You should use exec() or calc() first.");
         }
-    }
-
-    private removeUnusedColumns() {
-        const _col = this.container.querySelectorAll(this.columnSelector);
-        _col.forEach(col => {
-            if (col.children.length === 0) col.remove();
-        });
     }
 
     /** 
