@@ -4,11 +4,11 @@
             <div id="thread-editor-actions">
                 <button type="button" aria-label="发表" id="thread-editor-submit" class="user-button editor-action"
                     @pointerdown.capture="stopActionEvent" @click.capture="submitFromAction">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+                    <Send aria-hidden="true" />
                 </button>
                 <button type="button" aria-label="关闭" id="thread-editor-exit" class="user-button editor-action"
                     @pointerdown.capture="stopActionEvent" @click.capture="closeFromAction">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>
+                    <X aria-hidden="true" />
                 </button>
             </div>
             <UserTextbox v-if="type === 'thread'" class="title-editor" placeholder="输入标题" lodash-style></UserTextbox>
@@ -19,6 +19,7 @@
 </template>
 
 <script lang="tsx" setup>
+import { Send, X } from "@lucide/vue";
 import { imagesViewer } from "@/components/images-viewer";
 import { asyncdom } from "@/lib/elemental";
 import { UEDITOR_READY_TIMEOUT, useUEditor } from "@/lib/utils/use-ueditor";
@@ -258,8 +259,9 @@ defineExpose({ unload });
                         gap: 4px;
 
                         &::before {
-                            @extend %icon;
-                            font-size: 16px;
+                            width: 16px;
+                            height: 16px;
+                            flex: 0 0 16px;
                         }
                     }
                 }
@@ -331,7 +333,7 @@ defineExpose({ unload });
     .edui-btn-toolbar .edui-icon {
         &.edui-icon-medal {
             &::before {
-                content: "diamond";
+                @include lucide-mask-icon($lucide-diamond);
             }
 
             &::after {
@@ -341,7 +343,7 @@ defineExpose({ unload });
 
         &.edui-icon-image {
             &::before {
-                content: "photo";
+                @include lucide-mask-icon($lucide-image);
             }
 
             &::after {
@@ -351,7 +353,7 @@ defineExpose({ unload });
 
         &.edui-icon-video {
             &::before {
-                content: "video_file";
+                @include lucide-mask-icon($lucide-video);
             }
 
             &::after {
@@ -361,7 +363,7 @@ defineExpose({ unload });
 
         &.edui-icon-emotion {
             &::before {
-                content: "face";
+                @include lucide-mask-icon($lucide-smile);
             }
 
             &::after {
@@ -371,7 +373,7 @@ defineExpose({ unload });
 
         &.edui-icon-scrawl {
             &::before {
-                content: "format_paint";
+                @include lucide-mask-icon($lucide-brush);
             }
 
             &::after {
@@ -381,7 +383,7 @@ defineExpose({ unload });
 
         &.edui-icon-topic {
             &::before {
-                content: "grid_3x3";
+                @include lucide-mask-icon($lucide-hash);
             }
 
             &::after {
@@ -391,7 +393,7 @@ defineExpose({ unload });
 
         &.edui-icon-quick-reply {
             &::before {
-                content: "rocket_launch";
+                @include lucide-mask-icon($lucide-rocket);
             }
 
             &::after {
@@ -462,8 +464,9 @@ defineExpose({ unload });
                 gap: 4px;
 
                 &::before {
-                    @extend %icon;
-                    font-size: 16px;
+                    width: 16px;
+                    height: 16px;
+                    flex: 0 0 16px;
                 }
             }
         }
@@ -474,7 +477,7 @@ defineExpose({ unload });
     li {
         &.post_bubble a {
             &::before {
-                content: "bubble_chart";
+                @include lucide-mask-icon($lucide-message-circle);
             }
 
             &::after {
@@ -484,7 +487,7 @@ defineExpose({ unload });
 
         &.colorful_font a {
             &::before {
-                content: "format_color_text";
+                @include lucide-mask-icon($lucide-type);
             }
 
             &::after {
@@ -502,7 +505,7 @@ defineExpose({ unload });
 
         &.from_upload a {
             &::before {
-                content: "upload_file";
+                @include lucide-mask-icon($lucide-upload);
             }
 
             &::after {
@@ -512,7 +515,7 @@ defineExpose({ unload });
 
         &.from_web a {
             &::before {
-                content: "web";
+                @include lucide-mask-icon($lucide-globe);
             }
 
             &::after {
@@ -565,17 +568,17 @@ defineExpose({ unload });
                 box-shadow: none;
 
                 &::before {
-                    @extend %icon;
-                    font-size: 10px;
+                    width: 10px;
+                    height: 10px;
                 }
             }
 
             .s_prev::before {
-                content: "arrow_back_ios";
+                @include lucide-mask-icon($lucide-chevron-left);
             }
 
             .s_next::before {
-                content: "arrow_forward_ios";
+                @include lucide-mask-icon($lucide-chevron-right);
             }
 
             .s_tab_con_wrapper {

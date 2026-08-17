@@ -1,4 +1,5 @@
 import _ from "@/lib/utils/_";
+import { setLucideIcon, type LucideIcon } from "@/lib/lucide";
 import { TiebaAbstract, TiebaComponent } from "../api/abstract";
 import { dom, domrd } from "../elemental";
 
@@ -53,7 +54,7 @@ export class FloatBar extends TiebaComponent<"ul"> {
 
     public add(
         type: FloatButtonKey, event: (() => void),
-        className?: string, icon?: string, index = 0
+        className?: string, icon?: LucideIcon, index = 0
     ) {
         const anchor = domrd("a", {
             href: "javascript:;",
@@ -81,10 +82,9 @@ export class FloatBar extends TiebaComponent<"ul"> {
 
         return { el: el, type: type } as FloatButton;
 
-        function setFloatButtonIcon(el: HTMLAnchorElement, icon?: string) {
-            el.classList.add("icon");
+        function setFloatButtonIcon(el: HTMLAnchorElement, icon?: LucideIcon) {
             el.classList.add("tbui_aside_fbar_button");
-            el.innerHTML = icon ? icon : "";
+            if (icon) setLucideIcon(el, icon, { class: "float-bar-icon" });
         }
     }
 

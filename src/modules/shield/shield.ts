@@ -1,23 +1,24 @@
 import { UserKey } from "@/lib/user-values";
+import { CircleUserRound, MessageSquare, Type } from "@lucide/vue";
 
 export const shieldScopeOptions = [
     {
         value: "thread-title",
         label: "帖子标题",
         description: "首页推送和进吧列表中的帖子标题",
-        icon: "title",
+        icon: Type,
     },
     {
         value: "post-content",
         label: "楼层内容",
         description: "主楼、回复、楼中楼及推送正文",
-        icon: "chat",
+        icon: MessageSquare,
     },
     {
         value: "username",
         label: "用户名",
         description: "发帖人与回复者的用户名",
-        icon: "account_circle",
+        icon: CircleUserRound,
     },
 ] as const;
 

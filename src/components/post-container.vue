@@ -31,12 +31,13 @@
                     <div class="post-time">{{ props.post.time }}</div>
                 </div>
             </UserButton>
-            <div class="replies">{{ props.post.replies }}</div>
+            <div class="replies"><MessageSquare aria-hidden="true" />{{ props.post.replies }}</div>
         </div>
     </UserButton>
 </template>
 
 <script setup lang="ts">
+import { MessageSquare } from "@lucide/vue";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { threadImageQueueScope } from "@/lib/user-values";
 import { UserButton } from "user-view";
@@ -263,12 +264,11 @@ img::before {
             font-weight: var(--font-weight-bold);
         }
 
-        .replies::before {
-            @extend %icon;
+        .replies svg {
+            width: 16px;
+            height: 16px;
             margin-right: 6px;
-            content: "forum";
-            font-size: 16px;
-            font-weight: var(--font-weight-normal);
+            stroke-width: 1.75;
         }
     }
 }

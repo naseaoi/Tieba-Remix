@@ -16,11 +16,7 @@
                     :aria-label="unreadMessageCount > 0 ? `消息，${unreadMessageCount} 条未读` : '消息'" no-border="all"
                     @mouseenter="handleMenuTriggerEnter($event, 'message')"
                     @mouseleave="handleMenuTriggerLeave($event, 'message')">
-                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                    </svg>
+                    <Bell class="nav-svg" aria-hidden="true" />
                     <NavMessageBadge v-if="unreadMessageCount > 0" :count="unreadMessageCount" />
                     <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'message' }" data-menu-key="message"
                         :menu-items="messageMenu" @mouseenter="handleMenuPanelEnter('message')"
@@ -31,12 +27,7 @@
                 <UserButton class="nav-icon-button menu-trigger" data-menu-trigger="more" no-border="all"
                     @mouseenter="handleMenuTriggerEnter($event, 'more')"
                     @mouseleave="handleMenuTriggerLeave($event, 'more')">
-                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                    </svg>
+                    <Ellipsis class="nav-svg" aria-hidden="true" />
                     <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'more' }" data-menu-key="more"
                         :menu-items="moreMenu" @mouseenter="handleMenuPanelEnter('more')"
                         @mouseleave="handleMenuPanelLeave($event, 'more')" @request-close="closeMenus"></DropdownMenu>
@@ -44,12 +35,7 @@
 
                 <!-- 设置 -->
                 <UserButton class="nav-icon-button" no-border="all" @click="openSettings">
-                    <svg class="nav-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                        <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Settings class="nav-svg" aria-hidden="true" />
                 </UserButton>
 
                 <!-- 头像 -->
@@ -70,6 +56,7 @@
 </template>
 
 <script lang="ts" setup>
+import { Bell, Ellipsis, Settings } from "@lucide/vue";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { openSettingsDialog } from "@/lib/common/open-settings";
 import { dom } from "@/lib/elemental";

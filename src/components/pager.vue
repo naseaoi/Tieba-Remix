@@ -4,9 +4,9 @@
             <UserButton v-show="current > Math.ceil(pagerCount / 2) && current > 1 && total > pagerCount"
                 class="pager-button pager-head-button " no-border @click="pagerChange('head', 1)">1</UserButton>
             <UserButton v-show="current > Math.ceil(pagerCount / 2) && current > 1 && total > pagerCount"
-                class="pager-button pager-back-button icon" no-border
+                class="pager-button pager-back-button" no-border
                 @click="pagerChange('prev', Math.max(1, current - pagerCount))">
-                keyboard_double_arrow_left
+                <ChevronsLeft aria-hidden="true" />
             </UserButton>
 
             <UserButton v-for="(displayNumber, i) in _.range(pagerStart, pagerEnd)" :key="i" class="pager-button"
@@ -16,9 +16,9 @@
             </UserButton>
 
             <UserButton v-show="total - pagerCount > 1 && total - current > pagerCount / 2"
-                class="pager-button pager-forward-button icon" no-border
+                class="pager-button pager-forward-button" no-border
                 @click="pagerChange('next', Math.min(total, current + pagerCount))">
-                keyboard_double_arrow_right
+                <ChevronsRight aria-hidden="true" />
             </UserButton>
             <UserButton v-show="tail && total - pagerCount > 1 && total - current > pagerCount / 2"
                 class="pager-button pager-tail-button" no-border @click="pagerChange('tail', total)">
@@ -42,6 +42,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ChevronsLeft, ChevronsRight } from "@lucide/vue";
 import { PagerType } from "@/lib/tieba-components/pager";
 import _ from "@/lib/utils/_";
 import { UserButton, UserTextbox } from "user-view";
@@ -172,8 +173,10 @@ function handleJumperEnter() {
                 color: var(--tieba-theme-color);
             }
 
-            &.icon {
-                @extend %icon;
+            svg {
+                width: 16px;
+                height: 16px;
+                stroke-width: 1.75;
             }
         }
     }

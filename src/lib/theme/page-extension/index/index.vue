@@ -16,15 +16,15 @@
             <div ref="feedsHeader" class="block-controls feeds sticky-header"
                 :class="{ stuck: isFeedsHeaderStuck }">
                 <p class="block-title">
-                    <span class="block-title-icon icon-feeds" v-html="ICON_FEEDS"></span>
+                    <component :is="ICON_FEEDS" class="block-title-icon icon-feeds" aria-hidden="true" />
                     <span>推送</span>
                 </p>
 
                 <BlockPanel class="actions"
                     v-if="feedsMasonry && feedsMasonry.feeds && (feedsMasonry.feeds.length > 0 || feedsMasonry.isFetchingFeeds)">
-                    <UserButton class="panel-button icon refresh" title="刷新推送"
+                    <UserButton class="panel-button refresh" title="刷新推送"
                         unset-background @click="refreshFeeds" no-border>
-                        refresh
+                        <RefreshCw aria-hidden="true" />
                     </UserButton>
                 </BlockPanel>
             </div>
@@ -39,13 +39,14 @@
         <Transition name="back-to-top">
             <UserButton v-if="isFeedsHeaderStuck" class="back-to-top-btn" title="回到「推送」顶部"
                 @click="scrollToFeeds" no-border>
-                <span class="icon">arrow_upward</span>
+                <ArrowUp aria-hidden="true" />
             </UserButton>
         </Transition>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ArrowUp, RefreshCw } from "@lucide/vue";
 import BlockPanel from "@/components/block-panel.vue";
 import FeedsMasonry from "@/components/feeds-masonry.vue";
 import {
@@ -269,8 +270,10 @@ a {
         box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
         color: var(--default-fore);
 
-        .icon {
-            font-size: 22px;
+        svg {
+            width: 22px;
+            height: 22px;
+            stroke-width: 1.75;
         }
 
         &:hover {

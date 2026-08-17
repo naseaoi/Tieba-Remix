@@ -42,9 +42,11 @@
 }
 
 .tbui_aside_float_bar > li > a {
-    @extend %icon;
+    display: flex;
     width: 40px !important;
     height: 40px !important;
+    align-items: center;
+    justify-content: center;
     border-radius: inherit;
     background: none !important;
 }
@@ -64,6 +66,12 @@
     transform: translateY(9999px); */
 }
 
+.tbui_aside_float_bar > li > a > .float-bar-icon {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.75;
+}
+
 /* .tbui_aside_float_bar a:hover {
     color: var(--default-background);
     filter: drop-shadow(var(--default-fore) 0 -9999px);
@@ -76,14 +84,17 @@
 }
 
 .tbui_fbar_auxiliaryCare a::after {
-    content: "accessibility_new";
-    /* background-image: var(--svg-accessibility); */
+    @include lucide-mask-icon($lucide-accessibility);
+    width: 22px;
+    height: 22px;
 }
 
 .tbui_fbar_top a::after {
     /* 回到顶部 */
     /* color: var(--tieba-theme-fore); */
-    content: "arrow_upward";
+    @include lucide-mask-icon($lucide-arrow-up);
+    width: 22px;
+    height: 22px;
     /* background-image: var(--svg-arrow-up);
     filter: drop-shadow(var(--tieba-theme-fore) 0 -9999px); */
 }
@@ -99,8 +110,9 @@
 .tbui_fbar_post a::after {
     /* 回贴 */
     /* color: var(--default-background); */
-    content: "chat";
-    font-size: 22px;
+    @include lucide-mask-icon($lucide-message-square);
+    width: 22px;
+    height: 22px;
     /* vertical-align: bottom; */
     /* background-image: var(--svg-message);
     filter: drop-shadow(var(--default-background) 0 -9999px); */
@@ -113,8 +125,9 @@
 
 .tbui_fbar_feedback a::after {
     /* 反馈 */
-    content: "report";
-    font-size: 26px;
+    @include lucide-mask-icon($lucide-flag);
+    width: 22px;
+    height: 22px;
     /* background-image: var(--svg-infomation-outline);
     background-size: 24px; */
 }
@@ -155,29 +168,27 @@
 .p_tools .tb_icon_turnleft::before,
 .p_tools .tb_icon_turnright::before {
     margin-right: 4px;
-    font-family: var(--symbol-font, "Material Symbols");
-    font-feature-settings: "liga";
-    font-size: 14px;
-    -webkit-font-feature-settings: "liga";
+    width: 14px;
+    height: 14px;
     vertical-align: bottom;
 }
 
 .p_tools .p_putup::before {
     /* 收起 */
-    content: "zoom_out";
+    @include lucide-mask-icon($lucide-zoom-out);
 }
 
 .p_tools .tb_icon_ypic::before {
     /* 查看大图 */
-    content: "zoom_out_map";
+    @include lucide-mask-icon($lucide-maximize);
 }
 
 .p_tools .tb_icon_turnleft::before {
     /* 左转 */
-    content: "turn_left";
+    @include lucide-mask-icon($lucide-rotate-ccw);
 }
 
 .p_tools .tb_icon_turnright::before {
     /* 右转 */
-    content: "turn_right";
+    @include lucide-mask-icon($lucide-rotate-cw);
 }

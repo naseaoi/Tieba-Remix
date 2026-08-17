@@ -1,4 +1,5 @@
 import { GM_deleteValue, GM_listValues } from "@/lib/monkey";
+import { Boxes, Eye, FlaskConical } from "@lucide/vue";
 import type { NavBarHideMode } from "@/components/nav-bar.vue";
 import type { MainSettingKey, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
@@ -15,7 +16,7 @@ import ThemeColor from "./setting-widgets/theme.color.vue";
 export const getUserSettings = _.once((): UserSettings => ({
     "visibility": {
         name: "显示",
-        icon: "visibility",
+        icon: Eye,
         description: "主题、显示设置",
         sub: {
             "theme": {
@@ -298,7 +299,7 @@ export const getUserSettings = _.once((): UserSettings => ({
 
     "modules": {
         name: "模块",
-        icon: "deployed_code",
+        icon: Boxes,
         description: "用户模块管理及部署",
         sub: AllModules().filter(m => m.id !== "remixed-theme").reduce<Record<string, SubSettingKey>>((accu, curr) => {
             function toSubSettingKey(module: UserModule): SubSettingKey {
@@ -342,7 +343,7 @@ export const getUserSettings = _.once((): UserSettings => ({
 
     "enhanced": {
         name: "高级",
-        icon: "labs",
+        icon: FlaskConical,
         description: "性能、更新与高级设置",
         sub: {
             "backup-recover": {

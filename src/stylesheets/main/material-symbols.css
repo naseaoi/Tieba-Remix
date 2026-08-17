@@ -45,17 +45,6 @@ html[data-symbol-font="loading"] .user-icon-filled {
     color: transparent !important;
 }
 
-html[data-symbol-font="loading"] .tbui_aside_float_bar li a::after,
-html[data-symbol-font="loading"] .p_tools .p_putup::before,
-html[data-symbol-font="loading"] .p_tools .tb_icon_ypic::before,
-html[data-symbol-font="loading"] .p_tools .tb_icon_turnleft::before,
-html[data-symbol-font="loading"] .p_tools .tb_icon_turnright::before,
-html[data-symbol-font="loading"] .search_internal_btn::after,
-html[data-symbol-font="loading"] .icon_author::after,
-html[data-symbol-font="loading"] .icon_replyer::after {
-    color: transparent !important;
-}
-
 html[data-symbol-font="failed"] .material-symbols-outlined,
 html[data-symbol-font="failed"] .icon:not(:has(svg)),
 html[data-symbol-font="failed"] .outline-icon:not(:has(svg)),
@@ -74,15 +63,4 @@ html[data-symbol-font="failed"] .user-icon::before,
 html[data-symbol-font="failed"] .user-icon-outline::before,
 html[data-symbol-font="failed"] .user-icon-filled::before {
     content: none !important;
-}
-
-html[data-symbol-font="failed"] .tbui_aside_float_bar li a::after,
-html[data-symbol-font="failed"] .p_tools .p_putup::before,
-html[data-symbol-font="failed"] .p_tools .tb_icon_ypic::before,
-html[data-symbol-font="failed"] .p_tools .tb_icon_turnleft::before,
-html[data-symbol-font="failed"] .p_tools .tb_icon_turnright::before,
-html[data-symbol-font="failed"] .search_internal_btn::after,
-html[data-symbol-font="failed"] .icon_author::after,
-html[data-symbol-font="failed"] .icon_replyer::after {
-    color: transparent !important;
 }

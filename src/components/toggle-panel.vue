@@ -4,7 +4,7 @@
             <div v-for="(toggle, index) in props.toggles" class="toggle-container">
                 <button type="button" class="panel-button" :class="toggleStates[index] ? 'toggle-on' : 'toggle-off'"
                     :title="toggle.name" :aria-label="toggle.name" @click="handleToggleClick(index)">
-                    {{ toggle.icon }}
+                    <component :is="toggle.icon" aria-hidden="true" />
                 </button>
             </div>
         </div>
@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { LucideIcon } from "@lucide/vue";
 import { UserDialog, UserDialogOpts } from "user-view";
 import { onMounted, onUnmounted, ref } from "vue";
 
@@ -19,7 +20,7 @@ const PANEL_GAP = 10;
 const VIEWPORT_PADDING = 12;
 
 interface Toggle {
-    icon: string;
+    icon: LucideIcon;
     defaultValue?: boolean;
     name?: string;
     event?: ((now: boolean) => void);
@@ -129,7 +130,6 @@ const dialogOpts: UserDialogOpts = {
         height: var(--float-button-size);
 
         .panel-button {
-            @extend %icon;
             box-sizing: border-box;
             appearance: none;
             min-width: var(--float-button-size);
@@ -146,8 +146,6 @@ const dialogOpts: UserDialogOpts = {
             background-image: none !important;
             box-shadow: none !important;
             outline: none !important;
-            font-size: 24px;
-            font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 40;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -163,6 +161,12 @@ const dialogOpts: UserDialogOpts = {
                 color 0.18s ease,
                 box-shadow 0.18s ease,
                 transform 0.18s ease;
+
+            svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 1.75;
+            }
 
             &:hover {
                 border-color: var(--float-button-border-hover) !important;
@@ -190,7 +194,6 @@ const dialogOpts: UserDialogOpts = {
             }
 
             &.toggle-on {
-                @extend %filled-icon;
                 border-color: var(--tieba-theme-color) !important;
                 background-color: var(--tieba-theme-background) !important;
                 color: var(--tieba-theme-color) !important;
