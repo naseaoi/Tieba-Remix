@@ -7,6 +7,8 @@ describe("image preloader", () => {
 
     class TestImage extends EventTarget {
         decoding = "auto";
+        naturalWidth = 640;
+        naturalHeight = 480;
 
         constructor() {
             super();
@@ -45,7 +47,7 @@ describe("image preloader", () => {
         expect(settled).toBe(false);
 
         imageInstances.at(-1)?.dispatchEvent(new Event("load"));
-        await expect(request).resolves.toBeUndefined();
+        await expect(request).resolves.toEqual({ width: 640, height: 480 });
         expect(settled).toBe(true);
     });
 });

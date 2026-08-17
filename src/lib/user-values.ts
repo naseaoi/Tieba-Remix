@@ -322,6 +322,7 @@ export const fontWeights = new UserKey("fontWeights", {
     setter() { applyDynamicFonts(); },
 });
 export const highQualityImage = new UserKey("highQualityImage", true);
+export const imageViewerControlsPinned = new UserKey("imageViewerControlsPinned", true);
 /** 看图模式队列范围：full = 全帖所有图片；floor = 仅当前楼层 */
 export const threadImageQueueScope = new UserKey<"full" | "floor">(
     "threadImageQueueScope", "floor", undefined, undefined,

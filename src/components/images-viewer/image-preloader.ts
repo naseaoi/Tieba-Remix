@@ -1,19 +1,27 @@
 const PRELOAD_RECORD_LIMIT = 100;
-const preloadedUrls = new Set<string>();
-const activePreloads = new Map<string, Promise<void>>();
+const preloadedImages = new Map<string, ImageReadyInfo>();
+const activePreloads = new Map<string, Promise<ImageReadyInfo>>();
+
+export interface ImageReadyInfo {
+    width: number;
+    height: number;
+}
 
 export function preloadImageUrl(url: string | undefined, priority: "high" | "low" = "low"): void {
     void ensureImageReady(url, priority).catch(() => undefined);
 }
 
-export function ensureImageReady(url: string | undefined, priority: "high" | "low" = "high"): Promise<void> {
+export function ensureImageReady(url: string | undefined, priority: "high" | "low" = "high"): Promise<ImageReadyInfo | undefined> {
     const normalizedUrl = url?.trim();
-    if (!normalizedUrl || preloadedUrls.has(normalizedUrl)) return Promise.resolve();
+    if (!normalizedUrl) return Promise.resolve(undefined);
+
+    const preloaded = preloadedImages.get(normalizedUrl);
+    if (preloaded) return Promise.resolve(preloaded);
 
     const activeRequest = activePreloads.get(normalizedUrl);
     if (activeRequest) return activeRequest;
 
-    const request = new Promise<void>((resolve, reject) => {
+    const request = new Promise<ImageReadyInfo>((resolve, reject) => {
         const image = new Image();
         const cleanup = () => {
             image.removeEventListener("load", onLoad);
@@ -25,8 +33,12 @@ export function ensureImageReady(url: string | undefined, priority: "high" | "lo
                 : Promise.resolve();
             void decodeRequest.then(() => {
                 cleanup();
-                rememberPreloadedUrl(normalizedUrl);
-                resolve();
+                const info = {
+                    width: image.naturalWidth,
+                    height: image.naturalHeight,
+                };
+                rememberPreloadedImage(normalizedUrl, info);
+                resolve(info);
             }, error => {
                 cleanup();
                 reject(error);
@@ -51,12 +63,12 @@ export function ensureImageReady(url: string | undefined, priority: "high" | "lo
     return request;
 }
 
-function rememberPreloadedUrl(url: string): void {
-    preloadedUrls.add(url);
-    while (preloadedUrls.size > PRELOAD_RECORD_LIMIT) {
-        const oldestUrl = preloadedUrls.values().next().value;
+function rememberPreloadedImage(url: string, info: ImageReadyInfo): void {
+    preloadedImages.set(url, info);
+    while (preloadedImages.size > PRELOAD_RECORD_LIMIT) {
+        const oldestUrl = preloadedImages.keys().next().value;
         if (typeof oldestUrl !== "string") break;
-        preloadedUrls.delete(oldestUrl);
+        preloadedImages.delete(oldestUrl);
     }
 }
 
