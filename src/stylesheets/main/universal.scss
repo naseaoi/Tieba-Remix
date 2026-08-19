@@ -1,12 +1,3 @@
-.icon,
-.outline-icon {
-    @extend %icon;
-}
-
-.filled-icon {
-    @extend %filled-icon;
-}
-
 .anchor {
     @extend %anchor;
 }

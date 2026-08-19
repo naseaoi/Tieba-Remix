@@ -329,8 +329,6 @@ export const threadImageQueueScope = new UserKey<"full" | "floor">(
     value => value === "full" || value === "floor",
 );
 
-export const SymbolFont = "Material Symbols";
-
 export const currentStorageBase = new Map<string, unknown>();
 export type CurrentStorageEntry<T = unknown> = [string, T];
 

@@ -19,7 +19,6 @@ const inlineStyleLoaders = {
     "base": () => import("@/stylesheets/main/base.scss?inline"),
     "universal": () => import("@/stylesheets/main/universal.scss?inline"),
     "animations": () => import("@/stylesheets/main/animations.scss?inline"),
-    "material-symbols": () => import("@/stylesheets/main/material-symbols.css?inline"),
     "palette": () => import("@/stylesheets/main/palette.scss?inline"),
     "palette-vercel": () => import("@/stylesheets/main/palette-vercel.scss?inline"),
     "variables": () => import("@/stylesheets/main/variables.scss?inline"),
@@ -74,7 +73,6 @@ function ensureStyleBucket(key: string, loader: StyleBucketLoader) {
 async function ensureBaseCSS() {
     return ensureStyleBucket("base", () => loadInlineStyles([
         "animations",
-        "material-symbols",
         "palette",
         "variables",
         "base",

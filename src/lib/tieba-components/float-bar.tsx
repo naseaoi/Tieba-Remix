@@ -200,8 +200,6 @@ export const floatBar = new FloatBar(".tbui_aside_float_bar");
 //     return { el: el, type: type } as FloatButton;
 
 //     function setFloatButtonIcon(el: HTMLAnchorElement, icon?: string) {
-//         el.style.fontFamily = SymbolFont;
-//         el.style.fontVariationSettings = `"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 20`;
 //         el.style.userSelect = "none";
 //         el.innerHTML = icon ? icon : "";
 //         el.style.fontSize = "24px";
