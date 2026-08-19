@@ -14,6 +14,7 @@ import { installForumImageTakeover } from "./lib/tieba-components/forum-image-ta
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumNovelRankingFallback } from "./lib/tieba-components/forum-novel-ranking";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { installForumStatsCard } from "./lib/tieba-components/forum-stats-card";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
 import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
@@ -55,6 +56,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     installForumAsideCollapse();
 
     installForumPinnedFoldWatcher();
+
+    installForumStatsCard();
 
     installForumLoadFailureBanner();
 

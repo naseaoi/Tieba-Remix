@@ -14,6 +14,10 @@
         text-align: center;
     }
 
+    .pagination-default .pagination-item:is(.first, .previous, .prev, .pre, .next, .last) {
+        font-family: var(--code-zh, sans-serif);
+    }
+
     .pagination-default .pagination-current {
         background-color: var(--default-fore) !important;
         border-color: var(--default-fore) !important;
@@ -25,9 +29,142 @@
         background-color: var(--default-background) !important;
     }
 
+    .thread_list_bottom {
+        display: grid !important;
+        box-sizing: border-box !important;
+        height: auto !important;
+        padding: 12px 16px !important;
+        overflow: visible !important;
+    }
+
+    #frs_list_pager {
+        display: flex !important;
+        width: 100% !important;
+        align-items: center;
+        flex-wrap: wrap;
+        float: none !important;
+        gap: 6px;
+        margin: 0 !important;
+
+        .pagination-item {
+            margin: 0 !important;
+        }
+    }
+
+    .trex-forum-stats {
+        display: grid !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        height: auto !important;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        padding: 14px 16px !important;
+        border: 1px solid var(--border-color);
+        border-radius: $vercel-radius-md;
+        margin: 12px 0 0 !important;
+        background: var(--default-background) !important;
+        float: none !important;
+        gap: 16px;
+    }
+
+    .trex-forum-stats-title {
+        color: var(--default-fore);
+        font-size: $vercel-fs-sm;
+        font-weight: var(--font-weight-bold);
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .trex-forum-stats-list {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin: 0;
+    }
+
+    .trex-forum-stat {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        padding: 0 16px;
+        border-left: 1px solid var(--border-color);
+        gap: 3px;
+
+        &:first-child {
+            border-left: 0;
+        }
+    }
+
+    .trex-forum-stat-label,
+    .trex-forum-stat-value {
+        overflow: hidden;
+        margin: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .trex-forum-stat-label {
+        color: var(--light-fore);
+        font-size: $vercel-fs-xs;
+        line-height: 1.4;
+    }
+
+    .trex-forum-stat-value {
+        color: var(--default-fore);
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-md;
+        font-weight: var(--font-weight-bold);
+        line-height: 1.4;
+    }
+
+    .trex-forum-stat-link {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover,
+        &:focus-visible {
+            color: var(--tieba-theme-fore);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .trex-forum-stats {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .trex-forum-stat:first-child {
+            padding-left: 0;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .trex-forum-stats-list {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .trex-forum-stat {
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 8px 0 0;
+            border-top: 1px solid var(--border-color);
+            border-left: 0;
+
+            &:first-child {
+                padding-top: 0;
+                border-top: 0;
+            }
+        }
+    }
+
     // ---------------------------
     // 底部发帖编辑器
     // ---------------------------
+    .editor_wrap_bright {
+        margin-top: 12px !important;
+    }
+
     #tb_rich_poster_container {
         border-radius: $vercel-radius-md !important;
         background-color: var(--default-background) !important;
