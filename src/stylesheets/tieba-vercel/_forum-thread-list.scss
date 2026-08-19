@@ -493,7 +493,10 @@
             text-align: right !important;
             overflow: visible !important;
 
-            @include mono-meta($vercel-fs-xs);
+            color: var(--light-fore);
+            font-family: var(--code-zh, sans-serif) !important;
+            font-size: $vercel-fs-xs;
+            letter-spacing: 0;
         }
 
         // 作者名后代

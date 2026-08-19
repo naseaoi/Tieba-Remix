@@ -321,7 +321,7 @@ html.style-vercel {
         border-radius: $vercel-radius-xs;
         background-color: var(--default-background);
         color: var(--light-fore);
-        font-family: $vercel-font-mono;
+        font-family: var(--code-zh, sans-serif);
         font-size: $vercel-fs-xs;
 
         &:hover {

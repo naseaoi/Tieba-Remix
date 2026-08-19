@@ -225,6 +225,7 @@ html.style-vercel {
         display: flex !important;
         align-items: center !important;
         flex-wrap: wrap;
+        font-family: var(--code-zh);
         gap: 8px;
         color: var(--minimal-fore) !important;
 
@@ -251,7 +252,7 @@ html.style-vercel {
             &::before {
                 content: "#" attr(data-floor-num);
                 color: var(--default-fore);
-                font-family: $vercel-font-mono;
+                font-family: var(--code-zh);
                 font-size: $vercel-fs-sm;
             }
 
@@ -376,7 +377,10 @@ html.style-vercel {
     }
 
     .lzl_cnt .lzl_time {
-        @include mono-meta($vercel-fs-xs);
+        font-family: inherit;
+        font-size: $vercel-fs-xs;
+        color: var(--light-fore);
+        letter-spacing: 0;
     }
 
     .lzl_p_p {
@@ -577,6 +581,7 @@ html.style-vercel {
 
             .floor-info {
                 @include mono-meta;
+                font-family: var(--code-zh);
             }
         }
     }

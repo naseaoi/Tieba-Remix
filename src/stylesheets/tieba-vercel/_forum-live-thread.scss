@@ -214,7 +214,7 @@
                     content: "展开" !important;
                     display: inline !important;
                     font-size: $vercel-fs-xs !important;
-                    font-family: $vercel-font-mono !important;
+                    font-family: var(--code-zh, sans-serif) !important;
                     color: var(--default-fore) !important;
                     line-height: 24px !important;
                     background: none !important;
