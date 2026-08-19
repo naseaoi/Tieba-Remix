@@ -38,7 +38,7 @@
                     <p class="main-desc" v-if="selectedSubKey?.description">{{ selectedSubKey.description }}</p>
                 </header>
 
-                <section class="main-body" v-if="selectedSubKey">
+                <section ref="mainBody" class="main-body" v-if="selectedSubKey">
                     <template v-for="(content, key) in selectedSubKey.content" :key="key">
                         <!-- 纯组件页（about 项目信息 / 更新页等）：不包卡片 -->
                         <div v-if="content && isComponentOnly(content)" class="setting-component-wrap">
@@ -146,7 +146,7 @@ import { getUserSettings } from "@/lib/common/settings";
 import _ from "@/lib/utils/_";
 import { useDebounce } from "@/lib/utils/composables";
 import { UserButton, UserDialog, UserDialogOpts, UserSelectItem, UserTextbox } from "user-view";
-import { onMounted, provide, ref } from "vue";
+import { onMounted, provide, ref, watch } from "vue";
 
 export interface UserSettings {
     [props: string]: MainSettingKey;
@@ -216,6 +216,11 @@ const dialogOpts: UserDialogOpts = {
 const searchText = ref("");
 const selectedKey = ref<MainSettingKey>();
 const selectedSubKey = ref<SubSettingKey>();
+const mainBody = ref<HTMLElement>();
+
+watch(selectedSubKey, () => {
+    if (mainBody.value) mainBody.value.scrollTop = 0;
+}, { flush: "post" });
 
 // 底部 desc 悬浮提示：由 SettingSelect 等子控件通过 inject 写入
 const hoverDesc = ref("");
