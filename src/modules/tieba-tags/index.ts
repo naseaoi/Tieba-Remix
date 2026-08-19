@@ -3,6 +3,14 @@ import { threadCommentsObserver } from "@/lib/observers";
 import _ from "@/lib/utils/_";
 import "./stylesheet.css";
 
+interface TiebaTagData {
+    id?: string;
+    un?: string;
+    author?: {
+        portrait?: string;
+    };
+}
+
 export default {
     id: "tieba-tags",
     name: "楼中楼标签",
@@ -57,8 +65,8 @@ function main(): void {
             if (targetFloor) {
                 const dataAttr = targetFloor.getAttribute("data-field");
                 if (dataAttr) {
-                    const dataField = JSON.parse(dataAttr);
-                    return dataField.author.portrait.split("?")[0];
+                    const portrait = parseDataField(dataAttr)?.author?.portrait;
+                    if (portrait) return portrait.split("?")[0];
                 }
             }
         }
@@ -68,76 +76,73 @@ function main(): void {
     function createTagsAll() {
         dom(".lzl_cnt .at", []).forEach((elem) => {
             if (elem.classList.contains(TAGGED)) return;
-            elem.classList.add(TAGGED);
 
-            let isLouzhu = false;
-            let isMe = false;
+            try {
+                let isLouzhu = false;
+                let isMe = false;
 
-            const username = elem.getAttribute("username");
+                const username = elem.getAttribute("username");
 
-            // 自己
-            if (userClassify(myUserName, myPortrait)) {
-                isMe = true;
-                addTag(elem, MY_TAG);
-            }
-
-            // 楼主，如果我是楼主则不显示楼主层主
-            if (!isMe) {
-                if (userClassify(louzhu, louzhuPortrait)) {
-                    isLouzhu = true;
-                    addTag(elem, LZ_TAG);
+                // 自己
+                if (userClassify(myUserName, myPortrait)) {
+                    isMe = true;
+                    addTag(elem, MY_TAG);
                 }
-            }
 
-            // 层主，如果我/楼主是层主则不显示
-            if (!isMe && !isLouzhu) {
-                const floor = findParent(elem, "l_post_bright");
-                if (floor) {
-                    const cengzhuCard = floor.getElementsByClassName("p_author_name")[0];
-                    const cengzhu = cengzhuCard.textContent;
-
-                    if (cengzhu) {
-                        if (elem.textContent === cengzhu) {
-                            addTag(elem, CZ_TAG);
-                        }
+                // 楼主，如果我是楼主则不显示楼主层主
+                if (!isMe) {
+                    if (userClassify(louzhu, louzhuPortrait)) {
+                        isLouzhu = true;
+                        addTag(elem, LZ_TAG);
                     }
                 }
-            }
 
-            function userClassify(un: string, portrait?: string): boolean {
-                if (username === un && un !== "") {
-                    return true;
-                } else if (username != null && (["", " "]).indexOf(username) !== -1) {
-                    // 无法正常获取到 username 和 dataField
-                    const targetPortrait = elem.getAttribute("portrait");
-                    if (targetPortrait && portrait) {
-                        if (targetPortrait === portrait) {
-                            return true;
-                        }
-                    } else {
-                        return dataClassify();
+                // 层主，如果我/楼主是层主则不显示
+                if (!isMe && !isLouzhu) {
+                    const floor = findParent(elem, "l_post_bright");
+                    const cengzhu = floor?.getElementsByClassName("p_author_name")[0]?.textContent;
+
+                    if (cengzhu && elem.textContent === cengzhu) {
+                        addTag(elem, CZ_TAG);
                     }
-                } else if (!username) {
-                    return dataClassify();
                 }
-                return false;
 
-                function dataClassify() {
-                    const dataAttr = elem.getAttribute("data-field");
-                    if (dataAttr) {
-                        const dataField = JSON.parse(dataAttr.replace(/'/g, "\""));
-                        if (portrait) {
-                            if (dataField.id === portrait) {
+                elem.classList.add(TAGGED);
+
+                function userClassify(un: string, portrait?: string): boolean {
+                    if (username === un && un !== "") {
+                        return true;
+                    } else if (username != null && (["", " "]).indexOf(username) !== -1) {
+                        const targetPortrait = elem.getAttribute("portrait");
+                        if (targetPortrait && portrait) {
+                            if (targetPortrait === portrait) {
                                 return true;
                             }
                         } else {
-                            if (dataField.un === un) {
+                            return dataClassify();
+                        }
+                    } else if (!username) {
+                        return dataClassify();
+                    }
+                    return false;
+
+                    function dataClassify() {
+                        const dataAttr = elem.getAttribute("data-field");
+                        const dataField = dataAttr ? parseDataField(dataAttr) : undefined;
+                        if (dataField) {
+                            if (portrait) {
+                                if (dataField.id === portrait) {
+                                    return true;
+                                }
+                            } else if (dataField.un === un) {
                                 return true;
                             }
                         }
+                        return false;
                     }
-                    return false;
                 }
+            } catch (error) {
+                console.warn("[tieba-tags] 标签节点处理失败", error);
             }
         });
 
@@ -149,4 +154,17 @@ function main(): void {
             );
         }
     }
+}
+
+function parseDataField(value: string): TiebaTagData | undefined {
+    const candidates = value.includes("'") ? [value, value.replace(/'/g, "\"")] : [value];
+    for (const candidate of candidates) {
+        try {
+            const parsed = JSON.parse(candidate) as unknown;
+            if (typeof parsed === "object" && parsed !== null) return parsed as TiebaTagData;
+        } catch {
+            continue;
+        }
+    }
+    return undefined;
 }

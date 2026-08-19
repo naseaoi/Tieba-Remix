@@ -2,8 +2,8 @@ import type { SettingContent } from "@/components/settings.vue";
 import type { UserModuleEx } from "@/ex";
 import { tiebaAPI } from "@/lib/api/tieba";
 import { dom, findParent } from "@/lib/elemental";
-import { GM_getValue, GM_setValue } from "@/lib/monkey";
 import { threadCommentsObserver } from "@/lib/observers";
+import { UserKey } from "@/lib/user-values";
 
 export default {
     id: "toolkit",
@@ -28,68 +28,121 @@ export default {
         },
     } as Record<string, SettingContent>,
     entry: function () {
-        for (const key in toolkitFeatures) {
-            const k = key as keyof typeof toolkitFeatures;
-            if (toolkitToggles.get()[k]) toolkitFeatures[k]();
-        }
+        syncToolkitFeatures(toolkitToggles.get());
     },
 } as UserModuleEx;
 
-const toolkitFeatures = {
-    reloadAvatars() {
-        const observer = new IntersectionObserver(function (entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const avatar = entry.target as HTMLImageElement;
-                    if (!avatar.complete) return;
-                    if (avatar.naturalWidth > 0) {
-                        avatar.setAttribute("data-loaded", "");
-                    } else {
-                        const userCard = findParent<"li">(avatar, "j_user_card");
-                        if (!userCard) return;
-                        const dataField = userCard.getAttribute("data-field");
-                        if (!dataField) return;
-                        const portarit = JSON.parse(dataField.replaceAll(/'/g, '"')).id;
-                        avatar.src = tiebaAPI.URL_profile(portarit);
-                        avatar.setAttribute("data-loaded", "");
-                    }
-                }
-            });
-        }, { threshold: 0 });
-
-        threadCommentsObserver.addEvent(function () {
-            const avatars = dom<"img">(".lzl_single_post img:not(.BDE_Smiley, [data-loaded])", []);
-            avatars.forEach(avatar => observer.observe(avatar));
-        });
-    },
-};
-
-type ToolkitToggles = Record<keyof typeof toolkitFeatures, boolean>;
+interface ToolkitToggles {
+    reloadAvatars: boolean;
+}
 
 const TOOLKIT_TOGGLES_KEY = "toolkitToggles";
 const TOOLKIT_TOGGLES_DEFAULT: ToolkitToggles = {
     reloadAvatars: true,
 };
 
-const toolkitToggles = {
-    get(): ToolkitToggles {
-        const value = GM_getValue<Partial<ToolkitToggles>>(TOOLKIT_TOGGLES_KEY, TOOLKIT_TOGGLES_DEFAULT);
-        return {
-            ...TOOLKIT_TOGGLES_DEFAULT,
-            ...(isToolkitToggles(value) ? value : {}),
-        };
-    },
-    set(value: ToolkitToggles): void {
-        GM_setValue(TOOLKIT_TOGGLES_KEY, value);
-    },
-    merge(value: Partial<ToolkitToggles>): void {
-        toolkitToggles.set({
-            ...toolkitToggles.get(),
-            ...value,
-        });
-    },
-};
+const toolkitToggles = new UserKey<ToolkitToggles, unknown>(
+    TOOLKIT_TOGGLES_KEY,
+    TOOLKIT_TOGGLES_DEFAULT,
+    undefined,
+    normalizeToolkitToggles,
+);
 
-function isToolkitToggles(value: unknown): value is Partial<ToolkitToggles> {
-    return typeof value === "object" && value !== null;
+let reloadAvatarsEnabled = false;
+let reloadAvatarsRegistered = false;
+let avatarObserver: IntersectionObserver | undefined;
+let avatarEventController: AbortController | undefined;
+
+toolkitToggles.on("setter", syncToolkitFeatures);
+
+function syncToolkitFeatures(toggles: ToolkitToggles): void {
+    setReloadAvatarsEnabled(toggles.reloadAvatars);
+}
+
+function setReloadAvatarsEnabled(enabled: boolean): void {
+    if (reloadAvatarsEnabled === enabled) return;
+    reloadAvatarsEnabled = enabled;
+
+    if (!enabled) {
+        avatarObserver?.disconnect();
+        avatarObserver = undefined;
+        avatarEventController?.abort();
+        avatarEventController = undefined;
+        return;
+    }
+
+    avatarEventController = new AbortController();
+    avatarObserver = new IntersectionObserver(handleAvatarIntersections, { threshold: 0 });
+    if (!reloadAvatarsRegistered) {
+        reloadAvatarsRegistered = true;
+        threadCommentsObserver.addEvent(scanAvatars);
+    } else {
+        scanAvatars();
+    }
+}
+
+function scanAvatars(): void {
+    if (!reloadAvatarsEnabled || !avatarObserver) return;
+    const avatars = dom<"img">(".lzl_single_post img:not(.BDE_Smiley, [data-loaded])", []);
+    avatars.forEach(avatar => avatarObserver?.observe(avatar));
+}
+
+function handleAvatarIntersections(entries: IntersectionObserverEntry[]): void {
+    entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        processAvatar(entry.target as HTMLImageElement);
+    });
+}
+
+function processAvatar(avatar: HTMLImageElement): void {
+    if (!reloadAvatarsEnabled) return;
+    avatarObserver?.unobserve(avatar);
+
+    if (!avatar.complete) {
+        const signal = avatarEventController?.signal;
+        if (!signal) return;
+        const onSettled = () => {
+            avatar.removeEventListener("load", onSettled);
+            avatar.removeEventListener("error", onSettled);
+            processAvatar(avatar);
+        };
+        avatar.addEventListener("load", onSettled, { once: true, signal });
+        avatar.addEventListener("error", onSettled, { once: true, signal });
+        return;
+    }
+
+    if (avatar.naturalWidth > 0) {
+        avatar.setAttribute("data-loaded", "");
+        return;
+    }
+
+    const userCard = findParent<"li">(avatar, "j_user_card");
+    const portrait = parsePortrait(userCard?.getAttribute("data-field"));
+    if (!portrait) return;
+    avatar.src = tiebaAPI.URL_profile(portrait);
+    avatar.setAttribute("data-loaded", "");
+}
+
+function parsePortrait(value: string | null | undefined): string | undefined {
+    if (!value) return undefined;
+    const candidates = value.includes("'") ? [value, value.replace(/'/g, '"')] : [value];
+    for (const candidate of candidates) {
+        try {
+            const parsed = JSON.parse(candidate) as { id?: unknown };
+            if (typeof parsed.id === "string" && parsed.id) return parsed.id;
+        } catch {
+            continue;
+        }
+    }
+    return undefined;
+}
+
+function normalizeToolkitToggles(value: unknown): ToolkitToggles {
+    if (typeof value !== "object" || value === null) return TOOLKIT_TOGGLES_DEFAULT;
+    const stored = value as Partial<ToolkitToggles>;
+    return {
+        reloadAvatars: typeof stored.reloadAvatars === "boolean"
+            ? stored.reloadAvatars
+            : TOOLKIT_TOGGLES_DEFAULT.reloadAvatars,
+    };
 }
