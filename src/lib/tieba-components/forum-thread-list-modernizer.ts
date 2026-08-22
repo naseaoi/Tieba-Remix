@@ -1,30 +1,29 @@
 import { currentPageType } from "@/lib/api/remixed";
+import { EllipsisVertical, MessageSquare, Star, ThumbsUp, type LucideIcon } from "@lucide/vue";
 import { domrd } from "@/lib/elemental";
+import { createLucideIconElement } from "@/lib/lucide";
 import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, tiebaAPI } from "@/lib/api/tieba";
-import { forumThreadsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { forumThreadModernLayout } from "@/lib/user-values";
-import { fetchAgreeSnapshot } from "@/modules/thread-agree-count/api";
 import { setupAgreeAction } from "@/modules/thread-agree-count/agree-action";
-import { mergeRecentThreadAgreeState, saveRecentThreadAgreeState } from "@/modules/thread-agree-count/recent-state";
+import { saveRecentThreadAgreeState } from "@/modules/thread-agree-count/recent-state";
 import { shieldList } from "@/modules/shield/shield";
+import { observeForumAgree, unobserveForumAgree } from "./forum-agree-loader";
 import { getForumAuthorName, isTruncatedForumAuthorName } from "./forum-author-full-id";
 
 const ROOT_SELECTOR = "#pagelet_frs-list\\/pagelet\\/thread";
-const ITEM_SELECTOR = ".j_thread_list[data-field]:not(.thread_top)";
 const FLAG = "data-trex-modernized";
 const AGREE_FLAG = "data-trex-agree-loaded";
 const NATIVE_REPORT_FLAG = "data-tbr-native-report";
-const agreeCache = new Map<number, { count: number; liked: boolean }>();
-const agreeLoading = new Set<number>();
 let morePopup: HTMLElement | undefined;
 let moreOwner: HTMLElement | undefined;
 let favoriteTagPopup: HTMLElement | undefined;
 let favoriteTagOwner: HTMLElement | undefined;
 
-const ICON_LIKE = "favorite";
-const ICON_COMMENT = "chat_bubble";
-const ICON_FAVORITE = "star";
-const ICON_MORE = "more_vert";
+const ICON_LIKE = ThumbsUp;
+const ICON_COMMENT = MessageSquare;
+const ICON_FAVORITE = Star;
+const ICON_MORE = EllipsisVertical;
 
 type ThreadField = {
     id?: number | string;
@@ -54,12 +53,11 @@ function text(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
 }
 
-function createMetaIcon(name: string): HTMLSpanElement {
-    const icon = document.createElement("span");
-    icon.className = "thread-meta-icon material-symbols-outlined";
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = name;
-    return icon;
+function createMetaIcon(icon: LucideIcon): SVGSVGElement {
+    return createLucideIconElement(icon, {
+        class: "thread-meta-icon",
+        strokeWidth: 1.75,
+    });
 }
 
 function createFooter(item: HTMLElement, tid: number, replyCount: string): void {
@@ -313,29 +311,15 @@ function reportThread(tid: number, firstPostId?: number): void {
 }
 
 function loadAgree(item: HTMLElement, tid: number, badge: HTMLElement): void {
-    if (agreeCache.has(tid)) {
-        applyAgreeState(badge, tid, agreeCache.get(tid)!);
-        return;
-    }
-    const observer = new IntersectionObserver(entries => {
-        if (!entries.some(entry => entry.isIntersecting)) return;
-        observer.disconnect();
-        if (agreeLoading.has(tid)) return;
-        agreeLoading.add(tid);
-        void fetchAgreeSnapshot({ tid, pn: 1, rn: 1, lzOnly: false }).then(snapshot => {
-            const state = mergeRecentThreadAgreeState(tid, {
-                count: snapshot.threadAgree ?? 0,
-                liked: snapshot.threadHasAgree,
-            });
-            agreeCache.set(tid, state);
+    observeForumAgree(item, tid, state => {
+        if (badge.isConnected) {
             applyAgreeState(badge, tid, state);
-        }).catch(() => {
-            badge.querySelector(".thread-modern-value")!.textContent = "--";
-        }).finally(() => {
-            agreeLoading.delete(tid);
-        });
-    }, { rootMargin: "200px" });
-    observer.observe(item);
+        }
+    }, () => {
+        if (!badge.isConnected) return;
+        const value = badge.querySelector(".thread-modern-value");
+        if (value) value.textContent = "--";
+    });
 }
 
 function applyAgreeState(badge: HTMLElement, tid: number, state: { count: number; liked: boolean }): void {
@@ -372,6 +356,7 @@ function syncModernAuthorName(item: HTMLElement): void {
 
 function modernize(item: HTMLElement): void {
     if (item.classList.contains("thread_top")) {
+        unobserveForumAgree(item);
         item.querySelector(".thread-modern-author-row")?.remove();
         item.querySelector(".thread-modern-footer")?.remove();
         item.removeAttribute(FLAG);
@@ -432,10 +417,7 @@ function modernize(item: HTMLElement): void {
 export function installForumThreadListModernizer(): void {
     if (currentPageType() !== "forum" || !document.documentElement.classList.contains("style-vercel")) return;
     forumThreadModernLayout.on("setter", syncForumThreadModernLayout);
-    syncForumThreadModernLayout();
-    const process = () => document.querySelectorAll<HTMLElement>(`${ROOT_SELECTOR} ${ITEM_SELECTOR}`).forEach(modernize);
-    forumThreadsObserver.addEvent(process);
-    process();
+    addCoalescedObserverEvent(syncForumThreadModernLayout, forumThreadsObserver);
 }
 
 export function syncForumThreadModernLayout(): void {
@@ -447,6 +429,7 @@ export function syncForumThreadModernLayout(): void {
         return;
     }
     items.forEach(item => {
+        unobserveForumAgree(item);
         item.querySelector(".thread-modern-author-row")?.remove();
         item.querySelector(".thread-modern-footer")?.remove();
         item.removeAttribute(FLAG);

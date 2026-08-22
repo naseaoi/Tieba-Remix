@@ -1,7 +1,8 @@
 <template>
     <div v-if="release" class="update-wrapper">
         <div v-if="isLatest !== undefined" class="latest-info" :class="{ 'is-latest': isLatest }">
-            <div class="icon">{{ isLatest ? 'check' : 'warning' }}</div>
+            <Check v-if="isLatest" class="status-icon" aria-hidden="true" />
+            <TriangleAlert v-else class="status-icon" aria-hidden="true" />
             <div class="content">{{ isLatest ? '当前是最新版本' : '检测到新版本' }}</div>
         </div>
 
@@ -22,18 +23,28 @@
     </div>
 
     <div v-else-if="loading" class="status-wrapper">
-        <div class="icon">sync</div>
+        <RefreshCw class="status-icon loading-icon" aria-hidden="true" />
         <div class="status-text">正在检查更新...</div>
     </div>
 
     <div v-else class="status-wrapper">
-        <div class="icon">{{ errorIcon }}</div>
+        <component :is="errorIcon" class="status-icon" aria-hidden="true" />
         <div class="status-text">{{ errorText }}</div>
         <UserButton v-if="canRetry" class="retry-button" shadow-border @click="loadRelease">重新检查</UserButton>
     </div>
 </template>
 
 <script lang="ts" setup>
+import {
+    Ban,
+    Check,
+    Hourglass,
+    PackageX,
+    RefreshCw,
+    TriangleAlert,
+    WifiOff,
+    type LucideIcon,
+} from "@lucide/vue";
 import { getGMInfo } from "@/lib/monkey";
 import { ReleaseFetchErrorKind, compareSemver, getLatestReleaseFromGitee, resolveReleaseInstallUrl } from "@/lib/api/remixed";
 import { GiteeRelease } from "@/lib/user-values";
@@ -50,13 +61,13 @@ const errorText = ref("");
 
 const scriptInfo = getGMInfo();
 
-const errorIcon = computed(() => {
+const errorIcon = computed<LucideIcon>(() => {
     switch (errorKind.value) {
-        case "disabled": return "do_not_disturb_on";
-        case "ratelimit": return "hourglass_top";
-        case "network": return "wifi_off";
-        case "notfound": return "inventory_2";
-        default: return "warning";
+        case "disabled": return Ban;
+        case "ratelimit": return Hourglass;
+        case "network": return WifiOff;
+        case "notfound": return PackageX;
+        default: return TriangleAlert;
     }
 });
 
@@ -93,6 +104,10 @@ onMounted(loadRelease);
 </script>
 
 <style lang="scss" scoped>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .update-wrapper {
     display: flex;
     max-width: 100%;
@@ -165,11 +180,15 @@ onMounted(loadRelease);
     color: var(--light-fore);
     text-align: center;
 
-    .icon {
-        @extend %icon;
-        font-size: 56px;
+    .status-icon {
+        width: 56px;
+        height: 56px;
         color: var(--minimal-fore);
-        line-height: 1;
+        stroke-width: 1.25;
+    }
+
+    .loading-icon {
+        animation: spin 1s linear infinite;
     }
 
     .status-text {

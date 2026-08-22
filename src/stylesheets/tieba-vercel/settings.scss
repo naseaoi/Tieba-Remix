@@ -72,13 +72,13 @@ html.style-vercel {
     }
 
     .settings-wrapper .breadcrumb {
-        font-family: $vercel-font-mono;
+        font-family: var(--code-zh, sans-serif);
         font-size: $vercel-fs-xs;
         letter-spacing: 0;
     }
 
     .settings-wrapper .nav-group-label {
-        font-family: $vercel-font-mono;
+        font-family: var(--code-zh, sans-serif);
         letter-spacing: 0.06em;
     }
 

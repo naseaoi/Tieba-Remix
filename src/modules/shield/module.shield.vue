@@ -26,7 +26,7 @@
                 <span>按 Enter 添加，Shift + Enter 换行</span>
                 <UserButton class="submit-button" :shadow-border="true" :theme-style="true"
                     @click="updateShieldList">
-                    <span class="icon">add</span>
+                    <Plus class="button-icon" aria-hidden="true" />
                     添加规则
                 </UserButton>
             </div>
@@ -39,13 +39,13 @@
                     <p>{{ shieldListRef.length }} 条规则，点击卡片可编辑</p>
                 </div>
                 <UserButton v-if="shieldListRef.length > 0" class="remove-all" @click="removeAllWithConfirm">
-                    <span class="icon">delete_sweep</span>
+                    <Trash2 class="button-icon" aria-hidden="true" />
                     清空规则
                 </UserButton>
             </div>
 
             <div v-if="shieldListRef.length === 0" class="empty-list-container">
-                <span class="icon">filter_alt_off</span>
+                <ListFilterPlus class="empty-icon" aria-hidden="true" />
                 <div>
                     <strong>还没有屏蔽规则</strong>
                     <p>在上方输入屏蔽词并选择应用范围即可添加</p>
@@ -58,12 +58,12 @@
                     <div class="rule-card-heading">
                         <span class="rule-type">{{ rule.type === "regex" ? "正则" : "文本" }}</span>
                         <span v-if="!rule.toggle" class="rule-status">已停用</span>
-                        <span class="edit-icon icon">edit</span>
+                        <Pencil class="edit-icon" aria-hidden="true" />
                     </div>
                     <p class="rule-content">{{ rule.content }}</p>
                     <div class="scope-badges">
                         <span v-for="scope in rule.scopes" :key="scope" class="scope-badge">
-                            <span class="icon">{{ shieldScopeMeta[scope].icon }}</span>
+                            <component :is="shieldScopeMeta[scope].icon" class="scope-icon" aria-hidden="true" />
                             {{ shieldScopeMeta[scope].label }}
                         </span>
                     </div>
@@ -74,6 +74,7 @@
 </template>
 
 <script lang="tsx" setup>
+import { ListFilterPlus, Pencil, Plus, Trash2 } from "@lucide/vue";
 import { renderDialog } from "@/lib/render";
 import { UserButton, UserCheck, UserTextbox, messageBox, toast } from "user-view";
 import { ref } from "vue";
@@ -228,8 +229,10 @@ function updateShieldList() {
             padding: 6px 14px;
             gap: 4px;
 
-            .icon {
-                font-size: 18px;
+            .button-icon {
+                width: 18px;
+                height: 18px;
+                stroke-width: 1.75;
             }
         }
     }
@@ -245,8 +248,10 @@ function updateShieldList() {
             font-size: 12px;
             gap: 4px;
 
-            .icon {
-                font-size: 17px;
+            .button-icon {
+                width: 17px;
+                height: 17px;
+                stroke-width: 1.75;
             }
         }
     }
@@ -260,8 +265,11 @@ function updateShieldList() {
         color: var(--minimal-fore);
         gap: 10px;
 
-        > .icon {
-            font-size: 28px;
+        > .empty-icon {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            stroke-width: 1.5;
         }
 
         strong {
@@ -315,9 +323,11 @@ function updateShieldList() {
                 }
 
                 .edit-icon {
+                    width: 16px;
+                    height: 16px;
                     margin-left: auto;
                     color: var(--minimal-fore);
-                    font-size: 16px;
+                    stroke-width: 1.75;
                 }
             }
 
@@ -347,9 +357,11 @@ function updateShieldList() {
                     font-size: 11px;
                     gap: 3px;
 
-                    .icon {
+                    .scope-icon {
+                        width: 14px;
+                        height: 14px;
                         color: var(--tieba-theme-color);
-                        font-size: 14px;
+                        stroke-width: 1.75;
                     }
                 }
             }

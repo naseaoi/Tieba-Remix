@@ -4,20 +4,21 @@
         <div ref="header" class="block-controls topics sticky-header"
             :class="{ stuck: isStuck }">
             <p class="block-title">
-                <span class="block-title-icon icon-topic" v-html="ICON_TOPIC"></span>
+                <component :is="ICON_TOPIC" class="block-title-icon icon-topic" aria-hidden="true" />
                 <span>贴吧热议</span>
             </p>
 
             <BlockPanel class="topics actions">
-                <UserButton class="panel-btn icon toggle-collapse"
+                <UserButton class="panel-btn toggle-collapse"
                     :title="topicCollapsed ? '展开列表' : '收起列表'"
                     @click="toggleTopicCollapsed" :unset-background="true" no-border>
-                    {{ topicCollapsed ? 'expand_more' : 'expand_less' }}
+                    <ChevronDown v-if="topicCollapsed" aria-hidden="true" />
+                    <ChevronUp v-else aria-hidden="true" />
                 </UserButton>
-                <UserButton class="panel-btn icon more"
+                <UserButton class="panel-btn more"
                     :title="topicShowAll ? '只看前 10 条' : '查看更多'"
                     @click="toggleTopicShowAll" :unset-background="true" no-border>
-                    more_horiz
+                    <Ellipsis aria-hidden="true" />
                 </UserButton>
             </BlockPanel>
         </div>
@@ -39,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronDown, ChevronUp, Ellipsis } from "@lucide/vue";
 import BlockPanel from "@/components/block-panel.vue";
 import { TopicList } from "@/lib/api/tieba";
 import { indexTopicCollapsed } from "@/lib/user-values";

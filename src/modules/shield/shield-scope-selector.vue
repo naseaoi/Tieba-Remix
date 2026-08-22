@@ -2,7 +2,7 @@
     <div class="shield-scope-selector" role="group" aria-label="应用范围">
         <div v-for="option in shieldScopeOptions" :key="option.value" class="scope-option"
             :class="{ selected: modelValue.includes(option.value) }">
-            <div class="scope-option-icon icon">{{ option.icon }}</div>
+            <component :is="option.icon" class="scope-option-icon" aria-hidden="true" />
             <div class="scope-option-content">
                 <UserCheck :id="`${idPrefix}-${option.value}`" :model-value="modelValue.includes(option.value)"
                     :text="option.label" @update:model-value="toggleScope(option.value, $event)" />
@@ -60,9 +60,12 @@ function toggleScope(scope: ShieldScope, enabled: boolean) {
         }
 
         .scope-option-icon {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 20px;
             padding-top: 1px;
             color: var(--minimal-fore);
-            font-size: 20px;
+            stroke-width: 1.75;
         }
 
         .scope-option-content {

@@ -9,7 +9,7 @@
                 <UserButton class="menu-item" :is-anchor="menuItem.href !== undefined"
                     :href="menuItem.href ? menuItem.href : 'javascript:;'" @click="menuItem.click"
                     :target="menuItem.href ? '_blank' : ''" no-border>
-                    <div v-if="menuItem.icon" class="icon">{{ menuItem.icon }}</div>
+                    <component :is="menuItem.icon" v-if="menuItem.icon" class="menu-icon" aria-hidden="true" />
                     <div class="menu-title">
                         {{ menuItem.title }}
                         <span v-if="menuItem.innerText" class="menu-inner">{{ menuItem.innerText }}</span>
@@ -98,6 +98,13 @@ a {
         font-size: 14px;
         gap: 6px;
         transition: 0.2s;
+
+        .menu-icon {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+            stroke-width: 1.75;
+        }
 
         .menu-title {
             display: flex;

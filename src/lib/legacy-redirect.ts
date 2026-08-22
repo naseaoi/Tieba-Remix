@@ -2,6 +2,7 @@
 // 旧版/新版判定与百度安全验证拦截页都在此模块统一处理。
 
 import { GM_getValue } from "./monkey";
+import { installEarlyThreadImageLoading } from "./tieba-components/thread-image-loading";
 
 const LEGACY_SWITCH_ATTEMPT_KEY = "tiebaRemix:legacySwitchAttempt";
 const LEGACY_SWITCH_ATTEMPT_TTL_MS = 30_000;
@@ -189,6 +190,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
     }
 
     installThreadLoadingLayoutStyle();
+    installEarlyThreadImageLoading();
 
     if (document.readyState === "loading") {
         applyCloak();

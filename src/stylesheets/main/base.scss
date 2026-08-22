@@ -36,7 +36,7 @@ body {
     }
 
     // 强制所有元素继承自定义字体，覆盖贴吧原生 font-family
-    *:not(.user-icon):not(.user-icon-outline):not(.user-icon-filled):not(.material-symbols-outlined):not(code):not(pre) {
+    *:not(code):not(pre) {
         font-family: inherit;
     }
 }

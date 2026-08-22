@@ -2,7 +2,9 @@
     <UserDialog ref="dialog" v-bind="dialogOpts" @unload="handleUnload">
         <div class="confirm-dialog" :class="[`variant-${variant}`, { 'is-danger': danger }]">
             <header v-if="title || resolvedIcon" class="confirm-header">
-                <div v-if="resolvedIcon" class="confirm-icon" v-html="resolvedIcon"></div>
+                <div v-if="resolvedIcon" class="confirm-icon">
+                    <component :is="resolvedIcon" aria-hidden="true" />
+                </div>
                 <h3 v-if="title" class="confirm-title">{{ title }}</h3>
             </header>
 
@@ -25,6 +27,13 @@
 </template>
 
 <script setup lang="ts">
+import {
+    CircleCheck,
+    CircleX,
+    Info,
+    TriangleAlert,
+    type LucideIcon,
+} from "@lucide/vue";
 import { computed, nextTick, onMounted, ref } from "vue";
 import { UserDialog, UserDialogOpts } from "user-view";
 
@@ -39,8 +48,8 @@ export interface ConfirmDialogProps {
     variant?: ConfirmDialogVariant;
     /** 危险动作（红色确认按钮） */
     danger?: boolean;
-    /** 自定义图标（HTML 字符串，例如内联 SVG）。传空字符串可隐藏图标 */
-    icon?: string;
+    /** 自定义图标，传 null 可隐藏图标 */
+    icon?: LucideIcon | null;
     positiveText?: string;
     negativeText?: string;
 }
@@ -61,11 +70,11 @@ const response = ref<ConfirmDialogResponse>("cancel");
 
 const showCancelButton = computed(() => props.type !== "okOnly");
 
-const ICON_PRESETS: Record<ConfirmDialogVariant, string> = {
-    info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
-    warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-    danger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
-    success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+const ICON_PRESETS: Record<ConfirmDialogVariant, LucideIcon> = {
+    info: Info,
+    warning: TriangleAlert,
+    danger: CircleX,
+    success: CircleCheck,
 };
 
 const resolvedIcon = computed(() => {

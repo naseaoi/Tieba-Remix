@@ -1,12 +1,3 @@
-.icon,
-.outline-icon {
-    @extend %icon;
-}
-
-.filled-icon {
-    @extend %filled-icon;
-}
-
 .anchor {
     @extend %anchor;
 }
@@ -222,6 +213,10 @@
 
     .user-dialog.default:not(:has(#thread-editor)) {
         animation: none !important;
+    }
+
+    .user-dialog.default:has(.settings-wrapper) {
+        transition: none !important;
     }
 
     .user-dialog.default .dialog-title {

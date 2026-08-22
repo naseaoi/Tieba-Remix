@@ -2,12 +2,10 @@ import { currentPageType } from "@/lib/api/remixed";
 import { SuggestionResponse, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom } from "@/lib/elemental";
 import { debounce } from "lodash-es";
+import { LogIn, Search } from "@lucide/vue";
+import { setLucideIcon } from "@/lib/lucide";
 
 let installed = false;
-
-const ICON_SEARCH = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
-const ICON_ENTER_BA = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>`;
-const ICON_SEARCH_ALL = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
 
 interface Suggestion {
     fname: string;
@@ -51,14 +49,14 @@ export function installForumFloatingSearch(): void {
         enterBaBtn.className = "trex-search-floating-btn trex-search-floating-btn-enter-ba";
         enterBaBtn.title = "进入贴吧";
         enterBaBtn.setAttribute("aria-label", "进入贴吧");
-        enterBaBtn.innerHTML = ICON_ENTER_BA;
+        setLucideIcon(enterBaBtn, LogIn, { size: 18, strokeWidth: 1.75 });
 
         const searchAllBtn = document.createElement("button");
         searchAllBtn.type = "button";
         searchAllBtn.className = "trex-search-floating-btn trex-search-floating-btn-search-all";
         searchAllBtn.title = "全吧搜索";
         searchAllBtn.setAttribute("aria-label", "全吧搜索");
-        searchAllBtn.innerHTML = ICON_SEARCH_ALL;
+        setLucideIcon(searchAllBtn, Search, { size: 18, strokeWidth: 1.75 });
 
         panel.appendChild(input);
         panel.appendChild(enterBaBtn);
@@ -69,10 +67,10 @@ export function installForumFloatingSearch(): void {
 
         const toggle = document.createElement("a");
         toggle.href = "javascript:;";
-        toggle.className = "icon tbui_aside_fbar_button trex-search-floating-toggle";
+        toggle.className = "tbui_aside_fbar_button trex-search-floating-toggle";
         toggle.title = "搜索";
         toggle.setAttribute("aria-label", "搜索");
-        toggle.innerHTML = ICON_SEARCH;
+        setLucideIcon(toggle, Search, { class: "float-bar-icon", size: 20, strokeWidth: 1.75 });
 
         li.appendChild(wrap);
         li.appendChild(toggle);

@@ -3,7 +3,7 @@
         <div class="update-notify-dialog-shell">
             <div class="update-notify-dialog">
                 <header class="dialog-header">
-                    <div class="dialog-icon" v-html="ICON_SPARK"></div>
+                    <div class="dialog-icon"><Sparkles aria-hidden="true" /></div>
                     <h3 class="dialog-title">{{ title }}</h3>
                 </header>
 
@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import { Sparkles } from "@lucide/vue";
 import { ref } from "vue";
 import { UserDialog, UserDialogOpts } from "user-view";
 
@@ -46,8 +47,6 @@ const props = defineProps<UpdateNotifyDialogProps & {
 
 const dialog = ref<InstanceType<typeof UserDialog>>();
 const response = ref<string>("");
-
-const ICON_SPARK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M3 12h3M18 12h3M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12"/></svg>`;
 
 const dialogOpts: UserDialogOpts = {
     animation: false,

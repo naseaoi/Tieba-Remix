@@ -14,6 +14,7 @@ import { installForumImageTakeover } from "./lib/tieba-components/forum-image-ta
 import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load-failure-banner";
 import { installForumNovelRankingFallback } from "./lib/tieba-components/forum-novel-ranking";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
+import { installForumStatsCard } from "./lib/tieba-components/forum-stats-card";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
 import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
@@ -22,7 +23,7 @@ import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
-import { installSymbolFontStatus } from "./lib/symbol-font-status";
+import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
 import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 import { userModuleManifests } from "./modules/manifest";
@@ -35,8 +36,6 @@ export function bootstrap(signal: BootstrapSignal) {
 }
 
 function startBootstrap({ onReady }: BootstrapSignal) {
-    installSymbolFontStatus();
-
     setTheme(themeType.get());
     setStyleTheme(styleTheme.get());
     darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
@@ -47,11 +46,15 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     document.documentElement.dataset.pageType = currentPageType();
 
+    installThreadImageLoading();
+
     installForumImageTakeover();
 
     installForumAsideCollapse();
 
     installForumPinnedFoldWatcher();
+
+    installForumStatsCard();
 
     installForumLoadFailureBanner();
 
@@ -77,7 +80,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
 
-    const pageExtensionReady = loadPageExtension();
+    const pageExtensionReady = loadPageExtension().finally(() => refreshThreadImageLoading());
     const modulesReady = parseUserModules(
         userModuleManifests,
         module => {

@@ -2,7 +2,7 @@
     <div ref="rootRef" class="setting-select" :class="{ open }">
         <button type="button" class="select-trigger" :class="{ active: open }" @click="toggleOpen">
             <span class="trigger-text">{{ currentText }}</span>
-            <span class="material-symbols-outlined trigger-icon">expand_more</span>
+            <ChevronDown class="trigger-icon" aria-hidden="true" />
         </button>
 
         <transition name="setting-select-pop">
@@ -20,6 +20,7 @@
 </template>
 
 <script lang="ts" setup generic="T">
+import { ChevronDown } from "@lucide/vue";
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 interface SelectItem {
@@ -150,9 +151,11 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .trigger-icon {
+        width: 18px;
+        height: 18px;
         flex-shrink: 0;
         color: var(--minimal-fore);
-        font-size: 18px;
+        stroke-width: 1.75;
         transition: transform 0.18s $ease;
     }
 

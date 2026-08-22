@@ -1,4 +1,14 @@
-import { imagesViewer, notifyImageViewerFailure } from "@/components/images-viewer";
+import { imagesViewer, notifyImageViewerFailure, prepareImagesViewer } from "@/components/images-viewer";
+import {
+    ArrowLeftRight,
+    Check,
+    Heart,
+    Menu,
+    MessageSquare,
+    MessageSquareWarning,
+    Plus,
+    UserRound,
+} from "@lucide/vue";
 import Pager from "@/components/pager.vue";
 import ThreadEditor from "@/components/thread-editor.vue";
 import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
@@ -7,7 +17,7 @@ import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
-import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
@@ -25,6 +35,8 @@ import commentsStyle from "./comments.scss?inline";
 import compactStyle from "./compact.scss?inline";
 import { threadParser } from "./parser";
 import threadStyle from "./thread.scss?inline";
+
+const THREAD_IMAGE_BOUND = "data-tbr-thread-image-bound";
 
 export default async function () {
     if (!pageExtension.get().thread) return;
@@ -103,7 +115,7 @@ export default async function () {
             settingsPanel = renderDialog<TogglePanelProps>(TogglePanel, {
                 toggles: [
                     {
-                        icon: "favorite",
+                        icon: Heart,
                         name: "收藏",
                         defaultValue: (function () {
                             return dom<"a">(".j_favor, #j_favthread .p_favthr_main")?.innerText === "收藏" ? false : true;
@@ -113,7 +125,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "face_6",
+                        icon: UserRound,
                         name: "只看楼主",
                         defaultValue: (function () {
                             return dom<"a">("#lzonly_cntn")?.innerText === "只看楼主" ? false : true;
@@ -123,7 +135,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "compare_arrows",
+                        icon: ArrowLeftRight,
                         name: "紧凑布局",
                         defaultValue: (() => compactLayout.get())(),
                         event() {
@@ -132,7 +144,7 @@ export default async function () {
                         },
                     },
                     {
-                        icon: "feedback",
+                        icon: MessageSquareWarning,
                         name: "反馈",
                         momentary: true,
                         event() {
@@ -158,7 +170,7 @@ export default async function () {
                     settingsButton.el.classList.remove("is-open");
                 },
             });
-        }, "module-settings", "menu");
+        }, "module-settings", Menu);
         setFloatButtonTooltip(settingsButton.el, "更多");
 
         document.body.insertBefore(domrd("div", {
@@ -211,10 +223,10 @@ export default async function () {
                 </a>
                 <div class="button-container">
                     <UserButton
-                        class="icon forum-button add-forum-button"
+                        class="forum-button add-forum-button"
                         noBorder
                         onClick={() => dom<"button">("#j_head_focus_btn")?.click()}>
-                        {PageData.user.is_like ? "check" : "add"}
+                        {PageData.user.is_like ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
                     </UserButton>
                 </div>
             </div>
@@ -248,13 +260,12 @@ export default async function () {
             }
         }, { once: true });
 
-        threadFloorsObserver.addEvent(function () {
+        addCoalescedObserverEvent(function () {
             if (dom(".d_author", threadList, []).length === 0) return;
 
-            // TODO: performance
             thread = threadParser();
             applyAuthorContainers(thread);
-        });
+        }, threadFloorsObserver);
 
         function applyAuthorContainers(sourceThread: ReturnType<typeof threadParser>) {
             sourceThread.cotents.forEach((c, i) => {
@@ -263,8 +274,8 @@ export default async function () {
 
                 const floor = postRoot.querySelector<HTMLDivElement>(".d_post_content_main");
                 if (!floor) return;
+                if (floor.querySelector(".author-container")) return;
 
-                floor.querySelector(".author-container")?.remove();
                 const authorContainer = createAuthorContainer(sourceThread, i);
                 floor.insertBefore(authorContainer, floor.firstChild);
             });
@@ -294,7 +305,7 @@ export default async function () {
                 </div>, badgeContainer.root);
 
             if (sourceThread.cotents[index].isLouzhu)
-                appendJSX(<div class="floor-badge">楼主</div>, badgeContainer.root);
+                appendJSX(<div class="floor-badge floor-owner-badge"><span>楼主</span></div>, badgeContainer.root);
 
             return authorContainer;
         }
@@ -333,8 +344,9 @@ export default async function () {
             }
             if (!PageData.thread.thread_id) return;
 
-            (dom<"img">(".BDE_Image", threadList, [])).forEach(el => {
+            (dom<"img">(`.BDE_Image:not([${THREAD_IMAGE_BOUND}])`, threadList, [])).forEach(el => {
                 const newEl = el.cloneNode(false) as HTMLImageElement;
+                newEl.setAttribute(THREAD_IMAGE_BOUND, "");
                 const postContent = findParent(el, "d_post_content");
 
                 let ancestor: HTMLElement | null = el.parentElement;
@@ -352,11 +364,14 @@ export default async function () {
                     e.preventDefault();
                     e.stopImmediatePropagation();
                 };
+                newEl.addEventListener("pointerenter", () => prepareImagesViewer(), { once: true });
+                newEl.addEventListener("pointerdown", () => prepareImagesViewer(), { once: true });
                 newEl.addEventListener("mousedown", stop, true);
                 newEl.addEventListener("auxclick", stop, true);
                 newEl.addEventListener("click", async function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
+                    prepareImagesViewer();
 
                     let allImages: ThreadPicture[];
                     try {
@@ -391,17 +406,18 @@ export default async function () {
                 el.replaceWith(newEl);
             });
         };
-        threadFloorsObserver.addEvent(() => {
+        addCoalescedObserverEvent(() => {
             threadImagesReady = processThreadImages();
-        });
+        }, threadFloorsObserver);
 
         // 去除楼中楼用户发言的冒号
         threadCommentsObserver.addEvent(() => {
-            (dom(".lzl_cnt", [])).forEach(el => {
+            (dom(".lzl_cnt:not([data-tbr-lzl-normalized])", [])).forEach(el => {
                 el.childNodes.forEach(node => {
                     if (node)
                         node.nodeType === 3 ? node.remove() : undefined;
                 });
+                el.setAttribute("data-tbr-lzl-normalized", "");
             });
         });
 
@@ -462,7 +478,7 @@ export default async function () {
             button.el.style.display = "none";
             button.el.toggleAttribute("aria-hidden", true);
         });
-        const commentButton = floatBar.add("other", showEditor, "trex-comment-button", "comment", 2);
+        const commentButton = floatBar.add("other", showEditor, "trex-comment-button", MessageSquare, 2);
         setFloatButtonTooltip(commentButton.el, "评论");
 
         // 添加末尾帖子回复入口

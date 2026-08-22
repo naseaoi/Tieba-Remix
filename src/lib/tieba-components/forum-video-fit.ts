@@ -1,5 +1,5 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { forumThreadsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { constrainForumVideoPreviewSize } from "./forum-video-layout";
 
 let installed = false;
@@ -172,6 +172,5 @@ export function installForumVideoFit(): void {
     if (currentPageType() !== "forum") return;
     installed = true;
 
-    forumThreadsObserver.addEvent(process);
-    process();
+    addCoalescedObserverEvent(process, forumThreadsObserver);
 }

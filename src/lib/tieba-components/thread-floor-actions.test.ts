@@ -25,6 +25,7 @@ describe("legacy thread floor metadata", () => {
                     <div class="core_reply_tail">
                         <div class="j_lzl_r p_reply">
                             <a class="lzl_link_unfold">回复</a>
+                            <span class="lzl_link_fold" style="display:none">收起回复</span>
                         </div>
                         <ul class="p_tail">
                             <li><span>7楼</span></li>
@@ -38,6 +39,9 @@ describe("legacy thread floor metadata", () => {
                             </li>
                         </ul>
                         <div class="ip-location"><span>IP属地:广东</span></div>
+                    </div>
+                    <div class="lzl_content_reply">
+                        <span class="tbr-lzl-source" data-tbr-platform="mobile" title="移动端">移动端</span>
                     </div>
                 </div>
             </div>
@@ -53,14 +57,23 @@ describe("legacy thread floor metadata", () => {
         const time = tail?.querySelector<HTMLElement>(".p_tail li:last-child span");
         const platform = tail?.querySelector<HTMLElement>(".p_tail_wap");
         const menu = tail?.querySelector<HTMLElement>(".tbr-floor-menu");
+        const reply = tail?.querySelector<HTMLElement>(".lzl_link_unfold");
+        const collapseReply = tail?.querySelector<HTMLElement>(".lzl_link_fold");
+        const subPostPlatform = document.querySelector<HTMLElement>(".tbr-lzl-source");
 
         expect(floor?.dataset.floorNum).toBe("7");
         expect(time?.textContent).toBe("今天 08:00");
         expect(tail?.querySelector(".ip-location")?.textContent).toBe("广东");
         expect(platform?.dataset.tbrPlatform).toBe("mobile");
         expect(platform?.title).toBe("iPhone客户端");
+        expect(platform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
+        expect(subPostPlatform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
         expect(menu?.parentElement).toBe(tail);
         expect(menu?.getAttribute("aria-label")).toBe("更多操作");
+        expect(reply?.querySelector("svg.lucide-message-square")).not.toBeNull();
+        expect(reply?.getAttribute("aria-label")).toBe("回复");
+        expect(collapseReply?.querySelector("svg.lucide-message-square")).not.toBeNull();
+        expect(collapseReply?.getAttribute("aria-label")).toBe("收起回复");
 
         menu?.click();
         expect(document.querySelector(".tbr-floor-menu-popup")?.textContent).toBe("举报拉黑");

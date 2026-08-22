@@ -72,7 +72,7 @@ type DropdownMenu = {
     title: string
     href?: string
     click?: (() => void)
-    icon?: string
+    icon?: import("@lucide/vue").LucideIcon
     innerText?: string
 } | "separator"
 

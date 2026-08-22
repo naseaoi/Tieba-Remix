@@ -1,12 +1,11 @@
 <template>
     <UserDialog ref="dialog" v-bind="dialogOpts">
-        <svg class="loading-svg" viewBox="0 0 100 100">
-            <circle class="loading-circle" cx="50" cy="50" r="40" fill="none" stroke-width="8"></circle>
-        </svg>
+        <LoaderCircle class="loading-svg" aria-hidden="true" />
     </UserDialog>
 </template>
 
 <script setup lang="ts">
+import { LoaderCircle } from "@lucide/vue";
 import { styleTheme } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import { UserDialog, UserDialogOpts } from "user-view";
@@ -87,29 +86,12 @@ onMounted(() => {
     }
 }
 
-@keyframes loading {
-    25% {
-        stroke-dashoffset: 140;
-    }
-
-    75% {
-        stroke-dashoffset: 280;
-    }
-}
-
 .loading-svg {
     width: 64px;
     height: 64px;
-
-    .loading-circle {
-        animation:
-            loading 2.8s ease-in-out infinite,
-            rotate 1s linear infinite;
-        stroke: var(--tieba-theme-color);
-        stroke-dasharray: 314;
-        stroke-dashoffset: 314;
-        stroke-linecap: round;
-        transform-origin: center;
-    }
+    animation: rotate 1s linear infinite;
+    color: var(--tieba-theme-color);
+    stroke-width: 1.75;
+    transform-origin: center;
 }
 </style>

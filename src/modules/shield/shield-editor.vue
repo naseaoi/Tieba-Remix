@@ -4,8 +4,8 @@
         <div class="shield-editor-panel">
             <header class="editor-header">
                 <h3>编辑屏蔽规则</h3>
-                <button type="button" class="close-button icon" aria-label="关闭" title="关闭" @click="unload">
-                    close
+                <button type="button" class="close-button" aria-label="关闭" title="关闭" @click="unload">
+                    <X aria-hidden="true" />
                 </button>
             </header>
 
@@ -40,6 +40,7 @@
 </template>
 
 <script lang="tsx" setup>
+import { X } from "@lucide/vue";
 import { UserButton, UserCheck, UserDialog, UserDialogOpts, UserTextbox, toast } from "user-view";
 import { ref } from "vue";
 import { getShieldRuleValidationError, ShieldRule } from "./shield";
@@ -145,6 +146,12 @@ function deleteRule() {
             cursor: pointer;
             font-size: 19px;
             transition: var(--default-duration);
+
+            svg {
+                width: 18px;
+                height: 18px;
+                stroke-width: 1.75;
+            }
 
             &:hover,
             &:focus-visible {

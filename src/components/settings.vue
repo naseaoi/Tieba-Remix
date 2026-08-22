@@ -12,7 +12,7 @@
                 <nav class="sidebar-nav">
                     <div v-for="main in userSettings" :key="main.name" class="nav-group">
                         <div class="nav-group-label">
-                            <span class="material-symbols-outlined nav-group-icon">{{ main.icon }}</span>
+                            <component :is="main.icon" v-if="main.icon" class="nav-group-icon" aria-hidden="true" />
                             <span class="nav-group-name">{{ main.name }}</span>
                         </div>
                         <ul class="nav-list">
@@ -31,14 +31,14 @@
                 <header class="main-header" v-if="selectedSubKey">
                     <div class="breadcrumb">
                         <span class="crumb">{{ selectedKey?.name }}</span>
-                        <span class="material-symbols-outlined crumb-sep">chevron_right</span>
+                        <ChevronRight class="crumb-sep" aria-hidden="true" />
                         <span class="crumb current">{{ selectedSubKey?.name }}</span>
                     </div>
                     <h2 class="main-title">{{ selectedSubKey?.name }}</h2>
                     <p class="main-desc" v-if="selectedSubKey?.description">{{ selectedSubKey.description }}</p>
                 </header>
 
-                <section class="main-body" v-if="selectedSubKey">
+                <section ref="mainBody" class="main-body" v-if="selectedSubKey">
                     <template v-for="(content, key) in selectedSubKey.content" :key="key">
                         <!-- 纯组件页（about 项目信息 / 更新页等）：不包卡片 -->
                         <div v-if="content && isComponentOnly(content)" class="setting-component-wrap">
@@ -107,9 +107,8 @@
                                         :muti-lines="widget.type === 'textarea'"
                                         :placeholder="widget.placeHolder" @change="widget.event" />
 
-                                    <div v-else-if="widget.type === 'icon'" class="widget-icon material-symbols-outlined">
-                                        {{ widget.content }}
-                                    </div>
+                                    <component :is="resolveWidgetIcon(widget.content)" v-else-if="widget.type === 'icon'"
+                                        class="widget-icon" aria-hidden="true" />
 
                                     <img v-else-if="widget.type === 'image'" class="widget-image"
                                         :src="widget.content?.toString()" :alt="widget.altContent"
@@ -125,7 +124,7 @@
 
                 <!-- 默认空态 -->
                 <section v-else class="main-empty">
-                    <span class="material-symbols-outlined empty-icon">tune</span>
+                    <SlidersHorizontal class="empty-icon" aria-hidden="true" />
                     <p class="empty-tip">从左侧选择一项以开始配置</p>
                 </section>
 
@@ -139,6 +138,7 @@
 </template>
 
 <script lang="tsx" setup>
+import { ChevronRight, SlidersHorizontal, type LucideIcon } from "@lucide/vue";
 import SettingSelect from "@/components/setting-select.vue";
 import SettingSwitch from "@/components/setting-switch.vue";
 import { SupportedComponent } from "@/ex";
@@ -146,7 +146,7 @@ import { getUserSettings } from "@/lib/common/settings";
 import _ from "@/lib/utils/_";
 import { useDebounce } from "@/lib/utils/composables";
 import { UserButton, UserDialog, UserDialogOpts, UserSelectItem, UserTextbox } from "user-view";
-import { onMounted, provide, ref } from "vue";
+import { onMounted, provide, ref, watch } from "vue";
 
 export interface UserSettings {
     [props: string]: MainSettingKey;
@@ -154,7 +154,7 @@ export interface UserSettings {
 
 export interface SettingKey {
     name: string;
-    icon?: string;
+    icon?: LucideIcon;
     description?: string;
 }
 
@@ -188,6 +188,10 @@ export interface SettingContent {
 
 const userSettings = getUserSettings();
 
+function resolveWidgetIcon(content: unknown): LucideIcon {
+    return content as LucideIcon;
+}
+
 const dialogOpts: UserDialogOpts = {
     uniqueName: "settings",
     animation: false,
@@ -212,6 +216,11 @@ const dialogOpts: UserDialogOpts = {
 const searchText = ref("");
 const selectedKey = ref<MainSettingKey>();
 const selectedSubKey = ref<SubSettingKey>();
+const mainBody = ref<HTMLElement>();
+
+watch(selectedSubKey, () => {
+    if (mainBody.value) mainBody.value.scrollTop = 0;
+}, { flush: "post" });
 
 // 底部 desc 悬浮提示：由 SettingSelect 等子控件通过 inject 写入
 const hoverDesc = ref("");
@@ -382,8 +391,9 @@ $dur: 0.18s;
             user-select: none;
 
             .nav-group-icon {
-                font-size: 14px;
-                font-variation-settings: "FILL" 0, "wght" 400;
+                width: 14px;
+                height: 14px;
+                stroke-width: 1.75;
             }
         }
 
@@ -444,7 +454,9 @@ $dur: 0.18s;
             gap: 4px;
 
             .crumb-sep {
-                font-size: 14px;
+                width: 14px;
+                height: 14px;
+                stroke-width: 1.75;
             }
 
             .crumb.current {
@@ -508,8 +520,9 @@ $dur: 0.18s;
         gap: 12px;
 
         .empty-icon {
-            font-size: 56px;
-            font-variation-settings: "FILL" 0, "wght" 300;
+            width: 56px;
+            height: 56px;
+            stroke-width: 1.25;
         }
 
         .empty-tip {
@@ -688,10 +701,11 @@ $dur: 0.18s;
 }
 
 .widget-icon {
+    width: 52px;
+    height: 52px;
     margin: 4px auto;
     color: var(--minimal-fore);
-    font-size: 52px;
-    font-variation-settings: "FILL" 1;
+    stroke-width: 1.5;
     text-align: center;
 }
 

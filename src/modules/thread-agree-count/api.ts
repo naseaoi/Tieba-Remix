@@ -38,9 +38,15 @@ interface PbPageResponse {
 interface PbSubPost {
     id?: number | string;
     agree?: AgreeInfo;
+    ip_address?: string;
+    location?: string | {
+        name?: string;
+        ip_address?: string;
+    };
     author?: {
         id?: number | string;
         portrait?: string;
+        ip_address?: string;
     };
 }
 
@@ -48,6 +54,7 @@ interface PbFloorResponse {
     error_code: number | string;
     error_msg?: string;
     subpost_list?: PbSubPost[];
+    user_list?: PbUser[];
 }
 
 interface UserProfileResponse {
@@ -95,6 +102,7 @@ export interface SubPostAgreeSnapshot {
     subPostHasAgreeById: Map<number, boolean>;
     subPostAuthorIdById: Map<number, number>;
     subPostPortraitById: Map<number, string>;
+    subPostIpById: Map<number, string>;
 }
 
 export interface FetchSubPostAgreeSnapshotOptions {
@@ -259,6 +267,20 @@ export async function fetchSubPostAgreeSnapshot(opts: FetchSubPostAgreeSnapshotO
     const subPostHasAgreeById = new Map<number, boolean>();
     const subPostAuthorIdById = new Map<number, number>();
     const subPostPortraitById = new Map<number, string>();
+    const subPostIpById = new Map<number, string>();
+    const userIpById = new Map<number, string>();
+    const userIpByPortrait = new Map<string, string>();
+    for (const user of body.user_list ?? []) {
+        const ip = parseText(user.ip_address);
+        if (!ip) continue;
+
+        const userId = parseCount(user.id);
+        if (userId != null) userIpById.set(userId, ip);
+
+        const portrait = normalizePortrait(user.portrait);
+        if (portrait) userIpByPortrait.set(portrait, ip);
+    }
+
     for (const post of body.subpost_list ?? []) {
         const id = parseCount(post.id);
         if (id == null) continue;
@@ -271,6 +293,11 @@ export async function fetchSubPostAgreeSnapshot(opts: FetchSubPostAgreeSnapshotO
 
         const portrait = normalizePortrait(post.author?.portrait);
         if (portrait) subPostPortraitById.set(id, portrait);
+
+        const ip = parseSubPostIp(post)
+            ?? (authorId != null ? userIpById.get(authorId) : undefined)
+            ?? (portrait ? userIpByPortrait.get(portrait) : undefined);
+        if (ip) subPostIpById.set(id, ip);
     }
 
     return {
@@ -278,7 +305,16 @@ export async function fetchSubPostAgreeSnapshot(opts: FetchSubPostAgreeSnapshotO
         subPostHasAgreeById,
         subPostAuthorIdById,
         subPostPortraitById,
+        subPostIpById,
     };
+}
+
+function parseSubPostIp(post: PbSubPost): string | undefined {
+    return parseText(post.ip_address)
+        ?? parseText(post.author?.ip_address)
+        ?? (typeof post.location === "string" ? parseText(post.location) : undefined)
+        ?? (typeof post.location === "object" ? parseText(post.location.ip_address) : undefined)
+        ?? (typeof post.location === "object" ? parseText(post.location.name) : undefined);
 }
 
 export async function fetchUserProfileIp(uid: number | string): Promise<string | undefined> {

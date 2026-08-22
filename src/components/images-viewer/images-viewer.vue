@@ -2,54 +2,64 @@
     <UserDialog ref="dialog" v-bind="dialogOpts">
         <div ref="imagesViewer" class="images-viewer" @click="clickModal">
             <div ref="imageContainer" class="image-container dialog-toggle">
-                <div v-show="loading" class="image-loading-spinner"></div>
-                <img ref="currImage" class="curr-image changing"
-                    :class="{ 'loading-img': loading, 'failed-img': imageFailed }"
-                    :src="imageArray[curr]" :style="parseCSSRule(imageStyle)">
+                <div v-show="loading" class="image-loading-indicator" role="status" aria-label="图片加载中">
+                    <LoaderCircle class="image-loading-spinner" aria-hidden="true" />
+                </div>
+                <img ref="currImage" class="curr-image"
+                    :class="{ 'failed-img': imageFailed, 'loading-img': loading, 'rotating': imageRotationAnimating }"
+                    :src="imageArray[curr]" fetchpriority="high" decoding="async"
+                    :style="parseCSSRule(imageStyle)">
                 <div v-if="imageFailed" class="image-error-state">
-                    <span class="icon">broken_image</span>
+                    <ImageOff class="image-error-icon" aria-hidden="true" />
                     <span>图片加载失败</span>
                 </div>
             </div>
 
-            <div class="control-panel head-controls" :class="{ 'hide': !showControls.top }">
-                <UserButton class="zoom-in head-btn icon" title="缩小" @click="zoomImage(0.5)">
-                    zoom_in
+            <div class="control-panel head-controls"
+                :class="{ 'hide': !controlsPinned && !showControls.top }">
+                <UserButton class="zoom-in head-btn" title="放大" @click="zoomImage(0.5)">
+                    <ZoomIn class="head-control-icon" aria-hidden="true" />
                 </UserButton>
-                <UserButton class="zoom-out head-btn icon" title="放大" @click="zoomImage(-0.5)">
-                    zoom_out
+                <UserButton class="zoom-out head-btn" title="缩小" @click="zoomImage(-0.5)">
+                    <ZoomOut class="head-control-icon" aria-hidden="true" />
                 </UserButton>
                 <span class="zoom-size">{{ Math.round(scale * 100) + "%" }}</span>
                 <span class="head-sep">|</span>
-                <UserButton class="turn-left head-btn icon" title="逆时针旋转" @click="rotateImage(-90)">
-                    undo
+                <UserButton class="turn-left head-btn" title="逆时针旋转" @click="rotateImage(-90)">
+                    <RotateCcw class="head-control-icon" aria-hidden="true" />
                 </UserButton>
-                <UserButton class=" turn-right head-btn icon" title="顺时针旋转" @click="rotateImage(90)">
-                    redo
+                <UserButton class="turn-right head-btn" title="顺时针旋转" @click="rotateImage(90)">
+                    <RotateCw class="head-control-icon" aria-hidden="true" />
                 </UserButton>
                 <span class="head-sep">|</span>
-                <UserButton class="close head-btn icon" title="关闭" @click="unload">
-                    close
+                <UserButton class="controls-pin head-btn"
+                    :class="{ 'controls-pinned': controlsPinned }"
+                    :title="controlsPinTitle" :aria-label="controlsPinTitle"
+                    :aria-pressed="controlsPinned" @click="toggleControlsPinned">
+                    <PanelTop class="head-control-icon" aria-hidden="true" />
+                </UserButton>
+                <UserButton class="close head-btn" title="关闭" @click="unload">
+                    <X class="head-control-icon" aria-hidden="true" />
                 </UserButton>
             </div>
 
-            <UserButton v-if="imageArray.length > 1" class="control-panel back icon"
-                :class="{ 'hide': !showControls.left }" title="上一张" @click="listBack">
-                chevron_left
+            <UserButton v-if="imageArray.length > 1" class="control-panel back"
+                :class="{ 'hide': !controlsPinned && !showControls.left }" title="上一张" @click="listBack">
+                <ChevronLeft class="side-control-icon" aria-hidden="true" />
             </UserButton>
-            <UserButton v-if="imageArray.length > 1" class="control-panel forward icon"
-                :class="{ 'hide': !showControls.right }" title="下一张" @click="listForward">
-                chevron_right
+            <UserButton v-if="imageArray.length > 1" class="control-panel forward"
+                :class="{ 'hide': !controlsPinned && !showControls.right }" title="下一张" @click="listForward">
+                <ChevronRight class="side-control-icon" aria-hidden="true" />
             </UserButton>
 
             <div ref="bottomPanel"
                 class="control-panel bottom-controls-wrapper"
-                :class="{ 'hide': !showControls.bottom }">
+                :class="{ 'hide': !controlsPinned && !showControls.bottom }">
                 <div ref="bottomContainerRef" class="bottom-controls-container">
                     <div ref="thumbContainer" class="thumb-container">
                         <UserButton v-for="(thumb, index) in thumbArray" class="bottom-btn"
                             :class="{ 'selected': index === curr }" no-border="all">
-                            <img class="image-list" alt="" :data-lazyload="thumb" @click="curr = index">
+                            <img class="image-list" alt="" :data-lazyload="thumb" @click="selectImage(index)">
                         </UserButton>
                     </div>
                 </div>
@@ -62,14 +72,27 @@
 </template>
 
 <script setup lang="ts">
+import {
+    ChevronLeft,
+    ChevronRight,
+    ImageOff,
+    LoaderCircle,
+    PanelTop,
+    RotateCcw,
+    RotateCw,
+    X,
+    ZoomIn,
+    ZoomOut,
+} from "@lucide/vue";
 import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
-import { styleTheme } from "@/lib/user-values";
+import { imageViewerControlsPinned, styleTheme } from "@/lib/user-values";
 import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { notifyImageViewerFailure } from "./image-feedback";
+import { ensureImageReady, preloadUpcomingImages } from "./image-preloader";
 
 export interface ImagesViewerOpts {
     content: string | string[] | TiebaPost | ThreadPicture[];
@@ -143,8 +166,10 @@ const lockControls = ref<ControlDirectionMap<boolean>>({
 });
 const loading = ref(true);
 const imageFailed = ref(false);
-const disableImageTransition = ref(false);
+const imageRotationAnimating = ref(false);
 const isScrollDragging = ref(false);
+const controlsPinned = ref(imageViewerControlsPinned.get());
+const controlsPinTitle = computed(() => controlsPinned.value ? "关闭界面常驻" : "开启界面常驻");
 
 const imageStyle = computed<CSSRule>(() => {
     const w = naturalSize.value.width * scale.value;
@@ -155,9 +180,6 @@ const imageStyle = computed<CSSRule>(() => {
         transform: `rotate(${deg.value}deg)`,
         left: imageLeft.value === undefined ? undefined : `${imageLeft.value}px`,
         top: imageTop.value === undefined ? undefined : `${imageTop.value}px`,
-        transition: disableImageTransition.value
-            ? "none"
-            : "width 0.4s ease, height 0.4s ease, transform 0.4s ease, left 0s, top 0s",
     };
 });
 
@@ -211,6 +233,8 @@ let lastControlTimeout: ControlDirectionMap<number> = {
 let thumbLazyloadObserver: IntersectionObserver | undefined;
 let imageMoveHandler: ((event: MouseEvent) => void) | undefined;
 let scrollDragCleanup: (() => void) | undefined;
+let navigationRequestId = 0;
+let viewerActive = true;
 
 onMounted(async () => {
     await nextTick();
@@ -246,53 +270,15 @@ onMounted(async () => {
         stopImageDragging();
     });
 
-    evproxy.on(currImage.value, "load", function () {
-        if (!currImage.value) return;
-        imageFailed.value = false;
+    evproxy.on(currImage.value, "load", handleCurrentImageLoad);
 
-        naturalSize.value = {
-            width: currImage.value.naturalWidth,
-            height: currImage.value.naturalHeight,
-        };
+    evproxy.on(currImage.value, "error", handleCurrentImageError);
 
-        (() => {
-            const availableW = window.innerWidth - UI_RESERVED_WIDTH;
-            const availableH = window.innerHeight - UI_RESERVED_HEIGHT;
-
-            if (currImage.value.naturalHeight < availableH &&
-                currImage.value.naturalWidth < availableW) {
-                scale.value = 1;
-                return;
-            }
-
-            scale.value = Math.min(
-                availableW / currImage.value.naturalWidth,
-                availableH / currImage.value.naturalHeight,
-            );
-        })();
-
-        syncImagePosition();
-
-        loading.value = false;
-        // 下一帧再启用过渡，避免首次加载时 width/height 从 0 动画放大
-        nextTick(() => {
-            currImage.value?.classList.remove("changing");
-        });
-    });
-
-    evproxy.on(currImage.value, "error", function () {
-        loading.value = false;
-        imageFailed.value = true;
-        naturalSize.value = { width: 0, height: 0 };
-        notifyImageViewerFailure("resource");
-    });
-
-    evproxy.on(currImage.value, "transitionend", function () {
+    evproxy.on(currImage.value, "transitionend", function (event: TransitionEvent) {
+        if (event.propertyName !== "transform") return;
+        imageRotationAnimating.value = false;
         if (Math.abs(deg.value) >= 360) {
-            currImage.value?.classList.add("changing");
             deg.value = Math.abs(deg.value) % 360;
-            currImage.value?.offsetHeight; // force reflow
-            currImage.value?.classList.remove("changing");
         }
     });
 
@@ -338,18 +324,17 @@ onMounted(async () => {
 
     // 兜底：首张图若已在缓存中，load 事件可能早于监听绑定触发，主动同步一次
     if (currImage.value?.complete && currImage.value.naturalHeight > 0) {
-        currImage.value.dispatchEvent(new Event("load"));
+        handleCurrentImageLoad();
     }
 });
 
 onUnmounted(function () {
+    viewerActive = false;
+    navigationRequestId++;
     evproxy.release();
     thumbLazyloadObserver?.disconnect();
     stopImageDragging();
     scrollDragCleanup?.();
-    if (imageTransitionTimer) {
-        clearTimeout(imageTransitionTimer);
-    }
     Object.values(lastControlTimeout).forEach(timer => clearTimeout(timer));
 });
 
@@ -357,15 +342,13 @@ function stopImageDragging() {
     if (imageMoveHandler) document.removeEventListener("mousemove", imageMoveHandler);
 }
 
-watch(curr, function () {
+watch(curr, async function () {
     loading.value = true;
     imageFailed.value = false;
-    currImage.value?.classList.add("changing");
-    deg.value = 0;
-    disableImageTransition.value = false;
-    imageLeft.value = undefined;
-    imageTop.value = undefined;
-    naturalSize.value = { width: 0, height: 0 };
+    imageRotationAnimating.value = false;
+
+    await nextTick();
+    if (currImage.value?.complete && currImage.value.naturalHeight > 0) handleCurrentImageLoad();
 });
 
 /** 卸载组件 */
@@ -375,19 +358,80 @@ function unload() {
 
 /** 上一张照片 */
 function listBack() {
-    if (curr.value > 0) curr.value--;
+    if (curr.value > 0) void selectImage(curr.value - 1);
 }
 
 /** 下一张照片 */
 function listForward() {
-    if (curr.value < imageArray.length - 1) curr.value++;
+    if (curr.value < imageArray.length - 1) void selectImage(curr.value + 1);
+}
+
+async function selectImage(index: number): Promise<void> {
+    if (!Number.isInteger(index) || index < 0 || index >= imageArray.length || index === curr.value) return;
+
+    const requestId = ++navigationRequestId;
+    loading.value = true;
+    imageFailed.value = false;
+
+    try {
+        const ready = await ensureImageReady(imageArray[index], "high");
+        if (!ready || ready.width <= 0 || ready.height <= 0) throw new Error("invalid image dimensions");
+
+        if (!viewerActive || requestId !== navigationRequestId) return;
+        applyInitialImageLayout(ready.width, ready.height);
+    } catch {
+        if (viewerActive && requestId === navigationRequestId) {
+            loading.value = false;
+            notifyImageViewerFailure("resource");
+        }
+        return;
+    }
+
+    if (!viewerActive || requestId !== navigationRequestId) return;
+    curr.value = index;
+}
+
+function handleCurrentImageLoad(): void {
+    const image = currImage.value;
+    if (!image || image.getAttribute("src") !== imageArray[curr.value]) return;
+
+    imageFailed.value = false;
+    applyInitialImageLayout(image.naturalWidth, image.naturalHeight);
+    loading.value = false;
+    preloadUpcomingImages(imageArray, curr.value);
+}
+
+function handleCurrentImageError(): void {
+    const image = currImage.value;
+    if (!image || image.getAttribute("src") !== imageArray[curr.value]) return;
+
+    loading.value = false;
+    imageFailed.value = true;
+    imageRotationAnimating.value = false;
+    naturalSize.value = { width: 0, height: 0 };
+    notifyImageViewerFailure("resource");
+}
+
+function applyInitialImageLayout(width: number, height: number): void {
+    imageRotationAnimating.value = false;
+    deg.value = 0;
+    imageLeft.value = undefined;
+    imageTop.value = undefined;
+    naturalSize.value = { width, height };
+
+    const availableW = window.innerWidth - UI_RESERVED_WIDTH;
+    const availableH = window.innerHeight - UI_RESERVED_HEIGHT;
+    scale.value = height < availableH && width < availableW
+        ? 1
+        : Math.min(availableW / width, availableH / height);
+    syncImagePosition();
 }
 
 /** 缩放图片 */
 function zoomImage(delta: number, anchor = getDefaultZoomAnchor()) {
     if (!currImage.value || !imageContainer.value) return;
 
-    suspendImageTransition();
+    imageRotationAnimating.value = false;
 
     const nextScale = Math.min(MAX_SIZE, Math.max(MIN_SIZE, scale.value + delta));
     if (nextScale === scale.value) return;
@@ -423,6 +467,7 @@ function zoomImage(delta: number, anchor = getDefaultZoomAnchor()) {
 
 /** 旋转图片 */
 function rotateImage(delta: number) {
+    imageRotationAnimating.value = true;
     deg.value += delta;
 }
 
@@ -467,21 +512,15 @@ function syncImagePosition() {
     imageTop.value = metrics.top;
 }
 
-let imageTransitionTimer = 0;
-function suspendImageTransition(timeout = 80) {
-    disableImageTransition.value = true;
-    if (imageTransitionTimer) {
-        clearTimeout(imageTransitionTimer);
-    }
-    imageTransitionTimer = window.setTimeout(() => {
-        disableImageTransition.value = false;
-    }, timeout);
-}
-
 function clickModal(e: MouseEvent) {
     if (e.target === imageContainer.value) {
         unload();
     }
+}
+
+function toggleControlsPinned() {
+    controlsPinned.value = !controlsPinned.value;
+    imageViewerControlsPinned.set(controlsPinned.value);
 }
 
 /** 同步底部缩略图区域滚动条的宽度与位置（按比例） */
@@ -640,10 +679,6 @@ $scroll-bar-height: 6px;
     inset: 0;
     transition: var(--default-duration);
 
-    .icon {
-        color: var(--light-fore);
-    }
-
     .control-panel {
         @include blur-effect;
         position: absolute;
@@ -667,18 +702,31 @@ $scroll-bar-height: 6px;
         }
 
         .head-btn {
+            display: flex;
             width: 30px;
             height: 30px;
+            align-items: center;
+            justify-content: center;
             padding: 0;
             border-radius: $panel-radius - 2;
             background-color: unset;
             box-shadow: none;
-            font-size: 15px;
+            color: var(--light-fore);
 
             &:hover {
                 background-color: var(--default-background);
                 color: var(--tieba-theme-color);
             }
+        }
+
+        .head-control-icon {
+            width: 15px;
+            height: 15px;
+            stroke-width: 1.75;
+        }
+
+        .controls-pin.controls-pinned {
+            color: var(--tieba-theme-color);
         }
 
         .close:hover {
@@ -701,10 +749,19 @@ $scroll-bar-height: 6px;
 
     .back,
     .forward {
+        display: flex;
         width: min-content;
         height: 56px;
+        align-items: center;
+        justify-content: center;
         box-shadow: 0 0 20px rgb(0 0 0 / 10%);
-        font-size: large;
+        color: var(--light-fore);
+
+        .side-control-icon {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.75;
+        }
     }
 
     .back {
@@ -746,30 +803,47 @@ $scroll-bar-height: 6px;
         .curr-image {
             position: absolute;
             object-fit: contain;
-            transition: opacity 0.2s ease;
+            transition: none;
 
-            &.loading-img {
-                opacity: 0;
+            &.rotating {
+                transition: transform 0.4s ease;
             }
 
             &.failed-img {
                 opacity: 0;
             }
 
-            &.changing {
-                transition: none !important;
+            &.loading-img {
+                visibility: hidden;
             }
         }
 
-        .image-loading-spinner {
+        .image-loading-indicator {
             position: absolute;
-            width: 48px;
-            height: 48px;
-            border: 3px solid rgb(255 255 255 / 15%);
-            border-radius: 50%;
-            border-top-color: rgb(255 255 255 / 90%);
-            animation: kf-spin 0.8s linear infinite;
+            z-index: 2;
+            display: flex;
+            width: 56px;
+            height: 56px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgb(255 255 255 / 28%);
+            border-radius: 8px;
+            background-color: rgb(0 0 0 / 76%);
+            box-shadow:
+                0 0 0 1px rgb(0 0 0 / 40%),
+                0 8px 24px rgb(0 0 0 / 45%);
+            color: #fff;
+            opacity: 0;
+            animation: kf-viewer-spinner-appear 0.15s ease 0.2s forwards;
+            backdrop-filter: blur(6px);
             pointer-events: none;
+
+            .image-loading-spinner {
+                width: 28px;
+                height: 28px;
+                animation: kf-spin 0.8s linear infinite;
+                stroke-width: 1.75;
+            }
         }
 
         .image-error-state {
@@ -783,14 +857,20 @@ $scroll-bar-height: 6px;
             gap: 8px;
             pointer-events: none;
 
-            .icon {
-                font-size: 42px;
+            .image-error-icon {
+                width: 42px;
+                height: 42px;
+                stroke-width: 1.5;
             }
         }
     }
 
     @keyframes kf-spin {
         to { transform: rotate(360deg); }
+    }
+
+    @keyframes kf-viewer-spinner-appear {
+        to { opacity: 1; }
     }
 
     .bottom-controls-wrapper {
@@ -884,10 +964,6 @@ html.style-vercel .images-viewer {
     --viewer-light-fore: #A1A1A1;
     --viewer-accent: #FFF;
 
-    .icon {
-        color: var(--viewer-light-fore);
-    }
-
     .control-panel {
         border: 1px solid var(--viewer-border);
         backdrop-filter: none;
@@ -915,6 +991,11 @@ html.style-vercel .images-viewer {
                 background-color: var(--viewer-bg-hover);
                 color: var(--viewer-fore);
             }
+        }
+
+        .controls-pin.controls-pinned,
+        .controls-pin.controls-pinned:hover {
+            color: var(--tieba-theme-color);
         }
 
         .close:hover {

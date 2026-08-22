@@ -19,21 +19,26 @@
     font-size: 14px;
     text-align: center;
 
-    .icon {
-        color: var(--light-fore);
-        font-size: 18px;
-    }
-
     .panel-button,
     .panel-btn {
+        display: flex;
         width: 30px;
         height: 30px;
+        align-items: center;
+        justify-content: center;
         padding: 4px;
         border: none !important;
         border-radius: 6px;
         transition:
             background-color var(--fast-duration, 0.15s),
             color var(--fast-duration, 0.15s);
+
+        svg {
+            width: 18px;
+            height: 18px;
+            color: var(--light-fore);
+            stroke-width: 1.75;
+        }
 
         &:hover {
             background-color: var(--default-hover);

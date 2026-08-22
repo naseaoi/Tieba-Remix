@@ -86,6 +86,23 @@ export class TbObserver {
     }
 }
 
+export function addCoalescedObserverEvent(callback: () => void, ...observers: TbObserver[]): void {
+    let registered = false;
+    let frameId: number | undefined;
+    const run = (): void => {
+        frameId = undefined;
+        callback();
+    };
+    const schedule = (): void => {
+        if (!registered || frameId !== undefined) return;
+        frameId = window.requestAnimationFrame(run);
+    };
+
+    observers.forEach(observer => observer.addEvent(schedule));
+    registered = true;
+    callback();
+}
+
 /** 帖子页面 楼层监控 */
 export const threadFloorsObserver = new TbObserver("#j_p_postlist", { childList: true });
 /** 帖子页面 楼中楼监控 */

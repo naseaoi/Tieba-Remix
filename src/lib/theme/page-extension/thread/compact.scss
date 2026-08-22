@@ -38,6 +38,24 @@ body[compact-layout] {
         margin-bottom: 0;
     }
 
+    .core_reply .core_reply_wrapper .core_reply_content {
+        .lzl_li_pager {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+
+            .j_pager {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        .tbr-lzl-pager-with-more,
+        .tbr-lzl-last-post {
+            margin-bottom: 0 !important;
+        }
+    }
+
     .lzl_content_reply {
         line-height: 24px !important;
     }

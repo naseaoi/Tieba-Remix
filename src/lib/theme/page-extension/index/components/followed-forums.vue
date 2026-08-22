@@ -3,7 +3,7 @@
         <div ref="header" class="block-controls followed sticky-header"
             :class="{ stuck: isStuck }">
             <p class="block-title">
-                <span class="block-title-icon icon-followed" v-html="ICON_FOLLOWED"></span>
+                <component :is="ICON_FOLLOWED" class="block-title-icon icon-followed" aria-hidden="true" />
                 <span>关注的吧</span>
             </p>
             <BlockPanel class="signed-count left-align">{{ signedForums }} /
@@ -11,9 +11,9 @@
             </BlockPanel>
 
             <BlockPanel class="followed actions">
-                <UserButton class="panel-btn icon sign-btn" title="一键签到"
+                <UserButton class="panel-btn sign-btn" title="一键签到"
                     @click="oneKeySignInstance" unset-background no-border>
-                    task_alt
+                    <ListChecks aria-hidden="true" />
                 </UserButton>
             </BlockPanel>
         </div>
@@ -21,7 +21,7 @@
         <div class="followed-list">
             <UserButton v-for="forum in followed.like_forum" :is-anchor="true" class="followed-btn"
                 :shadow-border="true" :href="tiebaAPI.URL_forum(forum.forum_name)" target="_blank" no-border>
-                <div v-if="forum.is_sign === 1" class="icon signed">check</div>
+                <Check v-if="forum.is_sign === 1" class="signed" aria-hidden="true" />
                 <div class="forum-title">{{ forum.forum_name }}</div>
                 <div class="forum-level" :class="'level-' + levelToClass(forum.user_level)">
                     {{ forum.user_level }}
@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { Check, ListChecks } from "@lucide/vue";
 import BlockPanel from "@/components/block-panel.vue";
 import { levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { UserButton } from "user-view";
@@ -74,8 +75,10 @@ watch(() => props.loggedIn, (v) => {
             gap: 6px;
 
             .signed {
+                width: 16px;
+                height: 16px;
                 color: green;
-                font-weight: var(--font-weight-bold);
+                stroke-width: 2;
             }
 
             .forum-level {

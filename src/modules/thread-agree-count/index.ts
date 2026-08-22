@@ -1,5 +1,7 @@
 import { asyncdom, domrd } from "@/lib/elemental";
+import { createLucideIconElement } from "@/lib/lucide";
 import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { ThumbsUp } from "@lucide/vue";
 import { AGREE_OBJ_TYPE_FLOOR, AGREE_OBJ_TYPE_SUB_POST, AGREE_OBJ_TYPE_THREAD, fetchAgreeSnapshot, fetchSubPostAgreeSnapshot, fetchSubPostSourceSnapshot, fetchUserProfileIp, type AgreeSnapshot, type SubPostAgreeSnapshot } from "./api";
 import { createAgreeActionState, setupAgreeAction, type AgreeActionServerState, type AgreeActionState } from "./agree-action";
 import { formatCount } from "./format";
@@ -14,7 +16,8 @@ const LZL_BADGE_CLASS = "lzl-agree-count-badge";
 const CONFIRMED_STATE_TTL = 5 * 60 * 1000;
 const LZL_FETCH_RN_MIN = 30;
 const LZL_FETCH_RN_MAX = 200;
-const PROFILE_IP_BATCH_SIZE = 4;
+const SUB_POST_FETCH_CONCURRENCY = 4;
+const PROFILE_IP_CONCURRENCY = 4;
 
 export default {
     id: "thread-agree-count",
@@ -45,13 +48,18 @@ async function main(): Promise<void> {
     let snapshot: AgreeSnapshot | undefined;
     let loadedKey = "";
     let loadToken = 0;
+    let snapshotRequestKey = "";
+    let snapshotRequest: Promise<AgreeSnapshot | undefined> | undefined;
     let subPostLoadedKey = "";
-    let subPostLoadToken = 0;
     const subPostSnapshotByParentId = new Map<number, Promise<SubPostAgreeSnapshot | undefined>>();
     const subPostSnapshotCache = new Map<number, SubPostAgreeSnapshot>();
+    const queuedSubPostGroups = new Map<number, { key: string; rn: number }>();
+    const activeSubPostParentIds = new Set<number>();
     const actionStateByKey = new Map<string, AgreeActionState>();
     const profileIpByUserId = new Map<number, Promise<string | undefined>>();
     const resolvedProfileIpByUserId = new Map<number, string>();
+    const queuedProfileIpPosts = new Map<number, Set<HTMLElement>>();
+    const activeProfileIpUserIds = new Set<number>();
     const sourceByPortrait = new Map<string, string>();
     const sourceBySubPostId = new Map<number, string>();
     let subPostSourcePromise: Promise<Map<number, string>> | undefined;
@@ -73,25 +81,35 @@ async function main(): Promise<void> {
     });
 
     async function syncSnapshot(): Promise<void> {
-        const key = `${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
+        const key = currentSnapshotKey();
         if (key === loadedKey) {
             if (snapshot) renderFloorAgree(threadList, snapshot, actionStateByKey);
             return;
         }
-
-        const token = ++loadToken;
-        let next: AgreeSnapshot;
-        try {
-            next = await fetchAgreeSnapshot({
-                tid,
-                pn: PageData.pager.cur_page,
-                rn: PageData.pager.page_size ?? 30,
-                lzOnly: PageData.special.lz_only,
-            });
-        } catch (err) {
-            console.warn("[thread-agree-count] 拉取点赞数据失败:", err);
+        if (key === snapshotRequestKey && snapshotRequest) {
+            await snapshotRequest;
+            if (key === loadedKey && snapshot) renderFloorAgree(threadList, snapshot, actionStateByKey);
             return;
         }
+
+        const token = ++loadToken;
+        const request = fetchAgreeSnapshot({
+            tid,
+            pn: PageData.pager.cur_page,
+            rn: PageData.pager.page_size ?? 30,
+            lzOnly: PageData.special.lz_only,
+        }).catch(err => {
+            console.warn("[thread-agree-count] 拉取点赞数据失败:", err);
+            return undefined;
+        });
+        snapshotRequestKey = key;
+        snapshotRequest = request;
+        let next = await request;
+        if (snapshotRequest === request) {
+            snapshotRequestKey = "";
+            snapshotRequest = undefined;
+        }
+        if (!next) return;
         if (token !== loadToken) return;
 
         if (next.threadAgree != null) {
@@ -108,6 +126,7 @@ async function main(): Promise<void> {
         snapshot = next;
         loadedKey = key;
         renderFloorAgree(threadList, snapshot, actionStateByKey);
+        scheduleSubPostsSync();
     }
 
     async function syncSubPosts(): Promise<void> {
@@ -115,53 +134,42 @@ async function main(): Promise<void> {
         if (key !== subPostLoadedKey) {
             subPostSnapshotByParentId.clear();
             subPostSnapshotCache.clear();
-            resolvedProfileIpByUserId.clear();
+            queuedSubPostGroups.clear();
+            queuedProfileIpPosts.clear();
             sourceByPortrait.clear();
             sourceBySubPostId.clear();
             subPostSourcePromise = undefined;
             subPostLoadedKey = key;
         }
+        void resolveAndRenderSubPostSources(key);
 
         const groups = collectSubPostGroups(threadList, subPostSnapshotCache);
         if (groups.size === 0) {
             renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
-            void resolveAndRenderSubPostProfileIps(subPostSnapshotCache, key);
-            void resolveAndRenderSubPostSources(key);
+            void resolveAndQueueSubPostProfileIps(subPostSnapshotCache, key);
             return;
         }
 
-        const token = ++subPostLoadToken;
-        const entries = await Promise.all([...groups].map(async ([parentId, rn]) => {
-            const next = await getSubPostSnapshot(parentId, rn);
-            return [parentId, next] as const;
-        }));
-        if (token !== subPostLoadToken) return;
-
-        const snapshots = new Map<number, SubPostAgreeSnapshot>();
-        entries.forEach(([parentId, next]) => {
-            if (!next) return;
-            subPostSnapshotCache.set(parentId, next);
-            snapshots.set(parentId, next);
+        groups.forEach((rn, parentId) => {
+            if (activeSubPostParentIds.has(parentId)) return;
+            const queued = queuedSubPostGroups.get(parentId);
+            queuedSubPostGroups.set(parentId, { key, rn: Math.max(rn, queued?.rn ?? 0) });
         });
-        renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+        pumpSubPostQueue();
+    }
 
-        void resolveAndRenderSubPostProfileIps(snapshots, key);
-        void resolveAndRenderSubPostSources(key);
+    function currentSnapshotKey(): string {
+        return `${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
     }
 
     function currentSubPostKey(): string {
         return `${PageData.thread.thread_id}:${PageData.pager.cur_page}:${Number(PageData.special.lz_only)}`;
     }
 
-    async function resolveAndRenderSubPostProfileIps(snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, key: string): Promise<void> {
-        const profileIps = await resolveSubPostProfileIps(threadList, snapshotsByParentId, snapshot?.userIpByPortrait);
+    async function resolveAndQueueSubPostProfileIps(snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, key: string): Promise<void> {
+        if (snapshotRequestKey === currentSnapshotKey()) await snapshotRequest;
         if (key !== currentSubPostKey()) return;
-        if (profileIps.size === 0) return;
-
-        profileIps.forEach((ip, userId) => {
-            resolvedProfileIpByUserId.set(userId, ip);
-        });
-        renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+        queueSubPostProfileIps(snapshotsByParentId, snapshot?.userIpByPortrait);
     }
 
     async function resolveAndRenderSubPostSources(key: string): Promise<void> {
@@ -233,45 +241,117 @@ async function main(): Promise<void> {
         return promise;
     }
 
-    async function resolveSubPostProfileIps(threadList: HTMLElement, snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, userIpByPortrait: Map<string, string> | undefined): Promise<Map<number, string>> {
-        const userIds = new Set<number>();
-        snapshotsByParentId.forEach(snapshot => {
-            snapshot.subPostAuthorIdById.forEach((userId, subPostId) => {
-                if (resolvedProfileIpByUserId.has(userId)) return;
+    function pumpSubPostQueue(): void {
+        while (activeSubPostParentIds.size < SUB_POST_FETCH_CONCURRENCY && queuedSubPostGroups.size > 0) {
+            const parentId = takeNextSubPostParentId();
+            if (parentId == null) return;
 
-                const portrait = snapshot.subPostPortraitById.get(subPostId);
-                if (portrait && userIpByPortrait?.has(portrait)) return;
+            const group = queuedSubPostGroups.get(parentId);
+            queuedSubPostGroups.delete(parentId);
+            if (!group) continue;
 
-                userIds.add(userId);
+            activeSubPostParentIds.add(parentId);
+            void getSubPostSnapshot(parentId, group.rn).then(next => {
+                if (group.key !== currentSubPostKey() || !next) return;
+                subPostSnapshotCache.set(parentId, next);
+                renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+                void resolveAndQueueSubPostProfileIps(new Map([[parentId, next]]), group.key);
+            }).finally(() => {
+                activeSubPostParentIds.delete(parentId);
+                pumpSubPostQueue();
+                scheduleSubPostsSync();
             });
-        });
+        }
+    }
 
+    function takeNextSubPostParentId(): number | undefined {
+        let nextParentId: number | undefined;
+        let nextPriority = Number.POSITIVE_INFINITY;
+        queuedSubPostGroups.forEach((_, parentId) => {
+            const priority = subPostParentPriority(parentId);
+            if (priority >= nextPriority) return;
+            nextParentId = parentId;
+            nextPriority = priority;
+        });
+        return nextParentId ?? queuedSubPostGroups.keys().next().value;
+    }
+
+    function subPostParentPriority(parentId: number): number {
+        let priority = Number.POSITIVE_INFINITY;
+        threadList.querySelectorAll<HTMLElement>(".lzl_single_post").forEach(post => {
+            if (getSubPostIds(post)?.parentId !== parentId) return;
+            priority = Math.min(priority, viewportPriority(post));
+        });
+        if (Number.isFinite(priority)) return priority;
+
+        for (const floor of threadList.querySelectorAll<HTMLElement>(".l_post")) {
+            if (getFloorPostId(floor) === parentId) return viewportPriority(floor);
+        }
+        return priority;
+    }
+
+    function queueSubPostProfileIps(snapshotsByParentId: Map<number, SubPostAgreeSnapshot>, userIpByPortrait: Map<string, string> | undefined): void {
         const posts = threadList.querySelectorAll<HTMLElement>(".lzl_single_post");
         posts.forEach(post => {
             const ids = getSubPostIds(post);
             if (!ids) return;
+            if (post.getClientRects().length === 0) return;
 
             const snapshot = snapshotsByParentId.get(ids.parentId);
+            if (snapshot?.subPostIpById.has(ids.subPostId)) return;
+
             const portrait = getSubPostPortrait(post) ?? snapshot?.subPostPortraitById.get(ids.subPostId);
             if (portrait && userIpByPortrait?.has(portrait)) return;
 
             const userId = snapshot?.subPostAuthorIdById.get(ids.subPostId);
             if (userId != null && resolvedProfileIpByUserId.has(userId)) return;
-            if (userId != null) userIds.add(userId);
-        });
+            if (userId == null || profileIpByUserId.has(userId)) return;
 
-        const result = new Map<number, string>();
-        const ids = [...userIds];
-        for (let i = 0; i < ids.length; i += PROFILE_IP_BATCH_SIZE) {
-            const batch = await Promise.all(ids.slice(i, i + PROFILE_IP_BATCH_SIZE).map(async userId => {
-                const ip = await getProfileIp(userId);
-                return [userId, ip] as const;
-            }));
-            batch.forEach(([userId, ip]) => {
-                if (ip) result.set(userId, ip);
+            let queuedPosts = queuedProfileIpPosts.get(userId);
+            if (!queuedPosts) {
+                queuedPosts = new Set();
+                queuedProfileIpPosts.set(userId, queuedPosts);
+            }
+            queuedPosts.add(post);
+        });
+        pumpProfileIpQueue();
+    }
+
+    function pumpProfileIpQueue(): void {
+        while (activeProfileIpUserIds.size < PROFILE_IP_CONCURRENCY && queuedProfileIpPosts.size > 0) {
+            const userId = takeNextProfileIpUserId();
+            if (userId == null) return;
+
+            queuedProfileIpPosts.delete(userId);
+            activeProfileIpUserIds.add(userId);
+            void getProfileIp(userId).then(ip => {
+                if (!ip) return;
+                resolvedProfileIpByUserId.set(userId, ip);
+                renderSubPostAgree(threadList, subPostSnapshotCache, snapshot?.userIpByPortrait, resolvedProfileIpByUserId, sourceByPortrait, sourceBySubPostId, actionStateByKey);
+            }).finally(() => {
+                activeProfileIpUserIds.delete(userId);
+                pumpProfileIpQueue();
             });
         }
-        return result;
+    }
+
+    function takeNextProfileIpUserId(): number | undefined {
+        let nextUserId: number | undefined;
+        let nextPriority = Number.POSITIVE_INFINITY;
+        queuedProfileIpPosts.forEach((posts, userId) => {
+            const priority = Math.min(...[...posts].map(viewportPriority));
+            if (priority >= nextPriority) return;
+            nextUserId = userId;
+            nextPriority = priority;
+        });
+        return nextUserId ?? queuedProfileIpPosts.keys().next().value;
+    }
+
+    function viewportPriority(element: HTMLElement): number {
+        const rect = element.getBoundingClientRect();
+        if (rect.bottom >= 0 && rect.top <= window.innerHeight) return 0;
+        if (rect.top > window.innerHeight) return rect.top - window.innerHeight;
+        return window.innerHeight + Math.abs(rect.bottom);
     }
 
     function getProfileIp(userId: number): Promise<string | undefined> {
@@ -390,6 +470,9 @@ function renderSubPostTailInfo(tail: HTMLElement, location: string | undefined, 
 
 function getSubPostLocation(post: HTMLElement, snapshot: SubPostAgreeSnapshot | undefined, userIpByPortrait: Map<string, string> | undefined, profileIpByUserId: Map<number, string>): string | undefined {
     const ids = getSubPostIds(post);
+    const snapshotIp = ids ? snapshot?.subPostIpById.get(ids.subPostId) : undefined;
+    if (snapshotIp) return snapshotIp;
+
     const portrait = getSubPostPortrait(post) ?? (ids ? snapshot?.subPostPortraitById.get(ids.subPostId) : undefined);
     const portraitIp = portrait ? userIpByPortrait?.get(portrait) : undefined;
     if (portraitIp) return portraitIp;
@@ -707,7 +790,10 @@ function parsePostId(value: unknown): number | undefined {
 }
 
 function createAgreeBadge(className: string): HTMLSpanElement {
-    const icon = domrd("span", { class: "agree-count-icon", "aria-hidden": "true" });
+    const icon = createLucideIconElement(ThumbsUp, {
+        class: "agree-count-icon",
+        strokeWidth: 1.75,
+    });
     const value = domrd("span", { class: "agree-count-value" });
     return domrd("span", { class: `agree-count-badge ${className}` }, [icon, value]);
 }

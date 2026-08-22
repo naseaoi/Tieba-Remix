@@ -1,5 +1,5 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
+import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { humanizeTiebaTime } from "./thread-time";
 
 let installed = false;
@@ -14,14 +14,7 @@ export function installThreadFloorTag(): void {
         tagCommentTimes();
     };
 
-    const refresh = (): void => {
-        tag();
-        window.setTimeout(tag, 100);
-    };
-    threadFloorsObserver.addEvent(refresh);
-    threadCommentsObserver.addEvent(refresh);
-    tag();
-    window.setTimeout(tag, 100);
+    addCoalescedObserverEvent(tag, threadFloorsObserver, threadCommentsObserver);
 }
 
 function tagFloorTimes(): void {
