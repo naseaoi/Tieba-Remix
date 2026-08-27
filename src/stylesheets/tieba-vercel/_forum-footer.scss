@@ -198,4 +198,13 @@
     .footer {
         display: none !important;
     }
+
+    // 页脚容器留白对齐卡片间距
+    .frs_content_footer_pagelet {
+        padding-bottom: 0 !important;
+    }
+
+    .wrap2 {
+        padding-bottom: 12px !important;
+    }
 }

@@ -375,7 +375,8 @@
             border-radius: $vercel-radius-xs !important;
             background-color: var(--default-hover) !important;
             color: var(--light-fore) !important;
-            font-family: $vercel-font-mono !important;
+            font-family: var(--code-zh, sans-serif) !important;
+            font-feature-settings: "tnum" 1 !important;
             font-size: $vercel-fs-xs !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -801,6 +802,15 @@
             white-space: nowrap !important;
         }
 
+        // 陈旧时间分级
+        .thread-modern-time[data-age="month"] {
+            color: var(--level-orange-fore) !important;
+        }
+
+        .thread-modern-time[data-age="year"] {
+            color: var(--error-color) !important;
+        }
+
         > li.j_thread_list:not(.thread_top) .threadlist_author,
         > li.j_thread_list:not(.thread_top) .threadlist_rep_num {
             display: none !important;
@@ -883,7 +893,10 @@
             vertical-align: middle !important;
         }
 
+        // 计数走等宽，"收藏"文字标签留在主要字体
         .thread-modern-action > .thread-modern-value {
+            font-family: $vercel-font-mono !important;
+            font-size: $vercel-fs-sm !important;
             font-variant-numeric: tabular-nums !important;
         }
 

@@ -10,6 +10,7 @@ import { saveRecentThreadAgreeState } from "@/modules/thread-agree-count/recent-
 import { shieldList } from "@/modules/shield/shield";
 import { observeForumAgree, unobserveForumAgree } from "./forum-agree-loader";
 import { getForumAuthorName, isTruncatedForumAuthorName } from "./forum-author-full-id";
+import { classifyForumThreadTime } from "./forum-thread-time";
 
 const ROOT_SELECTOR = "#pagelet_frs-list\\/pagelet\\/thread";
 const FLAG = "data-trex-modernized";
@@ -404,6 +405,8 @@ function modernize(item: HTMLElement): void {
     const timeNode = document.createElement("time");
     timeNode.className = "thread-modern-time";
     timeNode.textContent = time || "刚刚";
+    const age = classifyForumThreadTime(time);
+    if (age) timeNode.dataset.age = age;
     authorDetails.append(timeNode);
     authorInfo.append(avatarLink, authorDetails);
     authorRow.append(authorInfo, createMoreButton(tid, parseId(field.first_post_id), [name, text(field.author_nickname)]));

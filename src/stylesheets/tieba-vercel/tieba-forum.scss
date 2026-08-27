@@ -111,12 +111,13 @@ html.style-vercel:not([data-forum-thread-modern]) {
             display: none !important;
         }
 
-        > li.j_thread_list:not(.thread_top) .threadlist_author,
+        // 只放出主题作者，最后回复人保持隐藏
+        > li.j_thread_list:not(.thread_top) .threadlist_lz > .threadlist_author,
         > li.j_thread_list:not(.thread_top) .threadlist_rep_num {
             display: inline-flex !important;
         }
 
-        .threadlist_author {
+        .threadlist_lz > .threadlist_author {
             grid-area: author !important;
             justify-self: end !important;
         }
