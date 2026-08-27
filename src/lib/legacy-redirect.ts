@@ -1,6 +1,7 @@
 // document-start 给 <html> 上 inline !important 样式锁定遮罩与滚动条占位；
 // 旧版/新版判定与百度安全验证拦截页都在此模块统一处理。
 
+import { hideCloakIndicator, showCloakIndicator } from "./cloak-indicator";
 import { GM_getValue } from "./monkey";
 import { installEarlyThreadImageLoading } from "./tieba-components/thread-image-loading";
 
@@ -192,7 +193,9 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
     installThreadLoadingLayoutStyle();
     installEarlyThreadImageLoading();
 
-    if (document.readyState === "loading") {
+    // 生产构建经 System.import 异步求值，到这里 readyState 常已是 interactive，
+    // 只有 complete 才说明原生页面已完整绘制、此时遮罩已无意义
+    if (document.readyState !== "complete") {
         applyCloak();
         window.setTimeout(removeCloak, CLOAK_SAFETY_MS);
     }
@@ -236,9 +239,15 @@ function isForumPageWithoutPageData(): boolean {
 }
 
 function applyCloak(): void {
-    if (!document.documentElement) return;
+    if (cloakRemoved) return;
+    // document-start 下 <html> 可能尚未建立，重试到安全阀置起 cloakRemoved 为止
+    if (!document.documentElement) {
+        window.setTimeout(applyCloak, 0);
+        return;
+    }
     installThreadLoadingLayoutStyle();
     cloakApplied = true;
+    showCloakIndicator();
     document.documentElement.style.setProperty("overflow-y", "scroll", "important");
     document.documentElement.style.setProperty("scrollbar-gutter", "stable", "important");
     document.documentElement.style.setProperty("visibility", "hidden", "important");
@@ -250,6 +259,10 @@ function applyCloak(): void {
 function installThreadLoadingLayoutStyle(): void {
     if (!isThreadPath()) return;
     if (!threadPageExtensionEnabled()) return;
+    if (!document.documentElement) {
+        window.setTimeout(installThreadLoadingLayoutStyle, 0);
+        return;
+    }
     document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_LOADING);
     document.documentElement.dataset.navBarMode = readNavBarHideMode();
     const agreeCountEnabled = threadAgreeCountEnabled();
@@ -285,13 +298,19 @@ function threadAgreeCountEnabled(): boolean {
 }
 
 function removeCloak(): void {
-    if (cloakRemoved || !cloakApplied) return;
+    if (cloakRemoved) return;
     cloakRemoved = true;
+    if (!cloakApplied) return;
+    hideCloakIndicator();
     document.documentElement?.style.removeProperty("visibility");
 }
 
 function waitForBody(cb: () => void): void {
     if (document.body) { cb(); return; }
+    if (!document.documentElement) {
+        window.setTimeout(() => waitForBody(cb), 0);
+        return;
+    }
     const obs = new MutationObserver(() => {
         if (document.body) {
             obs.disconnect();

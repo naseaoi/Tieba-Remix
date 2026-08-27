@@ -108,10 +108,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     }
 
     const firstPaintReady = Promise.all([cssReady, pageExtensionReady, modulesReady]);
-    firstPaintReady.then(
-        () => requestAnimationFrame(() => requestAnimationFrame(onReady)),
-        onReady,
-    );
+    const revealAfterPaint = () => requestAnimationFrame(() => requestAnimationFrame(onReady));
+    firstPaintReady.then(revealAfterPaint, revealAfterPaint);
 
     window.addEventListener("load", function () {
         checkUpdateAndNotify();
