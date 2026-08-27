@@ -120,6 +120,16 @@ body[hide-bottom-editor] .editor_wrap_bright {
     box-shadow: 0 0 20px rgb(0 0 0 / 10%);
 }
 
+// 覆盖吧头卡片、签到、导航栏原生写死的 font-family
+.card_top,
+.card_top *,
+.sign_mod_bright,
+.sign_mod_bright *,
+.nav_list,
+.nav_list * {
+    font-family: var(--code-zh, sans-serif) !important;
+}
+
 .card_top_theme {
     border: none !important;
 }
