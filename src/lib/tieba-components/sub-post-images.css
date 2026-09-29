@@ -1,0 +1,17 @@
+.lzl_content_main .tbr-sub-post-image {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 8px 0;
+    cursor: zoom-in;
+}
+
+.lzl_content_main .tbr-sub-post-image img {
+    display: block;
+    width: auto;
+    max-width: min(100%, 280px);
+    height: auto;
+    max-height: 360px;
+    border-radius: 4px;
+    object-fit: contain;
+}
