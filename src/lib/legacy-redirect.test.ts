@@ -1,6 +1,11 @@
 // @vitest-environment-options {"url": "https://tieba.baidu.com/p/123"}
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// 帖子页还会预取点赞数据，这里只统计切换版本的请求
+function switchCalls(): unknown[][] {
+    return vi.mocked(fetch).mock.calls.filter(([url]) => String(url).includes("/c/s/pc/updateSwitch"));
+}
+
 describe("setupLegacyRedirect", () => {
     beforeEach(() => {
         vi.resetModules();
@@ -24,11 +29,10 @@ describe("setupLegacyRedirect", () => {
 
         setupLegacyRedirect(bootstrap);
 
-        expect(fetch).toHaveBeenCalledTimes(1);
-        expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain("/c/s/pc/updateSwitch");
+        expect(switchCalls()).toHaveLength(1);
 
         document.dispatchEvent(new Event("DOMContentLoaded"));
-        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(switchCalls()).toHaveLength(1);
         expect(bootstrap).not.toHaveBeenCalled();
     });
 
@@ -41,6 +45,6 @@ describe("setupLegacyRedirect", () => {
 
         document.dispatchEvent(new Event("DOMContentLoaded"));
         expect(bootstrap).toHaveBeenCalledTimes(1);
-        expect(fetch).not.toHaveBeenCalled();
+        expect(switchCalls()).toHaveLength(0);
     });
 });

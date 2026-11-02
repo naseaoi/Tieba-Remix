@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { gmRequest } = vi.hoisted(() => ({ gmRequest: vi.fn() }));
 
 vi.mock("@/lib/monkey", () => ({ gmRequest }));
 
-import { fetchAgreeSnapshot, fetchSubPostAgreeSnapshot } from "./api";
+import { md5 } from "@/modules/poll-display/md5";
+import { fetchAgreeSnapshot, fetchNestedFloorPage, loadThreadPageSnapshot } from "./api";
 
 describe("fetchAgreeSnapshot", () => {
     beforeEach(() => {
@@ -47,33 +48,101 @@ describe("fetchAgreeSnapshot", () => {
     });
 });
 
-describe("fetchSubPostAgreeSnapshot", () => {
+function jsonResponse(body: unknown): Response {
+    return new Response(JSON.stringify(body), { status: 200 });
+}
+
+function requestForm(call: unknown[]): URLSearchParams {
+    return new URLSearchParams((call[1] as RequestInit).body as string);
+}
+
+describe("loadThreadPageSnapshot", () => {
+    const fetchMock = vi.fn<typeof fetch>();
+
     beforeEach(() => {
-        gmRequest.mockReset();
+        fetchMock.mockReset();
+        vi.stubGlobal("fetch", fetchMock);
     });
 
-    it("reuses IP locations included in the floor response", async () => {
-        gmRequest.mockResolvedValue({
-            status: 200,
-            response: {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("合并旧版一页对应的两批数据并按作者匹配楼中楼属地", async () => {
+        fetchMock
+            .mockResolvedValueOnce(jsonResponse({
                 error_code: 0,
-                user_list: [
-                    { id: 3, portrait: "portrait-c", ip_address: "广东" },
-                ],
-                subpost_list: [
-                    { id: 11, author: { id: 1, portrait: "portrait-a", ip_address: "江苏" } },
-                    { id: 12, author: { id: 2, portrait: "portrait-b" }, location: { name: "浙江" } },
-                    { id: 13, author: { id: 3, portrait: "portrait-c?t=1" } },
+                thread: { agree: { agree_num: 99, has_agree: 1 } },
+                first_floor: { id: 1, agree: { agree_num: 10 } },
+                post_list: [{
+                    id: 2,
+                    agree: { agree_num: 20, has_agree: 1 },
+                    sub_post_list: { sub_post_list: [{ id: 21, author_id: 7, agree: { agree_num: 3 } }] },
+                }],
+                user_list: [{ id: 7, portrait: "p7?t=1", ip_address: "江苏" }],
+            }))
+            .mockResolvedValueOnce(jsonResponse({
+                error_code: 0,
+                post_list: [{ id: 3, agree: { agree_num: 30 } }],
+                user_list: [],
+            }));
+
+        const snapshot = await loadThreadPageSnapshot({ tid: 100, pn: 2, lzOnly: false });
+
+        expect(fetchMock.mock.calls.map(call => requestForm(call).get("pn"))).toEqual(["3", "4"]);
+        const form = requestForm(fetchMock.mock.calls[0]);
+        const sign = form.get("sign");
+        form.delete("sign");
+        const raw = [...form.keys()].sort().map(key => `${key}=${form.get(key)}`).join("");
+        expect(sign).toBe(md5(`${raw}36770b1f34c9bbf2e7d1a99d2b82fa9e`));
+
+        expect(snapshot.threadAgree).toBe(99);
+        expect(snapshot.threadHasAgree).toBe(true);
+        expect(snapshot.postAgreeById).toEqual(new Map([[1, 10], [2, 20], [3, 30]]));
+        expect(snapshot.postHasAgreeById.get(2)).toBe(true);
+        expect(snapshot.subPosts.subPostAgreeById).toEqual(new Map([[21, 3]]));
+        expect(snapshot.subPosts.subPostIpById).toEqual(new Map([[21, "江苏"]]));
+        expect(snapshot.userIpByPortrait).toEqual(new Map([["p7", "江苏"]]));
+    });
+
+    it("复用进行中的同页请求，失败后允许重新请求", async () => {
+        fetchMock.mockRejectedValue(new Error("network"));
+        vi.useFakeTimers();
+        const first = loadThreadPageSnapshot({ tid: 200, pn: 1, lzOnly: false });
+        expect(loadThreadPageSnapshot({ tid: 200, pn: 1, lzOnly: false })).toBe(first);
+        const settled = expect(first).rejects.toThrow("network");
+        await vi.runAllTimersAsync();
+        await settled;
+        vi.useRealTimers();
+
+        expect(fetchMock).toHaveBeenCalledTimes(4);
+        expect(loadThreadPageSnapshot({ tid: 200, pn: 1, lzOnly: false })).not.toBe(first);
+    });
+});
+
+describe("fetchNestedFloorPage", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("解析楼中楼点赞、属地和分页游标", async () => {
+        vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({
+            error_code: 0,
+            data: {
+                page: { offset: 14, has_more: 1 },
+                post_list: [
+                    { id: 31, agree: { agree_num: 5, has_agree: 1 }, author: { ip_address: "浙江" } },
+                    { id: 32, agree: { agree_num: 0 }, author: {} },
                 ],
             },
-        });
+        })));
 
-        const snapshot = await fetchSubPostAgreeSnapshot({ tid: 1, pid: 2 });
+        const page = await fetchNestedFloorPage({ tid: 1, pid: 2, offset: 4 });
 
-        expect(snapshot.subPostIpById).toEqual(new Map([
-            [11, "江苏"],
-            [12, "浙江"],
-            [13, "广东"],
-        ]));
+        expect(page.nextOffset).toBe(14);
+        expect(page.hasMore).toBe(true);
+        expect(page.subPostAgreeById).toEqual(new Map([[31, 5], [32, 0]]));
+        expect(page.subPostHasAgreeById.get(31)).toBe(true);
+        expect(page.subPostIpById).toEqual(new Map([[31, "浙江"]]));
     });
 });

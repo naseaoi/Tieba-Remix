@@ -1,6 +1,7 @@
 // document-start 给 <html> 上 inline !important 样式锁定遮罩与滚动条占位；
 // 旧版/新版判定与百度安全验证拦截页都在此模块统一处理。
 
+import { prefetchThreadPageSnapshot } from "@/modules/thread-agree-count/api";
 import { hideCloakIndicator, showCloakIndicator } from "./cloak-indicator";
 import { GM_getValue } from "./monkey";
 import { installEarlyThreadImageLoading } from "./tieba-components/thread-image-loading";
@@ -192,6 +193,8 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
 
     installThreadLoadingLayoutStyle();
     installEarlyThreadImageLoading();
+    // 点赞数与属地数据不依赖 DOM，提前请求可与原生页面加载并行
+    if (isThreadPath() && threadAgreeCountEnabled()) prefetchThreadPageSnapshot();
 
     // 生产构建经 System.import 异步求值，到这里 readyState 常已是 interactive，
     // 只有 complete 才说明原生页面已完整绘制、此时遮罩已无意义
