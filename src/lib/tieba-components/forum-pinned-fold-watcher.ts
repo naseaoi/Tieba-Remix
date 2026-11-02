@@ -180,6 +180,8 @@ function syncFolder(folder: HTMLLIElement, forumKey: string): void {
     visible.forEach((li, index) => li.toggleAttribute(OVERFLOW_ATTR, !expanded && index >= PREVIEW_COUNT));
     folder.toggleAttribute(EXPANDED_ATTR, expanded);
     folder.toggleAttribute("data-pinned-empty", visible.length === 0);
+    // 只剩占位项时整个置顶区隐藏；用户手动隐藏全部置顶时保留标题栏以便恢复
+    folder.toggleAttribute("data-pinned-none", real.length === 0);
 
     header.count.textContent = String(visible.length);
     header.restore.hidden = hiddenCount === 0;

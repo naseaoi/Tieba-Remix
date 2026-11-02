@@ -92,7 +92,8 @@
             }
         }
 
-        > li.thread_top_list_folder[data-pinned-empty] > .thread_top_list {
+        > li.thread_top_list_folder[data-pinned-empty] > .thread_top_list,
+        > li.thread_top_list_folder[data-pinned-none] {
             display: none !important;
         }
 

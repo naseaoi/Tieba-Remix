@@ -93,4 +93,21 @@ describe("forum pinned section", () => {
         restore.click();
         expect(native).toHaveBeenCalledOnce();
     });
+
+    it("hides the whole section when only the placeholder remains", async () => {
+        const folder = render([`<li class="j_thread_list thread_top" data-tid="1">
+            <div class="threadlist_title"><a class="j_th_tit" href="/bawu2/errorPage"></a></div>
+        </li>`]);
+        await install();
+
+        expect(folder.hasAttribute("data-pinned-none")).toBe(true);
+    });
+
+    it("keeps the section when the user hid every pinned thread", async () => {
+        const folder = render([pinnedItem(1001, "display: none")]);
+        await install();
+
+        expect(folder.hasAttribute("data-pinned-none")).toBe(false);
+        expect(folder.hasAttribute("data-pinned-empty")).toBe(true);
+    });
 });
