@@ -15,12 +15,14 @@ import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
 import { currentPageType } from "@/lib/api/remixed";
 import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
+import { onDOMReady } from "@/lib/elemental/ready";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
 import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
+import { installLzlReplyComposer } from "@/lib/tieba-components/lzl-reply-composer";
 import { installLzlReplyTarget } from "@/lib/tieba-components/lzl-reply-target";
 import { pager } from "@/lib/tieba-components/pager";
 import { installThreadFavoriteTagPopup } from "@/lib/tieba-components/thread-favorite-tag-popup";
@@ -246,7 +248,7 @@ export default async function () {
         // 楼层举报按钮的文本只在刷新帖子时才会出现，翻页时不会出现
         // 缺少文本时手动插入
         // 由于一些动态加载行为，在 DOMContentLoaded 后判断举报按钮中的文字节点是否存在更为妥当
-        document.addEventListener("DOMContentLoaded", function () {
+        onDOMReady(function () {
             threadFloorsObserver.addEvent(function () {
                 (dom<"a">(".j_jb_ele a", [])).forEach(el => {
                     if (el.lastChild?.nodeType !== Node.TEXT_NODE) {
@@ -254,7 +256,7 @@ export default async function () {
                     }
                 });
             });
-        }, { once: true });
+        });
 
         // AJAX 翻页会替换楼层节点并更新 cur_page，需随楼层变化重新标记主楼
         markMainFloor(threadList);
@@ -422,6 +424,7 @@ export default async function () {
         });
 
         installLzlReplyTarget();
+        installLzlReplyComposer();
         setupCommentEmotionPanel();
 
         threadFloorsObserver.observe();

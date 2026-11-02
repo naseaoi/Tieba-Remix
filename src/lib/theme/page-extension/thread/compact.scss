@@ -35,7 +35,7 @@ body[compact-layout] {
 
     // 楼中楼单个回复
     .core_reply .core_reply_wrapper .core_reply_content .lzl_single_post {
-        margin-bottom: 0;
+        --tbr-lzl-gap: 0px;
     }
 
     .core_reply .core_reply_wrapper .core_reply_content {

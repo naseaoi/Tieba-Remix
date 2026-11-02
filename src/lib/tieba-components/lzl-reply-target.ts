@@ -3,6 +3,7 @@ import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
 import { createLucideIconElement } from "@/lib/lucide";
 import { threadCommentsObserver } from "@/lib/observers";
+import { renderLzlReplyTrees } from "./lzl-reply-tree";
 
 const CHECKED_ATTR = "data-tbr-lzl-reply-target";
 let installed = false;
@@ -10,7 +11,15 @@ let installed = false;
 export function installLzlReplyTarget(): void {
     if (installed || currentPageType() !== "thread") return;
     installed = true;
-    threadCommentsObserver.addEvent(renderLzlReplyTargets);
+    threadCommentsObserver.addEvent(() => {
+        renderLzlReplyTargets();
+        renderLzlReplyTrees();
+    });
+    // 原生「点击查看」只切换 display，不触发 childList；其 handler 返回 false 会阻止冒泡
+    document.addEventListener("click", event => {
+        if (!(event.target instanceof Element) || !event.target.closest(".j_lzl_m")) return;
+        window.setTimeout(() => renderLzlReplyTrees(), 0);
+    }, true);
 }
 
 export function renderLzlReplyTargets(root: ParentNode = document): void {
@@ -38,6 +47,8 @@ function moveReplyTarget(cnt: HTMLElement): void {
     if (!separator.data) separator.remove();
 
     const portrait = target.getAttribute("portrait");
+    const post = cnt.closest<HTMLElement>(".lzl_single_post");
+    if (post && portrait) post.dataset.tbrReplyTo = portrait;
     if (!target.getAttribute("href") && portrait) {
         target.href = `/home/main?id=${encodeURIComponent(portrait)}&ie=utf-8&fr=pb`;
     }

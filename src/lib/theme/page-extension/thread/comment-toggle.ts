@@ -7,6 +7,8 @@ const EDITOR_SELECTOR = ".lzl_editor_container";
 const WRAPPER_SELECTOR = `${LIST_SELECTOR}, ${EDITOR_SELECTOR}`;
 const SUBPOST_SELECTOR = "li.j_lzl_s_p";
 const TOGGLING_CLASS = "tbr-lzl-toggling";
+// lzl-reply-toggle 读取 data-tbr-lzl-toggle="collapse" 判断编辑框正在收起
+const TOGGLE_DATA = "tbrLzlToggle";
 const FALLBACK_DURATION = 280;
 const SAFETY_BUFFER = 120;
 const PATCH_FLAG = "__tbrLzlTogglePatched";
@@ -193,6 +195,11 @@ function collapsesWithList(element: HTMLElement): boolean {
 }
 
 function expand(element: HTMLElement, complete?: () => void): void {
+    // 已展开或正在展开时（如编辑框打开后切换回复对象，原生会再次 show），不重新播放动画
+    if (!isHidden(element) && element.dataset[TOGGLE_DATA] !== "collapse") {
+        complete?.call(element);
+        return;
+    }
     abortRunning(element);
     element.style.display = "";
 
@@ -204,25 +211,44 @@ function expand(element: HTMLElement, complete?: () => void): void {
 
     clearVerticalEdges(element);
     const edges = readVerticalEdges(element);
-    const targetHeight = element.scrollHeight;
+    element.dataset[TOGGLE_DATA] = "expand";
     element.classList.add(TOGGLING_CLASS);
     element.style.boxSizing = "border-box";
+    // readVerticalEdges 已触发样式计算，起点状态需跳过过渡直接生效
+    element.style.transition = "none";
     element.style.height = "0px";
     element.style.opacity = "0";
     collapseVerticalEdges(element);
     void element.offsetHeight;
-    element.style.height = `${targetHeight}px`;
-    element.style.opacity = "1";
-    setVerticalEdges(element, edges);
+    element.style.transition = "";
 
-    whenSettled(element, () => {
-        element.style.height = "auto";
-        element.style.boxSizing = "";
-        element.classList.remove(TOGGLING_CLASS);
-        element.style.opacity = "";
-        clearVerticalEdges(element);
-        complete?.call(element);
+    // 原生在同一任务内随后写入的内容（回复前缀 → 回复对象标签）就位后再测量目标高度
+    const frame = window.requestAnimationFrame(() => {
+        aborts.delete(element);
+        element.style.height = `${measureExpandedHeight(element, edges)}px`;
+        element.style.opacity = "1";
+        setVerticalEdges(element, edges);
+
+        whenSettled(element, () => {
+            element.style.height = "auto";
+            element.style.boxSizing = "";
+            element.classList.remove(TOGGLING_CLASS);
+            element.style.opacity = "";
+            delete element.dataset[TOGGLE_DATA];
+            clearVerticalEdges(element);
+            complete?.call(element);
+        });
     });
+    aborts.set(element, () => window.cancelAnimationFrame(frame));
+}
+
+// padding 可能仍在向 0 过渡，先扣除当前值再加上目标值；读取 scrollHeight 同时让高度 0 生效作为过渡起点
+function measureExpandedHeight(element: HTMLElement, edges: Record<string, string>): number {
+    const style = getComputedStyle(element);
+    const currentPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    return element.scrollHeight - currentPadding
+        + parseFloat(edges["padding-top"]) + parseFloat(edges["padding-bottom"])
+        + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
 }
 
 function collapse(element: HTMLElement, complete?: () => void): void {
@@ -236,9 +262,10 @@ function collapse(element: HTMLElement, complete?: () => void): void {
     }
 
     const edges = readVerticalEdges(element);
+    element.dataset[TOGGLE_DATA] = "collapse";
     element.classList.add(TOGGLING_CLASS);
     element.style.boxSizing = "border-box";
-    element.style.height = `${element.scrollHeight}px`;
+    element.style.height = `${element.offsetHeight}px`;
     element.style.opacity = "1";
     setVerticalEdges(element, edges);
     void element.offsetHeight;
@@ -254,6 +281,7 @@ function collapse(element: HTMLElement, complete?: () => void): void {
 }
 
 function resetInlineStyles(element: HTMLElement): void {
+    delete element.dataset[TOGGLE_DATA];
     element.classList.remove(TOGGLING_CLASS);
     element.style.height = "";
     element.style.opacity = "";

@@ -71,7 +71,8 @@ function isElementVisible(element: HTMLElement): boolean {
     const style = getComputedStyle(element);
     if (style.display === "none") return false;
     if (style.visibility === "hidden") return false;
-    if (style.opacity === "0") return false;
+    // 收起动画期间视为已关闭；展开动画起始帧 opacity 为 0 但已算打开
+    if (element.dataset.tbrLzlToggle === "collapse") return false;
     return Boolean(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
 }
 

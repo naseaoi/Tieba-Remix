@@ -3,6 +3,9 @@
 $lzl-content-font-size: 15px;
 $lzl-tail-font-size: 13px;
 $lzl-content-margin: 12px;
+$lzl-indent: 30px;
+$lzl-avatar-size: 34px;
+$lzl-rail-width: 2px;
 
 // 楼层尾巴 + 楼中楼
 .core_reply {
@@ -52,13 +55,77 @@ $lzl-content-margin: 12px;
 
             // 单个楼中楼内容
             .lzl_single_post {
-                margin-bottom: $lzl-content-margin;
+                --tbr-lzl-gap: #{$lzl-content-margin};
+                --tbr-lzl-avatar-top: 0px;
+                position: relative;
+                padding-left: calc(var(--tbr-lzl-depth, 0) * #{$lzl-indent});
+                margin-bottom: var(--tbr-lzl-gap);
                 animation: kf-slide-in var(--default-duration);
                 transform-origin: bottom;
+
+                &.first_no_border {
+                    --tbr-lzl-avatar-top: 10px;
+                }
 
                 &:not(.first_no_border) {
                     padding-top: 0;
                     margin-top: 0;
+                }
+
+                // 可视父节点就是被回复者时，连线已表达回复关系
+                &[data-tbr-lzl-linked] .tbr-lzl-reply-target {
+                    display: none;
+                }
+
+                // 回复连线：列 n 的竖线对齐第 n 级头像中心
+                .tbr-lzl-rails {
+                    position: absolute;
+                    top: 0;
+                    bottom: calc(-1 * var(--tbr-lzl-gap));
+                    left: 0;
+                    pointer-events: none;
+                }
+
+                .tbr-lzl-rail {
+                    position: absolute;
+                    left: calc(var(--tbr-lzl-col) * #{$lzl-indent} + #{$lzl-avatar-size * 0.5 - $lzl-rail-width * 0.5});
+                    box-sizing: border-box;
+                    border: 0 solid color-mix(in srgb, var(--minimal-fore) 45%, transparent);
+                    transition: border-color var(--fast-duration) ease;
+                }
+
+                .tbr-lzl-rail-pass,
+                .tbr-lzl-rail-tee {
+                    top: 0;
+                    bottom: 0;
+                    border-left-width: $lzl-rail-width;
+                }
+
+                .tbr-lzl-rail-stem {
+                    top: calc(var(--tbr-lzl-avatar-top) + #{$lzl-avatar-size + 4px});
+                    bottom: 0;
+                    border-left-width: $lzl-rail-width;
+                }
+
+                .tbr-lzl-rail-elbow,
+                .tbr-lzl-rail-tee::after {
+                    top: 0;
+                    width: $lzl-indent - $lzl-avatar-size * 0.5 + $lzl-rail-width * 0.5 - 4px;
+                    height: calc(var(--tbr-lzl-avatar-top) + #{$lzl-avatar-size * 0.5 + $lzl-rail-width * 0.5});
+                    border-bottom-width: $lzl-rail-width;
+                    border-left-width: $lzl-rail-width;
+                    border-bottom-left-radius: 10px;
+                }
+
+                .tbr-lzl-rail-tee::after {
+                    position: absolute;
+                    left: -$lzl-rail-width;
+                    box-sizing: border-box;
+                    border-color: inherit;
+                    border-style: solid;
+                    border-top-width: 0;
+                    border-right-width: 0;
+                    content: "";
                 }
 
                 // 当前具体内容
@@ -193,10 +260,27 @@ $lzl-content-margin: 12px;
                 font-size: $lzl-tail-font-size;
             }
 
-            // 楼中楼编辑器
+            // 楼中楼编辑器：回复对象标签 + 输入区 + 操作栏合成一张卡片
             .lzl_editor_container {
                 box-sizing: border-box;
                 width: 100% !important;
+                padding: 8px 8px 6px 12px;
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                margin-top: 4px;
+                background-color: var(--default-background);
+
+                // 展开 / 收起期间让位给 .tbr-lzl-toggling 的高度过渡
+                &:not(.tbr-lzl-toggling) {
+                    transition:
+                        border-color var(--fast-duration) ease,
+                        box-shadow var(--fast-duration) ease;
+                }
+
+                &:focus-within {
+                    border-color: var(--tieba-theme-color);
+                    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tieba-theme-color) 16%, transparent);
+                }
 
                 .edui-container,
                 .edui-editor,
@@ -207,62 +291,195 @@ $lzl-content-margin: 12px;
                     box-sizing: border-box;
                     width: 100% !important;
                 }
-            }
 
-            .edui-container {
-                width: auto !important;
-                max-height: 64px;
+                .edui-container {
+                    max-height: none;
+                }
 
                 .edui-editor-body {
-                    overflow: hidden;
-                    height: max-content !important;
-                    max-height: 72px;
-                    padding: 6px;
-                    border-radius: 6px;
+                    overflow: visible !important;
+                    height: auto !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    background: none !important;
+                    box-shadow: none !important;
+                }
 
-                    .edui-body-container {
-                        min-height: 16px !important;
-                        max-height: 64px;
-                        padding-left: 0;
-                        border-radius: 6px;
-                        font-size: 14px;
-                        overflow-y: auto;
+                .edui-body-container {
+                    min-height: 24px !important;
+                    max-height: 132px !important;
+                    padding: 2px 4px 2px 0 !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    background: none !important;
+                    font-size: 14px;
+                    line-height: 22px;
+                    outline: none;
+                    overflow-y: auto !important;
+                    scrollbar-width: thin;
+
+                    &:empty::before {
+                        color: var(--minimal-fore);
+                        content: "写下你的回复…";
+                        pointer-events: none;
+                    }
+                }
+
+                &:has(.edui-body-container:empty) .lzl_panel_submit {
+                    color: var(--light-fore);
+
+                    &:hover {
+                        background-color: var(--very-light-background);
+                    }
+                }
+            }
+
+            // 回复对象标签，替代可被删改的「回复 xx :」文本前缀
+            .tbr-lzl-reply-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                box-sizing: border-box;
+                max-width: 100%;
+                padding: 1px 2px 1px 8px;
+                border-radius: 999px;
+                margin-bottom: 4px;
+                background-color: color-mix(in srgb, var(--tieba-theme-color) 10%, transparent);
+                color: var(--tieba-theme-fore);
+                font-size: 12px;
+                line-height: 20px;
+
+                html.dark-theme & {
+                    background-color: color-mix(in srgb, var(--tieba-theme-color) 18%, transparent);
+                    color: var(--tieba-theme-color);
+                }
+
+                .tbr-lzl-reply-chip-icon {
+                    flex-shrink: 0;
+                    width: 13px;
+                    height: 13px;
+                }
+
+                .tbr-lzl-reply-chip-label {
+                    flex-shrink: 0;
+                    opacity: 0.8;
+                }
+
+                .tbr-lzl-reply-chip-name {
+                    overflow: hidden;
+                    font-weight: var(--font-weight-bold);
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .tbr-lzl-reply-chip-close {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    width: 18px;
+                    height: 18px;
+                    padding: 0;
+                    border: none;
+                    border-radius: 50%;
+                    background: none;
+                    color: inherit;
+                    cursor: pointer;
+                    opacity: 0.7;
+                    transition:
+                        background-color var(--fast-duration) ease,
+                        opacity var(--fast-duration) ease;
+
+                    &:hover,
+                    &:focus-visible {
+                        background-color: color-mix(in srgb, var(--tieba-theme-color) 16%, transparent);
+                        opacity: 1;
+                    }
+
+                    svg {
+                        width: 12px;
+                        height: 12px;
                     }
                 }
             }
 
             // 楼中楼编辑异常文本
             .lzl_panel_error {
+                margin: 2px 0;
                 color: var(--error-color);
+                font-size: 12px;
             }
 
             .lzl_panel_wrapper {
-                width: 100%;
+                display: block;
+                margin-top: 2px;
+
+                > tbody {
+                    display: block;
+                }
+
+                > tbody > tr {
+                    display: flex;
+                    align-items: center;
+                }
+
+                > tbody > tr > td {
+                    width: auto !important;
+                    padding: 0;
+                }
+
+                > tbody > tr > td:first-child {
+                    flex: 1;
+                    min-width: 0;
+                    color: var(--light-fore);
+                    font-size: 12px;
+
+                    p {
+                        margin: 0;
+                        color: inherit !important;
+                    }
+                }
 
                 .lzl_panel_btn {
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
-                    gap: 6px;
+                    gap: 4px;
                 }
 
                 .lzl_panel_submit {
-                    @extend %anchor;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     order: 1;
-                    width: 28px;
-                    height: 28px;
+                    width: 30px;
+                    height: 30px;
                     padding: 0;
-                    border-radius: 6px;
-                    background: var(--very-light-background);
+                    border-radius: 50%;
+                    // 简写同时清除原生雪碧图背景
+                    background: none;
+                    color: var(--tieba-theme-color);
+                    cursor: pointer;
                     font-size: 0;
+                    transition:
+                        background-color var(--fast-duration) ease,
+                        color var(--fast-duration) ease,
+                        transform var(--fast-duration) ease;
+
+                    &:hover {
+                        background-color: color-mix(in srgb, var(--tieba-theme-color) 12%, transparent);
+                    }
+
+                    &:active {
+                        transform: scale(0.94);
+                    }
 
                     &::before {
                         @include lucide-mask-icon($lucide-send);
-                        width: 16px;
-                        height: 16px;
+                        width: 17px;
+                        height: 17px;
+                        margin: 1px 1px 0 0;
                     }
                 }
 
@@ -273,21 +490,30 @@ $lzl-content-margin: 12px;
                     position: static !important;
 
                     .lzl_insertsmiley_holder {
-                        @extend %anchor;
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        width: 28px;
-                        height: 28px;
+                        width: 30px;
+                        height: 30px;
                         padding: 0;
-                        border-radius: 6px;
-                        background: var(--very-light-background);
+                        border-radius: 50%;
+                        background: none;
+                        color: var(--light-fore);
+                        cursor: pointer;
                         font-size: 0;
+                        transition:
+                            background-color var(--fast-duration) ease,
+                            color var(--fast-duration) ease;
+
+                        &:hover {
+                            background-color: var(--very-light-background);
+                            color: var(--default-fore);
+                        }
 
                         &::after {
                             @include lucide-mask-icon($lucide-smile);
-                            width: 16px;
-                            height: 16px;
+                            width: 18px;
+                            height: 18px;
                         }
                     }
                 }
