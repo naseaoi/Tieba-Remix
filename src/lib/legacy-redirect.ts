@@ -200,8 +200,12 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         window.setTimeout(removeCloak, CLOAK_SAFETY_MS);
     }
 
-    // 早期：仅处理「百度安全验证」拦截页
-    waitForBody(() => { handleSecurityPage(); });
+    // 早期：处理「百度安全验证」拦截页；<body> 插入时属性已由解析器写好，
+    // 新版标记 cos-tieba 一出现就切换，不必等新版 SPA 资源加载到 DOMContentLoaded
+    waitForBody(() => {
+        if (handleSecurityPage()) return;
+        if (isNewVersionBody()) finalize();
+    });
 
     // 最终版本判定：等 DOMContentLoaded，确保 body class、PageData 都已就位
     if (document.readyState === "loading") {
@@ -214,8 +218,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         if (bootstrapped || redirectTriggered) return;
         if (handleSecurityPage()) return;
 
-        const isNewVersion = document.body?.classList.contains("cos-tieba") === true
-            || isForumPageWithoutPageData();
+        const isNewVersion = isNewVersionBody() || isForumPageWithoutPageData();
 
         if (isNewVersion) {
             if (hasRecentLegacySwitchAttempt()) {
@@ -232,6 +235,10 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         bootstrapped = true;
         bootstrap({ onReady: removeCloak });
     }
+}
+
+function isNewVersionBody(): boolean {
+    return document.body?.classList.contains("cos-tieba") === true;
 }
 
 function isForumPageWithoutPageData(): boolean {
