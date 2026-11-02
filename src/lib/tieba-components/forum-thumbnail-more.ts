@@ -23,7 +23,8 @@ export function syncThumbnailMore(root: ParentNode = document): void {
         items.forEach(item => {
             if (item !== last) item.removeAttribute(MORE_ATTR);
         });
-        if (more > 0) last.setAttribute(MORE_ATTR, `+${more}`);
-        else last.removeAttribute(MORE_ATTR);
+        const label = `+${more}`;
+        if (more <= 0) last.removeAttribute(MORE_ATTR);
+        else if (last.getAttribute(MORE_ATTR) !== label) last.setAttribute(MORE_ATTR, label);
     });
 }

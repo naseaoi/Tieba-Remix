@@ -12,6 +12,8 @@ const REPLY_CLASS = "tbr-floor-reply";
 const MENU_CLASS = "tbr-floor-menu";
 const MENU_BOUND = "data-tbr-floor-menu";
 const NATIVE_REPORT_FLAG = "data-tbr-native-report";
+// 在 JS 中识别而非用 CSS :has()：:has() 后接后代选择器会让任意内联 style 变更触发全页样式重算
+const CLIENT_DOWNLOAD_LINK = "a[href*=\"c.tieba.baidu.com/c/s/download/pc\"]";
 
 let installed = false;
 let popupEl: HTMLElement | undefined;
@@ -212,7 +214,7 @@ function normalizeLocationText(): void {
 function renderPlatformIcons(): void {
     document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info, .core_reply_tail .p_tail_wap, .lzl_content_reply .tbr-lzl-source").forEach(elem => {
         const text = (elem.title || elem.textContent || "").trim();
-        if (!/移动端|Android|iPhone|iPad/i.test(text)) return;
+        if (!/移动端|Android|iPhone|iPad/i.test(text) && !elem.querySelector(CLIENT_DOWNLOAD_LINK)) return;
 
         elem.setAttribute("data-tbr-platform", "mobile");
         elem.title = text;

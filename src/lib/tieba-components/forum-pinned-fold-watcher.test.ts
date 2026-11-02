@@ -94,6 +94,25 @@ describe("forum pinned section", () => {
         expect(native).toHaveBeenCalledOnce();
     });
 
+    it("leaves the header untouched when a resync changes nothing", async () => {
+        const folder = render([1001, 1002, 1003, 1004].map(tid => pinnedItem(tid)));
+        await install();
+
+        const header = folder.querySelector(".trex-pinned-header")!;
+        const records: MutationRecord[] = [];
+        const observer = new MutationObserver(list => records.push(...list));
+        observer.observe(header, { childList: true, subtree: true, attributes: true, characterData: true });
+
+        // 触发置顶区内部的 style 监听，使其重新同步
+        folder.querySelector<HTMLElement>("li[data-tid='1001']")!.style.color = "red";
+        await Promise.resolve();
+        await Promise.resolve();
+        records.push(...observer.takeRecords());
+        observer.disconnect();
+
+        expect(records).toEqual([]);
+    });
+
     it("hides the whole section when only the placeholder remains", async () => {
         const folder = render([`<li class="j_thread_list thread_top" data-tid="1">
             <div class="threadlist_title"><a class="j_th_tit" href="/bawu2/errorPage"></a></div>

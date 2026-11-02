@@ -43,6 +43,9 @@ describe("legacy thread floor metadata", () => {
                     <div class="lzl_content_reply">
                         <span class="tbr-lzl-source" data-tbr-platform="mobile" title="移动端">移动端</span>
                     </div>
+                    <div class="post-tail-wrap">
+                        <span class="tail-info"><a href="https://c.tieba.baidu.com/c/s/download/pc?src=webtbGF">来自客户端</a></span>
+                    </div>
                 </div>
             </div>
         `;
@@ -68,6 +71,7 @@ describe("legacy thread floor metadata", () => {
         expect(platform?.title).toBe("iPhone客户端");
         expect(platform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
         expect(subPostPlatform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
+        expect(document.querySelector<HTMLElement>(".post-tail-wrap .tail-info")?.dataset.tbrPlatform).toBe("mobile");
         expect(menu?.parentElement).toBe(tail);
         expect(menu?.getAttribute("aria-label")).toBe("更多操作");
         expect(reply?.querySelector("svg.lucide-message-square")).not.toBeNull();

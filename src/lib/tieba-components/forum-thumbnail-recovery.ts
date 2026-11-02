@@ -49,7 +49,7 @@ function normalizeImageUrl(value: Maybe<string | null>): Maybe<string> {
 }
 
 function markRestored(img: HTMLImageElement): void {
-    img.dataset.trexThumbnailRestored = "1";
+    if (img.dataset.trexThumbnailRestored !== "1") img.dataset.trexThumbnailRestored = "1";
 }
 
 function setBackgroundFallback(img: HTMLImageElement, url: string): void {

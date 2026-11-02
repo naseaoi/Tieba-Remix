@@ -183,12 +183,23 @@ function syncFolder(folder: HTMLLIElement, forumKey: string): void {
     // 只剩占位项时整个置顶区隐藏；用户手动隐藏全部置顶时保留标题栏以便恢复
     folder.toggleAttribute("data-pinned-none", real.length === 0);
 
-    header.count.textContent = String(visible.length);
-    header.restore.hidden = hiddenCount === 0;
-    header.restore.textContent = `恢复已隐藏的 ${hiddenCount} 条`;
-    header.toggle.hidden = visible.length <= PREVIEW_COUNT;
-    header.toggle.setAttribute("aria-expanded", String(expanded));
-    header.toggleLabel.textContent = expanded ? "收起" : `展开全部 ${visible.length} 条`;
+    // 置顶区位于 forumThreadsObserver 的监听子树内，无变化时写入会触发 observer 形成逐帧回环
+    setText(header.count, String(visible.length));
+    setHidden(header.restore, hiddenCount === 0);
+    setText(header.restore, `恢复已隐藏的 ${hiddenCount} 条`);
+    setHidden(header.toggle, visible.length <= PREVIEW_COUNT);
+    if (header.toggle.getAttribute("aria-expanded") !== String(expanded)) {
+        header.toggle.setAttribute("aria-expanded", String(expanded));
+    }
+    setText(header.toggleLabel, expanded ? "收起" : `展开全部 ${visible.length} 条`);
+}
+
+function setText(el: HTMLElement, text: string): void {
+    if (el.textContent !== text) el.textContent = text;
+}
+
+function setHidden(el: HTMLElement, hidden: boolean): void {
+    if (el.hidden !== hidden) el.hidden = hidden;
 }
 
 const watchedFolders = new WeakSet<HTMLLIElement>();
