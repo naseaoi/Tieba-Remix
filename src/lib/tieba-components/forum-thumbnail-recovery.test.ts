@@ -60,6 +60,28 @@ afterEach(() => {
 });
 
 describe("forum thumbnail recovery", () => {
+    it.each(["interactive", "complete"] as const)("schedules all post-load recovery passes when installed at %s", async state => {
+        vi.spyOn(document, "readyState", "get").mockReturnValue(state);
+        await install();
+        const scan = vi.spyOn(listElement(), "querySelectorAll");
+        if (state === "interactive") {
+            await vi.advanceTimersByTimeAsync(300);
+            expect(scan).not.toHaveBeenCalled();
+            window.dispatchEvent(new Event("load"));
+        }
+
+        await vi.advanceTimersByTimeAsync(200);
+        expect(scan).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(scan).toHaveBeenCalledTimes(2);
+        await vi.advanceTimersByTimeAsync(1300);
+        expect(scan).toHaveBeenCalledTimes(3);
+
+        window.dispatchEvent(new Event("load"));
+        await vi.advanceTimersByTimeAsync(2500);
+        expect(scan).toHaveBeenCalledTimes(3);
+    });
+
     it("initially restores only list thumbnails and preserves the fallback behavior", async () => {
         const pageScan = vi.spyOn(document, "querySelectorAll");
         await install();

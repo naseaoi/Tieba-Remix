@@ -1,3 +1,4 @@
+import { onDOMReady } from "@/lib/elemental/ready";
 import { addCoalescedObserverEvent, threadFloorsObserver } from "@/lib/observers";
 
 const IMAGE_SELECTOR = ".d_post_content .BDE_Image";
@@ -25,7 +26,7 @@ export function installEarlyThreadImageLoading(): void {
         });
     });
     earlyObserver.observe(document.documentElement, { childList: true, subtree: true });
-    document.addEventListener("DOMContentLoaded", stopEarlyObserver, { once: true });
+    onDOMReady(stopEarlyObserver);
 }
 
 export function installThreadImageLoading(): void {

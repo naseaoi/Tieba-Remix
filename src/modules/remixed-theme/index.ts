@@ -1,4 +1,5 @@
 import { dom, fadeInElems, fadeInLoad } from "@/lib/elemental";
+import { onDOMReady, onWindowLoaded } from "@/lib/elemental/ready";
 import { injectCSSRule, overwriteCSS } from "@/lib/elemental/styles";
 import { threadFloorsObserver } from "@/lib/observers";
 import { setCustomBackground } from "@/lib/theme";
@@ -36,7 +37,7 @@ function main(): void {
 
     setCustomBackground();
 
-    document.addEventListener("DOMContentLoaded", () => {
+    onDOMReady(() => {
         // 修改元素
         dom(".post-tail-wrap .icon-jubao", []).forEach(elem => {
             elem.removeAttribute("src");
@@ -54,7 +55,7 @@ function main(): void {
         });
     });
 
-    window.addEventListener("load", () => {
+    onWindowLoaded(() => {
         // 功能按钮 svg 延迟
         fadeInLoad(".tbui_aside_float_bar .svg-container");
 

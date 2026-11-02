@@ -1,5 +1,6 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { dom } from "@/lib/elemental";
+import { onWindowLoaded } from "@/lib/elemental/ready";
 import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 
 let installed = false;
@@ -174,9 +175,9 @@ export function installForumThumbnailRecovery(): void {
         document.addEventListener("DOMContentLoaded", flushRestore, { once: true });
     }
 
-    window.addEventListener("load", () => {
+    onWindowLoaded(() => {
         window.setTimeout(flushRestore, 200);
         window.setTimeout(flushRestore, 1200);
         window.setTimeout(flushRestore, 2500);
-    }, { once: true });
+    });
 }

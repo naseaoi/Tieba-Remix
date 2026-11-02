@@ -56,3 +56,47 @@ describe("thread image loading", () => {
         expect(dynamic.getAttribute("src")).toBeNull();
     });
 });
+
+describe("early thread image observer readiness", () => {
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+
+    beforeEach(() => {
+        vi.resetModules();
+        vi.clearAllMocks();
+        window.history.replaceState({}, "", "/p/1");
+        document.body.innerHTML = "";
+        vi.stubGlobal("MutationObserver", class {
+            observe = observe;
+            disconnect = disconnect;
+        });
+    });
+
+    afterEach(() => {
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    it("disconnects once DOMContentLoaded fires when installed early", async () => {
+        vi.spyOn(document, "readyState", "get").mockReturnValue("loading");
+        const { installEarlyThreadImageLoading } = await import("./thread-image-loading");
+        installEarlyThreadImageLoading();
+        expect(observe).toHaveBeenCalledOnce();
+        expect(disconnect).not.toHaveBeenCalled();
+
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        expect(disconnect).toHaveBeenCalledOnce();
+    });
+
+    it.each(["interactive", "complete"] as const)("releases the early observer immediately when %s", async state => {
+        vi.spyOn(document, "readyState", "get").mockReturnValue(state);
+        const { installEarlyThreadImageLoading } = await import("./thread-image-loading");
+        installEarlyThreadImageLoading();
+        expect(disconnect).toHaveBeenCalledOnce();
+
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        expect(disconnect).toHaveBeenCalledOnce();
+    });
+});

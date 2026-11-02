@@ -4,6 +4,7 @@ import "user-view/build/index.css";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { openSettingsDialog } from "./lib/common/open-settings";
 import { parseUserModules } from "./lib/common/packer";
+import { onWindowLoaded } from "./lib/elemental/ready";
 import type { BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
@@ -125,7 +126,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     const revealAfterPaint = () => requestAnimationFrame(() => requestAnimationFrame(onReady));
     firstPaintReady.then(revealAfterPaint, revealAfterPaint);
 
-    window.addEventListener("load", function () {
+    onWindowLoaded(() => {
         checkUpdateAndNotify();
     });
 
