@@ -46,4 +46,29 @@ describe("楼中楼图片", () => {
         content?.querySelectorAll("a")[1]?.click();
         expect(showImages).toHaveBeenCalledWith(expect.objectContaining({ defaultIndex: 1 }));
     });
+
+    it("翻页后的 JSON data-field 缺少 pid 时从楼层读取", async () => {
+        document.body.innerHTML = `
+            <div id="j_p_postlist">
+                <div class="l_post" data-field='{"content":{"post_id":153973371594}}'>
+                    <li class="lzl_single_post" data-field='{"spid":153973374537,"portrait":"tb.1.x"}'>
+                        <span class="lzl_content_main">第二页[图片]</span>
+                    </li>
+                </div>
+            </div>
+        `;
+        fetchImagePage.mockResolvedValue({
+            imagesById: new Map([[153973374537, [
+                { original: "https://tiebapic.baidu.com/page2.jpg", thumbnail: "https://tiebapic.baidu.com/page2-small.jpg" },
+            ]]]),
+            hasMore: false,
+        });
+        const { renderSubPostImages } = await import("./sub-post-images");
+        renderSubPostImages();
+
+        await vi.waitFor(() => {
+            expect(document.querySelectorAll(".tbr-sub-post-image")).toHaveLength(1);
+        });
+        expect(fetchImagePage).toHaveBeenCalledWith(11055215765, 153973371594, 1);
+    });
 });

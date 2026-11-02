@@ -28,7 +28,9 @@ export function renderSubPostImages(): void {
         const content = dom<"span">(".lzl_content_main", post);
         if (!content?.textContent?.includes(IMAGE_MARKER)) return;
         const field = post.getAttribute("data-field") ?? "";
-        const parentId = readFieldId(field, "pid");
+        // AJAX 翻页得到的楼中楼 data-field 是 JSON 且不含 pid，需从所在楼层读取
+        const parentId = readFieldId(field, "pid")
+            ?? readFieldId(post.closest(".l_post")?.getAttribute("data-field") ?? "", "post_id");
         const id = readFieldId(field, "spid");
         if (!parentId || !id) return;
         const replies = groups.get(parentId) ?? [];

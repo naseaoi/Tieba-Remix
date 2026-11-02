@@ -288,6 +288,10 @@ interface PcSubPostResponse {
         id?: number;
         content?: PcSubPostContent[];
     }[];
+    page?: {
+        current_page?: number;
+        total_page?: number;
+    };
 }
 
 export interface SubPostImage {
@@ -319,7 +323,9 @@ export async function fetchSubPostImagePage(threadId: number, parentId: number, 
         }) ?? [];
         imagesById.set(post.id, images);
     });
-    return { imagesById, hasMore: posts.length >= 100 };
+    // 接口忽略 rn，每页固定 30 条
+    const { current_page: current = page, total_page: total = 1 } = body.page ?? {};
+    return { imagesById, hasMore: current < total };
 }
 
 function normalizeSubPostImageUrl(value: unknown): string | undefined {
