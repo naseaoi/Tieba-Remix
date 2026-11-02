@@ -42,7 +42,7 @@
 
 ## 分支与发布
 
-- 日常开发基于 `preview` 分支；较大改动从 `preview` 切出功能分支，通过 PR 合并回 `preview`。
+- 日常开发直接在 `preview` 上提交；实验性、可能放弃或需要多次会话完成的改动，从 `preview` 切出功能分支，合并后删除该分支（本地与远端）。
 - `main` 只接收来自 `preview` 的发布 PR，不直接提交。
 - 提交信息使用 Conventional Commits（`feat:`、`fix:`、`refactor:` 等）。
 - 发布流程和 tag 规则以 `docs/push-git.md` 为准。
