@@ -21,6 +21,7 @@ import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
+import { installLzlReplyTarget } from "@/lib/tieba-components/lzl-reply-target";
 import { pager } from "@/lib/tieba-components/pager";
 import { installThreadFavoriteTagPopup } from "@/lib/tieba-components/thread-favorite-tag-popup";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
@@ -420,6 +421,7 @@ export default async function () {
             });
         });
 
+        installLzlReplyTarget();
         setupCommentEmotionPanel();
 
         threadFloorsObserver.observe();

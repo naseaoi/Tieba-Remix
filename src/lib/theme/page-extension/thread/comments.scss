@@ -71,6 +71,29 @@ $lzl-content-margin: 12px;
                         font-weight: var(--font-weight-bold);
                     }
 
+                    // 回复对象：作者名 ↳ 被回复者
+                    .tbr-lzl-reply-target {
+                        margin-left: 6px;
+                        color: var(--light-fore);
+                        white-space: nowrap;
+
+                        .tbr-lzl-reply-target-icon {
+                            width: 14px;
+                            height: 14px;
+                            margin-right: 2px;
+                            vertical-align: -2px;
+                        }
+
+                        .at {
+                            color: var(--minimal-fore);
+                            font-weight: normal;
+
+                            &:hover {
+                                color: var(--tieba-theme-fore);
+                            }
+                        }
+                    }
+
                     .lzl_content_main {
                         font-size: $lzl-content-font-size;
 
