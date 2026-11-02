@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyForumThreadTime } from "./forum-thread-time";
+import { classifyForumThreadTime, formatForumThreadTime } from "./forum-thread-time";
 
 const now = new Date(2026, 7, 27);
 
@@ -35,5 +35,17 @@ describe("classifyForumThreadTime", () => {
         expect(classifyForumThreadTime("刚刚", now)).toBeUndefined();
         expect(classifyForumThreadTime("13-40", now)).toBeUndefined();
         expect(classifyForumThreadTime("2025-13", now)).toBeUndefined();
+    });
+});
+
+describe("formatForumThreadTime", () => {
+    const seconds = (date: Date) => date.getTime() / 1000;
+
+    it("mirrors the native list timestamp formats", () => {
+        const today = new Date(2026, 7, 27, 18, 0);
+        expect(formatForumThreadTime(seconds(new Date(2026, 7, 27, 9, 5)), today)).toBe("09:05");
+        expect(formatForumThreadTime(seconds(new Date(2026, 7, 26, 23, 59)), today)).toBe("8-26");
+        expect(formatForumThreadTime(seconds(new Date(2025, 2, 3)), today)).toBe("2025-03");
+        expect(formatForumThreadTime(0, today)).toBe("");
     });
 });

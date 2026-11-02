@@ -41,3 +41,15 @@ function parseForumThreadTime(raw: string, now: Date): Date | undefined {
     if (target.getTime() > today.getTime()) target.setFullYear(now.getFullYear() - 1);
     return target;
 }
+
+/** 按列表原生规则把秒级时间戳格式化为 HH:MM / M-D / YYYY-MM */
+export function formatForumThreadTime(seconds: number, now = new Date()): string {
+    if (!seconds) return "";
+    const date = new Date(seconds * 1000);
+    const pad = (value: number) => String(value).padStart(2, "0");
+    if (date.getFullYear() !== now.getFullYear()) return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+    if (date.getMonth() !== now.getMonth() || date.getDate() !== now.getDate()) {
+        return `${date.getMonth() + 1}-${date.getDate()}`;
+    }
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

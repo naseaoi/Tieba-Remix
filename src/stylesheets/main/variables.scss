@@ -4,4 +4,9 @@
     --default-duration: 0.4s;
     --slow-duration: 0.6s;
     --xslow-duration: 0.8s;
+    --avatar-radius: 50%;
+}
+
+:root[data-avatar-shape="rounded"] {
+    --avatar-radius: 20%;
 }

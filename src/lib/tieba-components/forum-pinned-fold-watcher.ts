@@ -1,9 +1,14 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { asyncdom } from "@/lib/elemental";
+import { ChevronDown, Pin } from "@lucide/vue";
+import { createLucideIconElement } from "@/lib/lucide";
+import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { forumPinnedCollapsed, forumPinnedVisitedAt } from "@/lib/user-values";
 
 let installed = false;
 const EXPIRE_MS = 30 * 24 * 60 * 60 * 1000;
+const PREVIEW_COUNT = 3;
+const EXPANDED_ATTR = "data-pinned-expanded";
+const OVERFLOW_ATTR = "data-pinned-overflow";
 
 function purgeInvalidKeys(): void {
     const invalid = ["undefined", "null", ""];
@@ -78,29 +83,21 @@ function syncForumPinnedStorage(currentKey: string): void {
     }
 }
 
-function isPinnedCollapsed(key: string): boolean {
-    return forumPinnedCollapsed.get()[key] === true;
+// 存储语义：缺省为预览（只显示前几条），显式 false 表示展开全部
+function isPinnedExpanded(key: string): boolean {
+    return forumPinnedCollapsed.get()[key] === false;
 }
 
-function setPinnedCollapsed(key: string, collapsed: boolean): void {
+function setPinnedExpanded(key: string, expanded: boolean): void {
     const current = forumPinnedCollapsed.get();
-    if (current[key] === true && collapsed) return;
-    if (!(key in current) && !collapsed) return;
+    if (isPinnedExpanded(key) === expanded) return;
     const next = { ...current };
-    if (collapsed) {
-        next[key] = true;
+    if (expanded) {
+        next[key] = false;
     } else {
         delete next[key];
     }
     forumPinnedCollapsed.set(next);
-}
-
-function syncForumPinnedAttr(folded: boolean): void {
-    if (folded) {
-        document.documentElement.setAttribute("data-forum-pinned", "folded");
-    } else {
-        document.documentElement.removeAttribute("data-forum-pinned");
-    }
 }
 
 function isPinnedItemHidden(li: HTMLLIElement): boolean {
@@ -116,13 +113,83 @@ function isPinnedPlaceholder(li: HTMLLIElement): boolean {
     return title.textContent?.trim() === "" && title.href.includes("/bawu2/errorPage");
 }
 
-function normalizePinnedItems(folderLi: HTMLLIElement): void {
-    folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
-        if (!isPinnedPlaceholder(li)) return;
+interface PinnedHeader {
+    root: HTMLElement;
+    count: HTMLElement;
+    restore: HTMLButtonElement;
+    toggle: HTMLButtonElement;
+    toggleLabel: HTMLElement;
+}
+
+function createHeader(folder: HTMLLIElement, forumKey: string): PinnedHeader {
+    const root = document.createElement("div");
+    root.className = "trex-pinned-header";
+
+    const title = document.createElement("span");
+    title.className = "trex-pinned-title";
+    const count = document.createElement("span");
+    count.className = "trex-pinned-count";
+    title.append(createLucideIconElement(Pin, { size: 14 }), "置顶", count);
+
+    const actions = document.createElement("span");
+    actions.className = "trex-pinned-actions";
+
+    const restore = document.createElement("button");
+    restore.type = "button";
+    restore.className = "trex-pinned-action";
+    // 原生按钮负责清除 top_list cookie 并恢复被单独隐藏的置顶帖
+    restore.addEventListener("click", () => folder.querySelector<HTMLElement>("#thread_top_folder")?.click());
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "trex-pinned-action trex-pinned-toggle";
+    const toggleLabel = document.createElement("span");
+    toggle.append(toggleLabel, createLucideIconElement(ChevronDown, { size: 14 }));
+    toggle.addEventListener("click", () => {
+        setPinnedExpanded(forumKey, !isPinnedExpanded(forumKey));
+        syncFolder(folder, forumKey);
+    });
+
+    actions.append(restore, toggle);
+    root.append(title, actions);
+    folder.prepend(root);
+    return { root, count, restore, toggle, toggleLabel };
+}
+
+const headers = new WeakMap<HTMLLIElement, PinnedHeader>();
+
+function syncFolder(folder: HTMLLIElement, forumKey: string): void {
+    const items = [...folder.querySelectorAll<HTMLLIElement>(".thread_top_list > li")];
+    items.forEach(li => {
+        if (!isPinnedPlaceholder(li) || li.hidden) return;
         li.hidden = true;
         li.style.display = "none";
     });
+
+    const real = items.filter(li => !isPinnedPlaceholder(li));
+    const visible = real.filter(li => !isPinnedItemHidden(li));
+    const hiddenCount = real.length - visible.length;
+    const expanded = isPinnedExpanded(forumKey);
+
+    let header = headers.get(folder);
+    if (!header) {
+        header = createHeader(folder, forumKey);
+        headers.set(folder, header);
+    }
+
+    visible.forEach((li, index) => li.toggleAttribute(OVERFLOW_ATTR, !expanded && index >= PREVIEW_COUNT));
+    folder.toggleAttribute(EXPANDED_ATTR, expanded);
+    folder.toggleAttribute("data-pinned-empty", visible.length === 0);
+
+    header.count.textContent = String(visible.length);
+    header.restore.hidden = hiddenCount === 0;
+    header.restore.textContent = `恢复已隐藏的 ${hiddenCount} 条`;
+    header.toggle.hidden = visible.length <= PREVIEW_COUNT;
+    header.toggle.setAttribute("aria-expanded", String(expanded));
+    header.toggleLabel.textContent = expanded ? "收起" : `展开全部 ${visible.length} 条`;
 }
+
+const watchedFolders = new WeakSet<HTMLLIElement>();
 
 export function installForumPinnedFoldWatcher(): void {
     if (installed) return;
@@ -133,92 +200,18 @@ export function installForumPinnedFoldWatcher(): void {
     if (!forumKey) return;
     purgeInvalidKeys();
     syncForumPinnedStorage(forumKey);
-    syncForumPinnedAttr(isPinnedCollapsed(forumKey));
 
-    void (async () => {
+    // AJAX 翻页会重建整个列表，每次都重新查找置顶区
+    const sync = (): void => {
         if (!document.documentElement.classList.contains("style-vercel")) return;
-
-        const threadlist = await asyncdom<"ul">(".threadlist_bright");
-        if (!threadlist) return;
-
-        const allInnerHidden = (folderLi: HTMLLIElement): boolean => {
-            normalizePinnedItems(folderLi);
-            const inner = folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li");
-            if (inner.length === 0) return true;
-            return Array.from(inner).every(isPinnedItemHidden);
-        };
-
-        const ensureFolded = (folderLi: HTMLLIElement) => {
-            folderLi.classList.add("pinned-folded");
-            syncForumPinnedAttr(true);
-        };
-
-        const ensureExpanded = (folderLi: HTMLLIElement) => {
-            folderLi.classList.remove("pinned-folded");
-            syncForumPinnedAttr(false);
-            folderLi.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
-                if (li.style.display === "none") li.style.display = "";
-                if (li.style.overflow === "hidden") {
-                    li.style.overflow = "";
-                    li.style.height = "";
-                    li.style.marginTop = "";
-                    li.style.marginBottom = "";
-                    li.style.paddingTop = "";
-                    li.style.paddingBottom = "";
-                }
-            });
-            const anchor = folderLi.querySelector<HTMLElement>("#thread_top_folder");
-            if (anchor && anchor.style.display !== "none") anchor.style.display = "none";
-        };
-
-        let lastFoldedState = isPinnedCollapsed(forumKey);
-
-        const applyInitial = (folderLi: HTMLLIElement) => {
-            normalizePinnedItems(folderLi);
-            if (lastFoldedState) {
-                ensureFolded(folderLi);
-            } else if (allInnerHidden(folderLi)) {
-                lastFoldedState = true;
-                setPinnedCollapsed(forumKey, true);
-                ensureFolded(folderLi);
-            }
-        };
-
-        const initial = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
-        if (initial) applyInitial(initial);
-
-        threadlist.addEventListener("click", (e) => {
-            const target = e.target as Element | null;
-            if (!target?.closest) return;
-            if (!target.closest("#thread_top_folder")) return;
-            const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
-            if (!folderLi) return;
-            lastFoldedState = false;
-            setPinnedCollapsed(forumKey, false);
-            ensureExpanded(folderLi);
-        }, true);
-
-        const obs = new MutationObserver(() => {
-            const folderLi = threadlist.querySelector<HTMLLIElement>(".thread_top_list_folder");
-            if (!folderLi) return;
-            normalizePinnedItems(folderLi);
-            if (lastFoldedState) {
-                if (!folderLi.classList.contains("pinned-folded")) {
-                    folderLi.classList.add("pinned-folded");
-                }
-                return;
-            }
-            if (allInnerHidden(folderLi)) {
-                lastFoldedState = true;
-                setPinnedCollapsed(forumKey, true);
-                ensureFolded(folderLi);
-            }
-        });
-        obs.observe(threadlist, {
-            attributes: true,
-            attributeFilter: ["style"],
-            childList: true,
-            subtree: true,
-        });
-    })();
+        const folder = document.querySelector<HTMLLIElement>(".threadlist_bright > li.thread_top_list_folder");
+        if (!folder) return;
+        syncFolder(folder, forumKey);
+        if (watchedFolders.has(folder)) return;
+        watchedFolders.add(folder);
+        // 原生单帖隐藏和恢复通过 jQuery slide 改写内联样式
+        new MutationObserver(() => syncFolder(folder, forumKey))
+            .observe(folder, { attributes: true, attributeFilter: ["style"], subtree: true });
+    };
+    addCoalescedObserverEvent(sync, forumThreadsObserver);
 }

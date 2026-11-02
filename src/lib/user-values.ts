@@ -261,6 +261,11 @@ export const indexTopicCollapsed = new UserKey<boolean>("indexTopicCollapsed", f
 export const forumPinnedCollapsed = new UserKey<Record<string, boolean>>("forumPinnedCollapsed", {});
 /** 吧首页置顶帖最后访问时间 */
 export const forumPinnedVisitedAt = new UserKey<Record<string, number>>("forumPinnedVisitedAt", {});
+export type ForumThreadSort = "reply" | "create";
+/** 吧首页看贴排序方式 */
+export const forumThreadSort = new UserKey<ForumThreadSort>(
+    "forumThreadSort", "reply", undefined, undefined, value => value === "reply" || value === "create",
+);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",
@@ -289,6 +294,8 @@ export const pageExtension = new UserKey("pageExtension", {
 });
 /** 帖子列表新版布局 */
 export const forumThreadModernLayout = new UserKey<boolean>("forumThreadModernLayout", true);
+/** 吧首页标签导航栏滚出视口后吸顶 */
+export const forumStickyNav = new UserKey<boolean>("forumStickyNav", true);
 /** 是否显示吧首页底部贴吧原生发帖模块 */
 export const showBottomEditor = new UserKey<boolean>("showBottomEditor", false);
 /** 自定义主要字体组合 */
@@ -311,6 +318,13 @@ export const navBarHideMode = new UserKey<NavBarHideMode>("navBarHideMode", "fol
         document.documentElement.dataset.navBarMode = value;
     },
 }, undefined, value => ["fold", "alwaysFold", "never"].includes(String(value)));
+export type AvatarShape = "circle" | "rounded";
+/** 用户头像形状 */
+export const avatarShape = new UserKey<AvatarShape>("avatarShape", "circle", {
+    setter(value) {
+        document.documentElement.dataset.avatarShape = value;
+    },
+}, undefined, value => value === "circle" || value === "rounded");
 /** 自定义样式 */
 export const customStyle = new UserKey<string>("customStyle", "", {
     setter() { applyCustomStyle(); },

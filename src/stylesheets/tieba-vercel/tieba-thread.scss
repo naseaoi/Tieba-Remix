@@ -122,7 +122,7 @@ html.style-vercel {
 
     .p_author_face,
     .icon_relative {
-        border-radius: $vercel-radius-sm !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .p_author_face {
@@ -130,7 +130,7 @@ html.style-vercel {
     }
 
     .icon_relative img {
-        border-radius: $vercel-radius-sm !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .d_name .p_author_name {
@@ -385,11 +385,11 @@ html.style-vercel {
 
     .lzl_p_p {
         border: none !important;
-        border-radius: $vercel-radius-xs !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .lzl_p_p img {
-        border-radius: $vercel-radius-xs !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     // 纯文本链接
@@ -460,29 +460,113 @@ html.style-vercel {
         @include vercel-button($vercel-radius-sm);
     }
 
+    // 标题区作为帖子卡片的头部：吧名面包屑在上，标题在下，与下方 .pb_content 拼成一张卡
     #title-wrapper {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 28px 48px 8px;
+        margin: 0;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        border-radius: $vercel-radius-md $vercel-radius-md 0 0;
+        background-color: var(--default-background);
+
         .thread-title {
+            align-self: stretch;
+            padding-left: 0 !important;
+            border-left: none !important;
             color: var(--default-fore) !important;
-            font-size: 24px !important;
-            font-weight: var(--font-weight-normal) !important;
-            line-height: 1.45 !important;
-            border-left-color: var(--tieba-theme-color) !important;
+            font-size: 26px !important;
+            font-weight: var(--font-weight-bold) !important;
+            line-height: 1.4 !important;
+            overflow-wrap: anywhere;
         }
 
         .forum-wrapper-button {
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            background-color: var(--default-background) !important;
+            gap: 4px !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: none !important;
             backdrop-filter: none !important;
-            gap: 3px !important;
+
+            .forum-icon-link {
+                gap: 6px;
+                color: var(--light-fore);
+                font-size: $vercel-fs-sm;
+                line-height: 20px;
+                transition: color $vercel-trans-fast $vercel-ease;
+
+                &:hover {
+                    color: var(--default-fore);
+                    opacity: 1;
+                }
+            }
 
             .forum-icon {
-                border-radius: 8px !important;
+                width: 20px;
+                height: 20px;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-xs !important;
+            }
+
+            .forum-name {
+                display: inline;
+            }
+
+            .button-container,
+            .forum-button {
+                height: 20px;
             }
 
             .forum-button {
-                color: var(--default-fore) !important;
+                width: 20px;
+                border-radius: $vercel-radius-xs !important;
+                color: var(--light-fore) !important;
+
+                &:hover {
+                    background-color: var(--default-hover) !important;
+                    color: var(--default-fore) !important;
+                }
             }
+        }
+    }
+
+    // 有主楼的第一页：回帖数由分节标题承担，翻页交给底部分页条，标题与主楼之间不放分页
+    .pb_content:has([data-main-floor]) [data-thread-pager="top"] {
+        display: none !important;
+    }
+
+    #j_p_postlist > .l_post[data-main-floor] {
+        .d_post_content {
+            line-height: 1.8;
+        }
+
+        .vercel-floor-tag {
+            display: none !important;
+        }
+
+        .poll-display {
+            margin: 16px 0;
+            border: none;
+            border-radius: $vercel-radius-md;
+            background-color: var(--very-light-background);
+        }
+
+        // 覆盖 clearfix 的隐形 ::after，输出主楼与回复区之间的分节标题
+        &[data-reply-label]::after {
+            content: attr(data-reply-label);
+            display: block;
+            visibility: visible;
+            height: auto;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--default-fore);
+            font-size: $vercel-fs-md;
+            font-weight: var(--font-weight-bold);
+            line-height: $vercel-lh-normal;
         }
     }
 
@@ -492,7 +576,8 @@ html.style-vercel {
 
     #container .content .pb_content {
         border: 1px solid var(--border-color) !important;
-        border-radius: $vercel-radius-md $vercel-radius-md 0 0 !important;
+        border-top: none !important;
+        border-radius: 0 !important;
         background-color: var(--default-background) !important;
         box-shadow: none !important;
     }
@@ -500,10 +585,10 @@ html.style-vercel {
     .content-wrapper {
         .author-container {
             .floor-avatar {
-                border-radius: $vercel-radius-sm !important;
+                border-radius: var(--avatar-radius) !important;
 
                 img {
-                    border-radius: $vercel-radius-sm !important;
+                    border-radius: var(--avatar-radius) !important;
                 }
             }
 
@@ -546,10 +631,10 @@ html.style-vercel {
 
         .floor-wrapper {
             .floor-avatar {
-                border-radius: $vercel-radius-sm !important;
+                border-radius: var(--avatar-radius) !important;
 
                 img {
-                    border-radius: $vercel-radius-sm !important;
+                    border-radius: var(--avatar-radius) !important;
                 }
             }
 

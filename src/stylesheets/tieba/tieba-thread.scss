@@ -323,19 +323,19 @@ span.tP {
 .p_author_face {
     overflow: hidden;
     border: none !important;
-    border-radius: 4px !important;
+    border-radius: var(--avatar-radius) !important;
     margin-bottom: 4px !important;
     background: none !important;
 }
 
 .icon_relative {
     overflow: hidden;
-    border-radius: 6px;
+    border-radius: var(--avatar-radius);
 }
 
 .icon_relative img {
     /* 层主头像 */
-    border-radius: 6px;
+    border-radius: var(--avatar-radius);
 }
 
 .d_name .p_author_name {
@@ -460,6 +460,11 @@ span.tP {
 .balv_mod .media-left {
     /* 我的头像 */
     border: none;
+}
+
+.balv_mod .media_left img,
+.balv_mod .media-left img {
+    border-radius: var(--avatar-radius);
 }
 
 .right_section .tieba_notice {
@@ -589,12 +594,12 @@ span.tP {
 .lzl_p_p {
     overflow: hidden;
     border: none;
-    border-radius: 4px !important;
+    border-radius: var(--avatar-radius) !important;
 }
 
 .lzl_p_p img {
     /* 回复头像 */
-    border-radius: 4px;
+    border-radius: var(--avatar-radius);
 }
 
 .core_reply_wrapper {
@@ -871,7 +876,7 @@ span.tP {
     width: 92px;
     height: 92px;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--avatar-radius);
     @include blur-effect(24px);
 }
 

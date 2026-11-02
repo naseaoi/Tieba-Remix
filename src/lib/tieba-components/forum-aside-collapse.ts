@@ -52,7 +52,7 @@ function initCollapseAll(root: ParentNode): void {
         if (module.dataset.collapseInit === "true") return;
 
         module.dataset.collapseInit = "true";
-        setCollapsed(module, true);
+        setCollapsed(module, false);
 
         const header = module.querySelector<HTMLElement>(HEADER_SELECTOR);
         if (!header) return;

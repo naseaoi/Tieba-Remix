@@ -2,66 +2,6 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
-// 折叠态展开按钮
-@mixin pinned-folded-state {
-    display: block !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -24px !important;
-    right: auto !important;
-    width: 28px !important;
-    min-height: 0 !important;
-    height: 28px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    background: none !important;
-    box-shadow: none !important;
-    transform: none !important;
-    z-index: 100 !important;
-    grid-template-areas: none !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    overflow: visible !important;
-
-    > ul,
-    > ul.thread_top_list,
-    > .thread_top_list {
-        display: none !important;
-    }
-
-    #thread_top_folder {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        margin: 0;
-        padding: 0;
-        border: 1px solid var(--border-color);
-        border-radius: $vercel-radius-sm;
-        background: var(--default-background);
-        cursor: pointer;
-        transition: border-color $vercel-trans-normal $vercel-ease;
-
-        &::before {
-            @include lucide-mask-icon($lucide-chevron-down);
-            width: 14px;
-            height: 14px;
-            background-color: var(--light-fore);
-            transition: background-color $vercel-trans-normal $vercel-ease;
-        }
-
-        &:hover {
-            border-color: var(--minimal-fore);
-
-            &::before {
-                background-color: var(--default-fore);
-            }
-        }
-    }
-}
-
 /// 帖子列表
 @mixin forum-thread-list {
     .threadlist_bright {
@@ -131,27 +71,36 @@
             display: none !important;
         }
 
-        // 置顶帖
+        // 置顶区：整体一张卡片，标题栏 + 紧凑行
         > li.thread_top_list_folder,
         > li.thread_top_list_folder:hover {
+            display: block !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-md !important;
             background-color: var(--default-background) !important;
-            border-left: 2px solid var(--default-fore) !important;
-        }
-
-        // 置顶帖展开态
-        > li.thread_top_list_folder:not(.pinned-folded) {
-            display: contents !important;
+            box-shadow: $vercel-shadow-sm !important;
 
             > ul.thread_top_list,
             > .thread_top_list {
-                display: contents !important;
+                display: block !important;
                 list-style: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
         }
 
-        // 内层置顶帖卡片
+        > li.thread_top_list_folder[data-pinned-empty] > .thread_top_list {
+            display: none !important;
+        }
+
+        .thread_top_list > li.j_thread_list.thread_top[data-pinned-overflow] {
+            display: none !important;
+        }
+
+        // 置顶行
         .thread_top_list > li.j_thread_list.thread_top {
             display: grid !important;
             position: relative !important;
@@ -163,33 +112,22 @@
             align-items: center !important;
             column-gap: 12px !important;
             row-gap: 0 !important;
-            min-height: 56px !important;
-            padding: 12px 16px !important;
+            min-height: 44px !important;
+            padding: 8px 32px 8px 16px !important;
             margin: 0 !important;
-            border: 1px solid var(--border-color) !important;
-            border-left: 2px solid var(--default-fore) !important;
-            border-radius: $vercel-radius-md !important;
-            background-color: var(--default-background) !important;
-            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            border: none !important;
+            border-top: 1px solid var(--border-color) !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
             float: none !important;
             width: auto !important;
             height: auto !important;
             overflow: visible !important;
-            transition: border-color $vercel-trans-normal $vercel-ease,
-                        box-shadow $vercel-trans-normal $vercel-ease !important;
+            transition: background-color $vercel-trans-normal $vercel-ease !important;
 
             &:hover {
-                border-color: var(--minimal-fore) !important;
-                background-color: var(--default-background) !important;
-                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
-            }
-
-            html.dark-theme & {
-                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
-
-                &:hover {
-                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
-                }
+                background-color: var(--default-hover) !important;
             }
         }
 
@@ -238,16 +176,13 @@
             vertical-align: middle !important;
         }
 
+        // 置顶区标题栏已标明身份，行内不再重复「顶」
         .thread_top_list .threadlist_title .icon-top {
-            background-color: var(--error-color) !important;
+            display: none !important;
         }
 
         .thread_top_list .threadlist_title .icon-good {
             background-color: var(--warning-color) !important;
-        }
-
-        .thread_top_list .threadlist_title .icon-top::before {
-            content: "顶";
         }
 
         .thread_top_list .threadlist_title .icon-good::before {
@@ -319,9 +254,72 @@
             display: none !important;
         }
 
-        // 置顶折叠态
-        > li.thread_top_list_folder.pinned-folded {
-            @include pinned-folded-state;
+        .trex-pinned-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 40px;
+            padding: 0 12px 0 16px;
+            color: var(--light-fore);
+            font-size: $vercel-fs-sm;
+        }
+
+        .trex-pinned-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--default-fore);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .trex-pinned-count {
+            padding: 0 6px;
+            border-radius: $vercel-radius-xs;
+            background-color: var(--default-hover);
+            color: var(--light-fore);
+            font-family: $vercel-font-mono;
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 18px;
+        }
+
+        .trex-pinned-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trex-pinned-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            height: 26px;
+            padding: 0 8px !important;
+            border: none !important;
+            border-radius: $vercel-radius-sm !important;
+            background: none !important;
+            color: var(--light-fore) !important;
+            font: inherit;
+            font-size: $vercel-fs-xs;
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--default-hover) !important;
+                color: var(--default-fore) !important;
+            }
+
+            &[hidden] {
+                display: none;
+            }
+
+            svg {
+                transition: transform $vercel-trans-normal $vercel-ease;
+            }
+
+            &[aria-expanded="true"] svg {
+                transform: rotate(180deg);
+            }
         }
 
         // 中间 wrapper
@@ -789,7 +787,7 @@
             height: 32px !important;
             flex: 0 0 32px !important;
             border: 1px solid var(--border-color) !important;
-            border-radius: 50% !important;
+            border-radius: var(--avatar-radius) !important;
             background: var(--default-hover) !important;
             object-fit: cover !important;
         }
@@ -832,8 +830,9 @@
         .thread-modern-footer {
             grid-area: footer !important;
             display: grid !important;
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 200px)) !important;
             align-items: center !important;
+            justify-content: center !important;
             gap: 0 !important;
             width: 100% !important;
             min-height: 24px !important;

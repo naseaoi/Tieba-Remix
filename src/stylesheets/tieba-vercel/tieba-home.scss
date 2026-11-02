@@ -157,7 +157,7 @@ html.style-vercel {
 
     .media_left img,
     .media-left img {
-        border-radius: $vercel-radius-sm;
+        border-radius: var(--avatar-radius);
     }
 
     #nameValue,

@@ -5,7 +5,7 @@ vi.mock("@/lib/api/remixed", () => ({
 }));
 
 describe("forum aside collapse", () => {
-    it("collapses native regions and novel ranking by default", async () => {
+    it("expands native regions and novel ranking by default", async () => {
         document.documentElement.classList.add("style-vercel");
         document.body.innerHTML = `
             <aside class="aside">
@@ -30,17 +30,17 @@ describe("forum aside collapse", () => {
         const novelRanking = document.querySelector<HTMLElement>("#novel-ranking");
         const novelTitle = novelRanking?.querySelector<HTMLElement>(".novel-ranking-frs-title");
 
-        expect(nativeRegion?.dataset.collapsed).toBe("true");
-        expect(novelRanking?.dataset.collapsed).toBe("true");
-        expect(novelTitle?.getAttribute("aria-expanded")).toBe("false");
+        expect(nativeRegion?.hasAttribute("data-collapsed")).toBe(false);
+        expect(novelRanking?.hasAttribute("data-collapsed")).toBe(false);
+        expect(novelTitle?.getAttribute("aria-expanded")).toBe("true");
         expect(novelTitle?.tabIndex).toBe(0);
 
         novelTitle?.click();
-        expect(novelRanking?.hasAttribute("data-collapsed")).toBe(false);
-        expect(novelTitle?.getAttribute("aria-expanded")).toBe("true");
+        expect(novelRanking?.dataset.collapsed).toBe("true");
+        expect(novelTitle?.getAttribute("aria-expanded")).toBe("false");
 
         novelTitle?.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
-        expect(novelRanking?.hasAttribute("data-collapsed")).toBe(true);
-        expect(novelTitle?.getAttribute("aria-expanded")).toBe("false");
+        expect(novelRanking?.hasAttribute("data-collapsed")).toBe(false);
+        expect(novelTitle?.getAttribute("aria-expanded")).toBe("true");
     });
 });

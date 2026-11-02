@@ -1,5 +1,5 @@
 import { asyncdom } from "@/lib/elemental";
-import { appendJSX } from "@/lib/render/jsx-extension";
+import { insertJSX } from "@/lib/render/jsx-extension";
 import _ from "@/lib/utils/_";
 import { h } from "vue";
 import { fetchPollInfo, type PollInfo } from "./api";
@@ -54,11 +54,13 @@ async function main(): Promise<void> {
     contentMain.setAttribute(FLAG_ATTR, "");
 
     const threadTitle = _.unescape(PageData.thread.title || "").replace(/^回复：/, "");
-    appendJSX(h(PollPanel, {
+    // 放在楼层尾部操作栏之前，使投票属于正文内容
+    const tail = contentMain.querySelector(":scope > .core_reply") ?? undefined;
+    insertJSX(h(PollPanel, {
         poll,
         threadId: tid,
         forumId: fid,
         threadTitle,
         isLoggedIn: Boolean(PageData.user?.is_login),
-    }), contentMain);
+    }), contentMain, tail);
 }

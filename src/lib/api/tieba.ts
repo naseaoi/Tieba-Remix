@@ -8,6 +8,10 @@ import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values"
 
 const PC_SIGN_SALT = "36770b1f34c9bbf2e7d1a99d2b82fa9e";
 
+function signPcForm(form: Record<string, string>): string {
+    return md5(Object.keys(form).sort().map(key => `${key}=${form[key]}`).join("") + PC_SIGN_SALT);
+}
+
 /** 贴吧 API */
 export const tiebaAPI = {
     /** 首页推荐 */
@@ -129,8 +133,28 @@ export const tiebaAPI = {
             subapp_type: "pc",
             _client_type: "20",
         };
-        const sign = md5(Object.keys(form).sort().map(key => `${key}=${form[key as keyof typeof form]}`).join("") + PC_SIGN_SALT);
+        const sign = signPcForm(form);
         return fetch("/c/f/pb/floor", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: new URLSearchParams({ ...form, sign }),
+        });
+    },
+
+    forumThreads: (kw: string, pn: number, sortType: 0 | 1) => {
+        const form = {
+            kw,
+            pn: String(pn),
+            rn: "30",
+            sort_type: String(sortType),
+            subapp_type: "pc",
+            _client_type: "20",
+        };
+        const sign = signPcForm(form);
+        return fetch("/c/f/frs/page", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",

@@ -303,6 +303,11 @@ body[hide-bottom-editor] .editor_wrap_bright {
     border: none !important;
 }
 
+.my_tieba .media_left img,
+.my_tieba .media-left img {
+    border-radius: var(--avatar-radius);
+}
+
 .my_current_forum .badge {
     border: 1px solid var(--border-color) !important;
     background-color: var(--light-background) !important;

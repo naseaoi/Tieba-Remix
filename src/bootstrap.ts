@@ -8,6 +8,9 @@ import type { BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
+import { installForumAsideLayout } from "./lib/tieba-components/forum-aside-layout";
+import { installForumStickyNav } from "./lib/tieba-components/forum-sticky-nav";
+import { installForumThreadSort } from "./lib/tieba-components/forum-thread-sort";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
 import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
@@ -25,7 +28,7 @@ import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
 import { installSubPostImages } from "./lib/tieba-components/sub-post-images";
-import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
+import { REMIXED, avatarShape, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 import { userModuleManifests } from "./modules/manifest";
 
@@ -45,6 +48,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     document.documentElement.dataset.navBarMode = navBarHideMode.get();
 
+    document.documentElement.dataset.avatarShape = avatarShape.get();
+
     document.documentElement.dataset.pageType = currentPageType();
 
     installThreadImageLoading();
@@ -52,6 +57,11 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     installForumImageTakeover();
 
     installForumAsideCollapse();
+
+    installForumAsideLayout();
+
+    installForumStickyNav();
+    installForumThreadSort();
 
     installForumPinnedFoldWatcher();
 

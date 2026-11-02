@@ -561,7 +561,7 @@ $hover-trigger-height: 28px;
                 .nav-avatar {
                     width: 28px;
                     height: 28px;
-                    border-radius: 6px;
+                    border-radius: var(--avatar-radius);
                     object-fit: cover;
                 }
 

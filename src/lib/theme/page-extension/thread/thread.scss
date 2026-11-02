@@ -354,6 +354,11 @@ body.special_conf_skin {
             border-radius: 8px;
         }
 
+        // 仅 vercel 风格以面包屑形式展示吧名
+        .forum-name {
+            display: none;
+        }
+
         .button-container {
             display: flex;
             align-items: center;
@@ -440,7 +445,7 @@ body.special_conf_skin {
             width: max-content !important;
             height: max-content !important;
             padding: 0 !important;
-            border-radius: 4px !important;
+            border-radius: var(--avatar-radius) !important;
             grid-area: avatar;
 
             img {
@@ -448,7 +453,7 @@ body.special_conf_skin {
                 width: $avatar-size;
                 height: $avatar-size;
                 aspect-ratio: 1 / 1;
-                border-radius: 4px;
+                border-radius: var(--avatar-radius);
                 object-fit: cover;
             }
         }
@@ -518,14 +523,14 @@ body.special_conf_skin {
             width: max-content !important;
             height: max-content !important;
             padding: 0 !important;
-            border-radius: 4px !important;
+            border-radius: var(--avatar-radius) !important;
             grid-area: avatar;
 
             img {
                 width: $avatar-size;
                 height: $avatar-size;
                 aspect-ratio: 1 / 1;
-                border-radius: 4px;
+                border-radius: var(--avatar-radius);
                 object-fit: cover;
             }
         }

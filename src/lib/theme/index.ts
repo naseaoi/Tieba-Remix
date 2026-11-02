@@ -253,7 +253,7 @@ export async function loadDynamicCSS() {
     applyDynamicFonts();
     applyThemeColor();
 
-    window.addEventListener("load", function () {
+    const applyScrollbarWidth = () => {
         GM_addStyle(
             parseMultiCSS({
                 ":root": {
@@ -261,7 +261,13 @@ export async function loadDynamicCSS() {
                 },
             })
         );
-    }, { once: true });
+    };
+    // bootstrap 可能晚于 load 事件执行，此时监听器永远不会触发
+    if (document.readyState === "complete") {
+        applyScrollbarWidth();
+    } else {
+        window.addEventListener("load", applyScrollbarWidth, { once: true });
+    }
 
     applyCustomStyle();
 }

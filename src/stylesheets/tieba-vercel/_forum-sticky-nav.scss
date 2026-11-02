@@ -1,0 +1,60 @@
+@use "./tokens" as *;
+
+// 脚本顶栏：top 8px + 高 48px，可见时吸顶导航让出位置
+$top-bar-offset: 64px;
+
+/// 导航栏滚出视口后固定在顶部，并补充吧名入口
+@mixin forum-sticky-nav {
+    .trex-forum-nav-placeholder[hidden],
+    .trex-forum-nav-brand {
+        display: none !important;
+    }
+
+    &[data-forum-nav-stuck] {
+        .nav_wrap {
+            position: fixed !important;
+            // 与顶栏呼出热区同级且 DOM 在其后：盖住重叠部分，导航栏上不误触；两侧空白仍可呼出；顶栏本体 1200 仍在上层
+            z-index: 1199;
+            top: 8px;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            background-color: var(--surface-glass) !important;
+            box-shadow: $vercel-shadow-md;
+            backdrop-filter: blur(12px);
+            transition: top var(--default-duration) $vercel-ease;
+        }
+
+        .trex-forum-nav-brand {
+            display: inline-flex !important;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 8px;
+            max-width: 200px;
+            margin-right: 16px;
+            color: var(--default-fore) !important;
+            font-size: $vercel-fs-md;
+            font-weight: var(--font-weight-bold);
+            text-decoration: none !important;
+
+            img {
+                width: 24px;
+                height: 24px;
+                flex-shrink: 0;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-xs;
+                object-fit: cover;
+            }
+
+            span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    }
+
+    // 只在顶栏因回滚常驻时让位；悬停呼出的顶栏临时覆盖在上方，避免导航栏在鼠标下移动
+    &[data-forum-nav-stuck]:has(#nav-bar:not(.fold)) .nav_wrap {
+        top: $top-bar-offset;
+    }
+}

@@ -1,9 +1,12 @@
+@use "./forum-aside-layout" as aside-layout;
 @use "./forum-header" as header;
 @use "./forum-title-card" as title;
 @use "./forum-nav-sidebar" as nav;
 @use "./forum-thread-list" as threads;
 @use "./forum-live-thread" as live;
 @use "./forum-footer" as footer;
+@use "./forum-sticky-nav" as sticky-nav;
+@use "./forum-thread-sort" as thread-sort;
 @use "./tokens" as *;
 
 html.style-vercel {
@@ -13,6 +16,9 @@ html.style-vercel {
     @include live.forum-live-thread;
     @include threads.forum-thread-list;
     @include footer.forum-footer;
+    @include aside-layout.forum-aside-layout;
+    @include sticky-nav.forum-sticky-nav;
+    @include thread-sort.forum-thread-sort;
 
     .thread-modern-tag-popup {
         position: absolute !important;
@@ -85,10 +91,6 @@ html.style-vercel {
         padding: 2px 6px !important;
         font-size: $vercel-fs-xs !important;
     }
-}
-
-html.style-vercel[data-forum-pinned="folded"] .threadlist_bright > li.thread_top_list_folder {
-    @include threads.pinned-folded-state;
 }
 
 html.style-vercel:not([data-forum-thread-modern]) {

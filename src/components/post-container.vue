@@ -226,7 +226,7 @@ img::before {
             .author-portrait {
                 width: 32px;
                 height: 32px;
-                border-radius: 24px;
+                border-radius: var(--avatar-radius);
                 object-fit: cover;
             }
 

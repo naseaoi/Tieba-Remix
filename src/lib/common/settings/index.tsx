@@ -3,7 +3,7 @@ import { Boxes, Eye, FlaskConical } from "@lucide/vue";
 import type { NavBarHideMode } from "@/components/nav-bar.vue";
 import type { MainSettingKey, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { UpdateConfig, compactLayout, customStyle, disabledModules, fontWeights, forumThreadModernLayout, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
+import { AvatarShape, UpdateConfig, avatarShape, compactLayout, customStyle, disabledModules, fontWeights, forumStickyNav, forumThreadModernLayout, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "@/lib/utils/_";
 import { UserSelectItem, messageBox } from "user-view";
@@ -146,6 +146,22 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
+                    "forum-sticky-nav": {
+                        title: "吧内导航栏吸顶",
+                        description: "向下滚动吧首页时，「看贴」「图片」等标签导航栏固定在页面顶部，并显示吧名入口",
+                        widgets: [{
+                            type: "toggle",
+                            content: "关闭后导航栏随页面正常滚动",
+                            init() {
+                                return forumStickyNav.get();
+                            },
+                            event() {
+                                forumStickyNav.set(!forumStickyNav.get());
+                                return forumStickyNav.get();
+                            },
+                        }],
+                    },
+
                     "nav-bar-mode": {
                         title: "导航栏隐藏模式",
                         description:
@@ -162,6 +178,24 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                             event(hideMode: NavBarHideMode) {
                                 navBarHideMode.set(hideMode);
+                            },
+                        }],
+                    },
+
+                    "avatar-shape": {
+                        title: "头像形状",
+                        description: "统一设置帖子列表、楼层、楼中楼等位置的用户头像形状",
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "circle", text: "圆形" },
+                                { value: "rounded", text: "圆角矩形" },
+                            ] as UserSelectItem<AvatarShape>[],
+                            init() {
+                                return avatarShape.get();
+                            },
+                            event(shape: AvatarShape) {
+                                avatarShape.set(shape);
                             },
                         }],
                     },
