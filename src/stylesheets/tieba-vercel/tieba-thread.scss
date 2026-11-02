@@ -705,21 +705,8 @@ html.style-vercel {
             background-color: var(--minimal-fore);
         }
 
-        #thread-editor-actions {
-            .editor-action {
-                @include vercel-button($vercel-radius-sm);
-                padding: 6px;
-
-                svg {
-                    width: 18px;
-                    height: 18px;
-                    fill: currentColor;
-                }
-            }
-
-            #thread-editor-submit svg {
-                fill: var(--tieba-theme-color);
-            }
+        .editor-title {
+            font-size: $vercel-fs-md;
         }
 
         .title-editor {
@@ -729,69 +716,52 @@ html.style-vercel {
             font-size: $vercel-fs-xl;
         }
 
+        .editor-composer {
+            border-radius: $vercel-radius-md;
+            transition:
+                border-color $vercel-trans-normal $vercel-ease,
+                box-shadow $vercel-trans-normal $vercel-ease;
+
+            &:hover:not(:focus-within) {
+                border-color: var(--minimal-fore);
+            }
+        }
+
+        .editor-action,
+        .editor-submit,
+        #thread-editor-slot .edui-toolbar .edui-btn-toolbar .edui-btn {
+            border-radius: $vercel-radius-sm;
+        }
+
+        .editor-submit {
+            font-size: $vercel-fs-sm;
+        }
+
         #thread-editor-slot {
             min-height: 0;
 
-            .edui-container {
-                .edui-editor-body {
-                    border: 1px solid var(--border-color) !important;
-                    border-radius: $vercel-radius-sm !important;
-                    height: auto !important;
-                    overflow: hidden !important;
-                    transition: border-color $vercel-trans-normal $vercel-ease;
+            .edui-body-container {
+                font-size: $vercel-fs-md;
+                line-height: $vercel-lh-normal;
+                scrollbar-color: var(--minimal-fore) transparent;
 
-                    &:hover {
-                        border-color: var(--minimal-fore) !important;
-                    }
-
-                    &:focus-within {
-                        border-color: var(--tieba-theme-color) !important;
-                        box-shadow: 0 0 0 1px var(--tieba-theme-color) !important;
-                    }
+                &::-webkit-scrollbar {
+                    width: 6px;
                 }
 
-                .edui-body-container {
-                    overflow-y: auto !important;
-                    min-height: calc(1em * $vercel-lh-normal + 16px) !important;
-                    padding: 8px 12px !important;
-                    font-size: $vercel-fs-md;
-                    line-height: $vercel-lh-normal;
-                    scrollbar-width: thin;
-                    scrollbar-color: var(--minimal-fore) transparent;
-
-                    &::-webkit-scrollbar {
-                        width: 6px;
-                    }
-
-                    &::-webkit-scrollbar-track {
-                        background: transparent;
-                    }
-
-                    &::-webkit-scrollbar-thumb {
-                        border-radius: 3px;
-                        background-color: var(--minimal-fore);
-                    }
+                &::-webkit-scrollbar-track {
+                    background: transparent;
                 }
 
-                .edui-editor-bottom,
-                .edui-editor-msg,
-                .edui-toolbar {
-                    border: none !important;
+                &::-webkit-scrollbar-thumb {
+                    border-radius: 3px;
+                    background-color: var(--minimal-fore);
                 }
+            }
 
-                .edui-toolbar .edui-btn-toolbar .edui-btn {
-                    @include vercel-button;
-                    padding: 2px 8px;
-                    font-size: $vercel-fs-sm;
-
-                    .edui-icon {
-                        font-size: $vercel-fs-sm;
-
-                        &::before {
-                            font-size: 14px;
-                        }
-                    }
-                }
+            .edui-editor-bottom,
+            .edui-editor-msg {
+                border: none !important;
             }
         }
     }
