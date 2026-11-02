@@ -6,6 +6,8 @@ import { renderPage } from "@/lib/render";
 import { pageExtension } from "@/lib/user-values";
 import Home from "./index.vue";
 
+const WRAP_TIMEOUT_MS = 8000;
+
 export default async function () {
     if (currentPageType() !== "index") return;
     if (!pageExtension.get().index) return;
@@ -16,8 +18,13 @@ export default async function () {
         },
     }));
 
-    const wrap = await asyncdom(".wrap1");
-    renderPage(Home);
-    wrap.remove();
-    bodyMask.remove();
+    try {
+        // 与 legacy-redirect 的遮罩安全阀同为 8 秒；节点缺失说明不是可接管的首页，保留原生页面
+        const wrap = await asyncdom(".wrap1", undefined, WRAP_TIMEOUT_MS);
+        if (!wrap) return;
+        renderPage(Home);
+        wrap.remove();
+    } finally {
+        bodyMask.remove();
+    }
 }

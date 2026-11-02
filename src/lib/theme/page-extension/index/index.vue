@@ -100,28 +100,36 @@ onMounted(() => {
     init();
 });
 
-async function init() {
-    const [userInfoData, topicListResp] = await Promise.all([
-        (async () => {
-            try {
-                const userInfoResp = (await (await tiebaAPI.userInfo()).json() as UserInfoResponse);
-                if (userInfoResp) return userInfoResp.data;
-            } catch (error) {
-                toast({
-                    message: errorMessage(error as Error),
-                    type: "error",
-                    duration: 6000,
-                });
-            }
-        })(),
-        requestInstance(tiebaAPI.topicList()) as Promise<TopicListResponse>,
-    ]);
+// 各请求独立更新状态，避免热榜慢或失败时拖住登录态与关注吧
+function init() {
+    void loadUserInfo();
+    void loadTopicList();
+}
 
-    userInfo.value = userInfoData;
-
-    if (topicListResp) {
-        topicList.value.push(...topicListResp.data.bang_topic.topic_list);
+async function loadUserInfo() {
+    try {
+        const userInfoResp = (await (await tiebaAPI.userInfo()).json() as UserInfoResponse);
+        if (userInfoResp) userInfo.value = userInfoResp.data;
+    } catch (error) {
+        notifyError(error);
     }
+}
+
+async function loadTopicList() {
+    try {
+        const topicListResp = await requestInstance(tiebaAPI.topicList()) as TopicListResponse;
+        if (topicListResp) topicList.value.push(...topicListResp.data.bang_topic.topic_list);
+    } catch (error) {
+        notifyError(error);
+    }
+}
+
+function notifyError(error: unknown) {
+    toast({
+        message: errorMessage(error as Error),
+        type: "error",
+        duration: 6000,
+    });
 }
 </script>
 
