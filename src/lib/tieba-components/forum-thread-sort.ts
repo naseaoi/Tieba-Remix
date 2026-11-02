@@ -254,10 +254,12 @@ export function renderForumThreadItem(thread: ForumThreadItem, now = new Date())
                     }),
                 ]),
             ])));
+        const gallery = domrd("div", { class: "small_list_gallery" }, [media]);
+        if (thread.images.length > 3) {
+            gallery.append(domrd("div", { class: "small_pic_num center_text" }, `共 ${thread.images.length} 张`));
+        }
         text.append(domrd("div", { class: "small_wrap j_small_wrap" }, [
-            domrd("div", { class: "small_list j_small_list cleafix" }, [
-                domrd("div", { class: "small_list_gallery" }, [media]),
-            ]),
+            domrd("div", { class: "small_list j_small_list cleafix" }, [gallery]),
         ]));
     }
 
