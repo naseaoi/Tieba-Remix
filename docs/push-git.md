@@ -19,6 +19,8 @@ git push origin v0.5.8-preview.1             # 含 - 后缀 → prerelease
 git switch preview
 git pull --ff-only
 pnpm lint
+pnpm lint:styles
+pnpm test
 pnpm build
 git push
 gh pr create --base main --head preview --title "Release v0.5.8" --body "preview → main"

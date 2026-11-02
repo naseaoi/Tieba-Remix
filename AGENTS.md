@@ -2,9 +2,11 @@
 
 ## 修改与验证
 
-- 代码修改完成后必须运行 `pnpm build` 和 `pnpm lint`。
-- 修改 Vue、SCSS 或 CSS 时，对相关文件运行 Stylelint。
-- 不直接修改 `build/tieba-remix.user.js`，该文件由构建生成。
+- 开发过程中按改动范围做快速验证：逻辑改动运行相关测试 `pnpm test <文件或关键字>`，类型改动运行 `pnpm typecheck`，Vue/SCSS/CSS 改动运行 `pnpm exec stylelint <文件>`。
+- 交付前运行与 CI 一致的完整检查并全部通过：`pnpm lint`、`pnpm lint:styles`、`pnpm test`、`pnpm build`（`build` 已包含类型检查）。
+- 新增或修改可脱离页面验证的逻辑（解析、匹配、计算、DOM 转换）时，在同目录补充或更新 `*.test.ts`（Vitest + jsdom）。
+- 页面布局、样式和交互改动通过 `pnpm dev` 在真实贴吧页面确认效果；无法确认时在交付说明中注明。
+- `build/` 是构建产物且不入库，不手动修改。
 
 ## 用户模块
 
@@ -40,6 +42,7 @@
 
 ## 分支与发布
 
-- 预览版改动只进入 `preview` 分支。
-- 正式版通过 PR 从 `preview` 合并到 `main`。
+- 日常开发基于 `preview` 分支；较大改动从 `preview` 切出功能分支，通过 PR 合并回 `preview`。
+- `main` 只接收来自 `preview` 的发布 PR，不直接提交。
+- 提交信息使用 Conventional Commits（`feat:`、`fix:`、`refactor:` 等）。
 - 发布流程和 tag 规则以 `docs/push-git.md` 为准。
