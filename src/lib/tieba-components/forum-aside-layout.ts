@@ -1,4 +1,4 @@
-import { ChevronDown, PanelRight, X } from "@lucide/vue";
+import { ChevronDown, X } from "@lucide/vue";
 import { currentPageType } from "@/lib/api/remixed";
 import { dom } from "@/lib/elemental";
 import { createLucideIconElement } from "@/lib/lucide";
@@ -31,7 +31,6 @@ function setup(): void {
     if (!aside || !nav || !content) return;
 
     const drawer = createDrawer(aside);
-    nav.insertBefore(createDrawerToggle(drawer), dom(".search_internal_wrap", nav) ?? null);
 
     const links = createLinksBar();
     nav.after(links.root);
@@ -123,15 +122,6 @@ function createDrawer(aside: HTMLElement): Drawer {
     closeButton.addEventListener("click", close);
 
     return { open };
-}
-
-function createDrawerToggle(drawer: Drawer): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "trex-forum-drawer-toggle";
-    button.append(createLucideIconElement(PanelRight, { size: 16 }), "本吧详情");
-    button.addEventListener("click", drawer.open);
-    return button;
 }
 
 function syncForumMeta(openDrawer: () => void): void {

@@ -130,7 +130,7 @@ describe("forum aside layout", () => {
         expect(original?.classList.contains("focus")).toBe(true);
     });
 
-    it("moves the native aside into a drawer that opens and closes", async () => {
+    it.each(["Escape", "close button", "backdrop"])("opens the native aside from the title card and closes via %s", async (closeVia) => {
         await install();
 
         const drawer = document.querySelector<HTMLElement>(".trex-forum-drawer");
@@ -140,13 +140,34 @@ describe("forum aside layout", () => {
         expect(drawer?.hidden).toBe(true);
         expect(document.querySelector("[aria-modal]")).toBeNull();
 
-        document.querySelector<HTMLButtonElement>(".nav_wrap .trex-forum-drawer-toggle")?.click();
+        expect(document.querySelector(".nav_wrap .trex-forum-drawer-toggle")).toBeNull();
+        const details = document.querySelector<HTMLButtonElement>(".card_top .trex-forum-meta-more")!;
+        const panel = drawer?.querySelector(".trex-forum-drawer-panel");
+        const closeButton = drawer?.querySelector<HTMLButtonElement>(".trex-forum-drawer-close");
+        expect(details.textContent).toBe("详情");
+        expect(details.type).toBe("button");
+        expect(panel?.getAttribute("role")).toBe("dialog");
+        expect(panel?.getAttribute("aria-label")).toBe("本吧详情");
+        expect(closeButton?.getAttribute("aria-label")).toBe("关闭");
+
+        details.focus();
+        details.click();
         expect(drawer?.hidden).toBe(false);
         expect(drawer?.dataset.open).toBe("true");
-        expect(drawer?.querySelector("[aria-modal]")).not.toBeNull();
+        expect(panel?.getAttribute("aria-modal")).toBe("true");
+        expect(document.activeElement).toBe(closeButton);
 
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+        if (closeVia === "Escape") {
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+        } else if (closeVia === "close button") {
+            closeButton?.click();
+        } else {
+            drawer?.querySelector<HTMLElement>(".trex-forum-drawer-backdrop")?.click();
+        }
         expect(drawer?.hasAttribute("data-open")).toBe(false);
         expect(document.querySelector("[aria-modal]")).toBeNull();
+        expect(document.activeElement).toBe(details);
+        drawer?.dispatchEvent(new Event("transitionend"));
+        expect(drawer?.hidden).toBe(true);
     });
 });

@@ -140,33 +140,6 @@
         line-height: 14px;
     }
 
-    .nav_wrap .trex-forum-drawer-toggle {
-        display: inline-flex;
-        align-self: center;
-        align-items: center;
-        gap: 6px;
-        height: 28px;
-        box-sizing: border-box;
-        flex-shrink: 0;
-        margin: 0 10px 0 auto;
-        padding: 0 10px;
-        border: 1px solid var(--border-color);
-        border-radius: $vercel-radius-sm;
-        background: var(--default-background);
-        color: var(--light-fore);
-        font: inherit;
-        font-size: $vercel-fs-sm;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: color $vercel-trans-normal $vercel-ease,
-                    background-color $vercel-trans-normal $vercel-ease;
-
-        &:hover {
-            background-color: var(--default-hover);
-            color: var(--default-fore);
-        }
-    }
-
     .trex-forum-links {
         display: flex;
         align-items: flex-start;
