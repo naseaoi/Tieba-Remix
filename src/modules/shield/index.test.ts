@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { applyFloorShield, findElementShieldRule, findShieldRule, type ShieldRule } from "./index";
+import { applyFloorShield, applyForumThreadShield, findElementShieldRule, findShieldRule, type ShieldRule } from "./index";
 
 function rule(content: string, scopes: ShieldRule["scopes"], type: ShieldRule["type"] = "text"): ShieldRule {
     return { content, type, scopes, toggle: true };
@@ -35,6 +35,31 @@ describe("findElementShieldRule", () => {
         item.innerHTML = `<span class="a">某用户</span><span class="b">某用户</span>`;
         const anchored = rule("^某用户$", ["username"], "regex");
         expect(findElementShieldRule(item, [{ scope: "username", subSelector: ".a, .b" }], [anchored])).toBe(anchored);
+    });
+});
+
+describe("applyForumThreadShield", () => {
+    it("keeps native pinned hiding when a rule is applied or removed", () => {
+        const item = document.createElement("li");
+        item.style.display = "none";
+        applyForumThreadShield(item, undefined);
+        expect(item.style.display).toBe("none");
+        applyForumThreadShield(item, rule("广告", ["thread-title"]));
+        expect(item.hasAttribute("data-tbr-shield-hidden")).toBe(true);
+        applyForumThreadShield(item, undefined);
+        expect(item.hasAttribute("data-tbr-shield-hidden")).toBe(false);
+        expect(item.style.display).toBe("none");
+    });
+
+    it("does not mutate an unchanged rule result", () => {
+        const item = document.createElement("li");
+        const matched = rule("广告", ["thread-title"]);
+        applyForumThreadShield(item, matched);
+        const observer = new MutationObserver(() => {});
+        observer.observe(item, { attributes: true });
+        applyForumThreadShield(item, matched);
+        expect(observer.takeRecords()).toEqual([]);
+        observer.disconnect();
     });
 });
 

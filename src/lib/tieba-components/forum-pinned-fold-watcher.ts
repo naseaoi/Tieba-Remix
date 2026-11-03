@@ -9,6 +9,17 @@ const EXPIRE_MS = 30 * 24 * 60 * 60 * 1000;
 const PREVIEW_COUNT = 3;
 const EXPANDED_ATTR = "data-pinned-expanded";
 const OVERFLOW_ATTR = "data-pinned-overflow";
+const HIDDEN_ATTR = "data-pinned-hidden";
+
+function readHiddenPinnedTids(): Set<string> {
+    const value = document.cookie.split(";").map(part => part.trim()).find(part => part.startsWith("top_list="))?.slice(9) ?? "";
+    try {
+        // 原生 util_top_cookie 使用连字符分隔 tid，刷新或 AJAX 重建后仍以它为准
+        return new Set(decodeURIComponent(value).split("-").filter(tid => /^\d+$/.test(tid)));
+    } catch {
+        return new Set();
+    }
+}
 
 function purgeInvalidKeys(): void {
     const invalid = ["undefined", "null", ""];
@@ -101,9 +112,9 @@ function setPinnedExpanded(key: string, expanded: boolean): void {
 }
 
 function isPinnedItemHidden(li: HTMLLIElement): boolean {
-    return li.style.display === "none" ||
-        li.hasAttribute("hidden") ||
-        li.style.overflow === "hidden";
+    return li.hasAttribute(HIDDEN_ATTR) ||
+        li.style.display === "none" ||
+        li.hasAttribute("hidden");
 }
 
 function isPinnedPlaceholder(li: HTMLLIElement): boolean {
@@ -138,7 +149,10 @@ function createHeader(folder: HTMLLIElement, forumKey: string): PinnedHeader {
     restore.type = "button";
     restore.className = "trex-pinned-action";
     // 原生按钮负责清除 top_list cookie 并恢复被单独隐藏的置顶帖
-    restore.addEventListener("click", () => folder.querySelector<HTMLElement>("#thread_top_folder")?.click());
+    restore.addEventListener("click", () => {
+        folder.querySelector<HTMLElement>("#thread_top_folder")?.click();
+        syncFolder(folder, forumKey);
+    });
 
     const toggle = document.createElement("button");
     toggle.type = "button";
@@ -167,8 +181,10 @@ function syncFolder(folder: HTMLLIElement, forumKey: string): void {
     });
 
     const real = items.filter(li => !isPinnedPlaceholder(li));
-    const visible = real.filter(li => !isPinnedItemHidden(li));
-    const hiddenCount = real.length - visible.length;
+    const hiddenTids = readHiddenPinnedTids();
+    real.forEach(li => li.toggleAttribute(HIDDEN_ATTR, hiddenTids.has(li.dataset.tid ?? "")));
+    const visible = real.filter(li => !isPinnedItemHidden(li) && !li.hasAttribute("data-tbr-shield-hidden"));
+    const hiddenCount = real.filter(isPinnedItemHidden).length;
     const expanded = isPinnedExpanded(forumKey);
 
     let header = headers.get(folder);
@@ -222,9 +238,14 @@ export function installForumPinnedFoldWatcher(): void {
         syncFolder(folder, forumKey);
         if (watchedFolders.has(folder)) return;
         watchedFolders.add(folder);
-        // 原生单帖隐藏和恢复通过 jQuery slide 改写内联样式
+        // 原生单帖隐藏和恢复通过 jQuery slide 改写内联样式；屏蔽规则拥有独立属性
+        folder.addEventListener("click", event => {
+            if (event.target instanceof Element && event.target.closest(".j_thread_hidden, #thread_top_folder")) {
+                syncFolder(folder, forumKey);
+            }
+        });
         new MutationObserver(() => syncFolder(folder, forumKey))
-            .observe(folder, { attributes: true, attributeFilter: ["style"], subtree: true });
+            .observe(folder, { attributes: true, attributeFilter: ["style", "hidden", "data-tbr-shield-hidden"], subtree: true });
     };
     addCoalescedObserverEvent(sync, forumThreadsObserver);
 }

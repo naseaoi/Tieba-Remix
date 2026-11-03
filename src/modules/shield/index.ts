@@ -53,6 +53,11 @@ function hideElement(elem: HTMLElement, rule: ShieldRule | undefined) {
     elem.style.display = rule ? "none" : "";
 }
 
+export function applyForumThreadShield(elem: HTMLElement, rule: ShieldRule | undefined): void {
+    // 独立标记屏蔽状态，保留原生置顶隐藏和其他功能拥有的内联 display
+    elem.toggleAttribute("data-tbr-shield-hidden", !!rule);
+}
+
 function shieldByMultiScope(
     observers: TbObserver[],
     parentSelector: string,
@@ -138,7 +143,7 @@ function main() {
     shieldByMultiScope([forumThreadsObserver], ".j_thread_list", [
         { scope: "thread-title", subSelector: ".threadlist_title a" },
         { scope: "username", subSelector: ".frs-author-name-wrap, .thread-modern-author-name" },
-    ]);
+    ], applyForumThreadShield);
 
     // 规则变更时实时生效
     shieldList.on("setter", () => {

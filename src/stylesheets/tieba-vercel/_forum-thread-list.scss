@@ -76,6 +76,7 @@
         > li.thread_top_list_folder:hover {
             display: block !important;
             overflow: hidden !important;
+            min-height: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
             border: 1px solid var(--border-color) !important;
@@ -135,8 +136,8 @@
         // 隐藏内层关闭项
         .thread_top_list > li.j_thread_list.thread_top[style*="display: none"],
         .thread_top_list > li.j_thread_list.thread_top[style*="display:none"],
-        .thread_top_list > li.j_thread_list.thread_top[style*="overflow: hidden"],
-        .thread_top_list > li.j_thread_list.thread_top[data-tid="1"]:has(.threadlist_title a.j_th_tit[href*="/bawu2/errorPage"]),
+        .thread_top_list > li.j_thread_list.thread_top[data-pinned-hidden],
+        .thread_top_list > li.j_thread_list.thread_top[data-tbr-shield-hidden],
         .thread_top_list > li.j_thread_list.thread_top[hidden] {
             display: none !important;
         }
@@ -233,6 +234,7 @@
         // 隐藏外层关闭项
         > li[style*="display: none"],
         > li[style*="display:none"],
+        > li[data-tbr-shield-hidden],
         > li[hidden] {
             display: none !important;
         }

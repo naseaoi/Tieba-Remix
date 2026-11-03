@@ -1,3 +1,7 @@
+.threadlist_bright li.j_thread_list[data-tbr-shield-hidden] {
+    display: none !important;
+}
+
 .tbr-shield-notice {
     display: flex;
     box-sizing: border-box;
