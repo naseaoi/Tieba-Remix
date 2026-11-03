@@ -91,6 +91,20 @@ describe("renderLzlReplyTrees", () => {
         expect(document.querySelector(".lzl_post_hidden")?.children).toHaveLength(0);
     });
 
+    it("回复对象只有用户名时按 user_name 挂入树", () => {
+        document.body.innerHTML = `
+            <ul class="j_lzl_m_w">
+                <li class="lzl_single_post" data-field="{'spid':'1','user_name':'甲','portrait':'a'}"></li>
+                <li class="lzl_single_post" data-field="{'spid':'2','user_name':'乙','portrait':'b'}" data-tbr-reply-to="甲"></li>
+            </ul>
+        `;
+        renderLzlReplyTrees();
+
+        const reply = document.querySelectorAll<HTMLElement>("li")[1];
+        expect(reply.style.getPropertyValue("--tbr-lzl-depth")).toBe("1");
+        expect(reply.hasAttribute("data-tbr-lzl-linked")).toBe(true);
+    });
+
     it("新回复加入后重建连线而不重复插入", () => {
         document.body.innerHTML = `<ul class="j_lzl_m_w">${post("1", "a")}</ul>`;
         renderLzlReplyTrees();

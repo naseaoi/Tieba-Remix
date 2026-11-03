@@ -6,6 +6,8 @@ const RAILS_CLASS = "tbr-lzl-rails";
 
 export interface ReplyItem {
     author: string;
+    // 回复目标可能只给出用户名或昵称，需与 author 一同参与匹配
+    names?: readonly string[];
     target?: string;
 }
 
@@ -38,7 +40,7 @@ export function buildReplyTree(items: readonly ReplyItem[]): ReplyNode[] {
         let parent: TreeEntry | undefined;
         if (item.target) {
             for (let i = index - 1; i >= 0; i--) {
-                if (items[i].author === item.target) {
+                if (items[i].author === item.target || items[i].names?.includes(item.target)) {
                     parent = entries[i];
                     break;
                 }
@@ -96,6 +98,7 @@ function renderReplyTree(list: HTMLElement): void {
 
     const nodes = buildReplyTree(posts.map(post => ({
         author: normalizePortrait(readDataField(post, "portrait")),
+        names: [readDataField(post, "user_name"), readDataField(post, "showname")].filter(Boolean),
         target: normalizePortrait(post.dataset.tbrReplyTo) || undefined,
     })));
 

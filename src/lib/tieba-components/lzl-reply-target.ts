@@ -48,9 +48,14 @@ function moveReplyTarget(cnt: HTMLElement): void {
 
     const portrait = target.getAttribute("portrait");
     const post = cnt.closest<HTMLElement>(".lzl_single_post");
-    if (post && portrait) post.dataset.tbrReplyTo = portrait;
-    if (!target.getAttribute("href") && portrait) {
-        target.href = `/home/main?id=${encodeURIComponent(portrait)}&ie=utf-8&fr=pb`;
+    // 「点击查看」展开的回复由另一模板渲染，目标链接没有 portrait，只能按用户名匹配
+    const userName = portrait ? "" : readUserName(target);
+    const replyTo = portrait || userName;
+    if (post && replyTo) post.dataset.tbrReplyTo = replyTo;
+    if (!target.getAttribute("href") && replyTo) {
+        target.href = portrait
+            ? `/home/main?id=${encodeURIComponent(portrait)}&ie=utf-8&fr=pb`
+            : `/home/main?un=${encodeURIComponent(userName)}&ie=utf-8&fr=pb`;
     }
 
     const icon = createLucideIconElement(CornerDownRight, {
@@ -59,6 +64,12 @@ function moveReplyTarget(cnt: HTMLElement): void {
     });
     const label = domrd("span", { class: "tbr-lzl-reply-target", title: `回复 ${target.textContent?.trim() ?? ""}` }, [icon, target]);
     author.after(label);
+}
+
+// 原生 showattip 悬停时才以链接文字补齐 data-field 和 href，文字本身就是用户名
+function readUserName(link: HTMLAnchorElement): string {
+    const fromField = link.getAttribute("data-field")?.match(/["']un["']\s*:\s*["']([^"']*)/)?.[1].trim();
+    return fromField || link.textContent?.trim() || "";
 }
 
 function skipBlank(node: ChildNode | null): ChildNode | null {
