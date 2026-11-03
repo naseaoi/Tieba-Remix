@@ -193,8 +193,9 @@ async function loadMore(current: SortState): Promise<void> {
         }
         current.loading = false;
         setMoreStatus(current, current.hasMore ? "idle" : "end");
-        // 观察器只在可见性变化时回调，重新观察以便按钮仍在视口内时继续加载
-        if (current.hasMore && current.more) {
+        // 观察器只在可见性变化时回调，重新观察以便按钮仍在视口内时继续加载；
+        // 连续空页时停止自动加载，避免接口格式异常时无限翻页，改由用户手动点击
+        if (current.hasMore && current.more && added > 0) {
             loadObserver?.unobserve(current.more);
             loadObserver?.observe(current.more);
         }

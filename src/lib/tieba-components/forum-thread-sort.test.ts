@@ -103,6 +103,29 @@ describe("forum thread sort", () => {
         expect(document.documentElement.hasAttribute("data-forum-sort")).toBe(false);
     });
 
+    it("stops auto-loading after consecutive empty pages", async () => {
+        const observed = new Set<Element>();
+        class VisibleObserver {
+            constructor(private callback: (entries: { isIntersecting: boolean }[]) => void) {}
+            observe(target: Element) {
+                observed.add(target);
+                queueMicrotask(() => this.callback([{ isIntersecting: true }]));
+            }
+            unobserve(target: Element) { observed.delete(target); }
+            disconnect() { observed.clear(); }
+        }
+        vi.stubGlobal("IntersectionObserver", VisibleObserver);
+        fetchForumThreads.mockResolvedValue({ threads: [], hasMore: true });
+        await install();
+
+        options()[1].click();
+        await vi.waitFor(() => expect(document.querySelector<HTMLElement>(".trex-thread-sort-more")?.dataset.status).toBe("idle"));
+        await new Promise(resolve => setTimeout(resolve, 20));
+
+        expect(fetchForumThreads).toHaveBeenCalledTimes(3);
+        vi.unstubAllGlobals();
+    });
+
     it("renders items with the native data-field contract", async () => {
         const { renderForumThreadItem } = await import("./forum-thread-sort");
         const item = renderForumThreadItem(thread(42, {

@@ -89,11 +89,68 @@ function parseImages(value: unknown): ForumThreadImage[] {
     });
 }
 
+function component(components: Record<string, unknown>[], name: string): Record<string, unknown> {
+    return record(components.find(item => item.component === name)?.[name]);
+}
+
+// 卡片流格式：置顶帖在独立的 frs_top_thread_card 中，这里只取 layout=feed 的普通帖；接口不再提供最后回复时间
+function parseFeedThreads(feedList: unknown[]): ForumThreadItem[] {
+    return feedList.map(record).filter(item => item.layout === "feed").flatMap(item => {
+        const feed = record(item.feed);
+        const info = record(feed.business_info_map);
+        const tid = nonNegativeInteger(info.thread_id);
+        const title = text(info.title);
+        if (isOne(info.is_tiebaplus_ad) || !tid || !title.trim()) return [];
+
+        const components = array(feed.components).map(record);
+        const head = component(components, "feed_head");
+        const name = array(head.main_data).map(record).find(part =>
+            record(part.business_info_map).icon_type === "name_show" && text(record(part.text).text).trim(),
+        );
+        const avatar = webUrl(record(head.image_data).img_url);
+        const home = webUrl(head.schema);
+        const social = component(components, "feed_social");
+
+        return [{
+            tid,
+            title,
+            url: `/p/${tid}`,
+            authorName: text(record(name?.text).text).trim(),
+            authorAvatar: avatar,
+            authorHome: home,
+            authorPortrait: authorPortrait(avatar, home),
+            firstPostId: nonNegativeInteger(social.first_post_id),
+            createTime: nonNegativeInteger(info.create_time),
+            lastTime: 0,
+            replyNum: nonNegativeInteger(social.comment_num),
+            agreeNum: nonNegativeInteger(record(social.agree).agree_num),
+            abstract: array(component(components, "feed_abstract").data).map(record)
+                .map(part => text(record(part.text_info).text)).join(""),
+            images: array(component(components, "feed_pic").pics).map(record).flatMap(pic => {
+                const thumb = webUrl(pic.small_pic_url) || webUrl(pic.big_pic_url);
+                const large = webUrl(pic.origin_pic_url) || webUrl(pic.big_pic_url) || thumb;
+                return thumb ? [{
+                    thumb,
+                    large,
+                    width: nonNegativeInteger(pic.width),
+                    height: nonNegativeInteger(pic.height),
+                }] : [];
+            }),
+            isTop: false,
+            isGood: isOne(info.is_good),
+        }];
+    });
+}
+
 export function parseForumThreadsResponse(json: unknown): ForumThreadsPage {
     const body = record(json);
     if (body.error_code !== 0 && body.error_code !== "0") {
         throw new Error(text(body.error_msg) || "吧页帖子接口错误");
     }
+
+    const hasMore = isOne(record(body.page).has_more);
+    const feedList = record(body.page_data).feed_list;
+    if (Array.isArray(feedList)) return { threads: parseFeedThreads(feedList), hasMore };
 
     const threads = array(body.thread_list).flatMap(item => {
         const thread = record(item);
@@ -131,7 +188,7 @@ export function parseForumThreadsResponse(json: unknown): ForumThreadsPage {
         }];
     });
 
-    return { threads, hasMore: isOne(record(body.page).has_more) };
+    return { threads, hasMore };
 }
 
 export async function fetchForumThreads(kw: string, pn: number, sortType: 0 | 1): Promise<ForumThreadsPage> {

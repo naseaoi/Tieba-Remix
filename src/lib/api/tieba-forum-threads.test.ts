@@ -20,6 +20,63 @@ function independentSign(form: Record<string, string>): string {
     return createHash("md5").update(`${input}36770b1f34c9bbf2e7d1a99d2b82fa9e`).digest("hex");
 }
 
+describe("吧页帖子解析：卡片流格式", () => {
+    it("从 page_data.feed_list 解析普通帖并跳过置顶卡片", () => {
+        const result = parseForumThreadsResponse({
+            error_code: 0,
+            page: { has_more: 1 },
+            page_data: {
+                feed_list: [
+                    { layout: "frs_top_thread_card", frs_top_thread_card: {} },
+                    { layout: "hot_topic_card", hot_topic_card: {} },
+                    {
+                        layout: "feed",
+                        feed: {
+                            business_info_map: { thread_id: "123", title: "测试标题", create_time: "1793673068", is_good: "1" },
+                            components: [
+                                {
+                                    component: "feed_head",
+                                    feed_head: {
+                                        image_data: { img_url: avatar },
+                                        main_data: [{ type: 1, text: { text: "作者昵称" }, business_info_map: { icon_type: "name_show" } }],
+                                        schema: home,
+                                    },
+                                },
+                                { component: "feed_abstract", feed_abstract: { data: [{ type: 1, text_info: { text: "摘要" } }, { type: 3, emoji_info: { c: "#(惊讶)" } }] } },
+                                { component: "feed_pic", feed_pic: { pics: [{ small_pic_url: thumb, big_pic_url: big, origin_pic_url: original, width: 560, height: 1526 }] } },
+                                { component: "feed_social", feed_social: { comment_num: 12, first_post_id: 456, agree: { agree_num: 7 } } },
+                            ],
+                        },
+                    },
+                    { layout: "feed", feed: { business_info_map: { thread_id: "124", title: "推广", is_tiebaplus_ad: "1" } } },
+                ],
+            },
+        });
+
+        expect(result).toEqual({
+            hasMore: true,
+            threads: [{
+                tid: 123,
+                title: "测试标题",
+                url: "/p/123",
+                authorName: "作者昵称",
+                authorAvatar: avatar,
+                authorHome: home,
+                authorPortrait: portrait,
+                firstPostId: 456,
+                createTime: 1793673068,
+                lastTime: 0,
+                replyNum: 12,
+                agreeNum: 7,
+                abstract: "摘要",
+                images: [{ thumb, large: original, width: 560, height: 1526 }],
+                isTop: false,
+                isGood: true,
+            }],
+        });
+    });
+});
+
 describe("吧页帖子解析", () => {
     it("解析作者、摘要、图片、时间、计数与标记", () => {
         const result = parseForumThreadsResponse({
