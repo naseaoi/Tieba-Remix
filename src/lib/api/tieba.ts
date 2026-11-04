@@ -124,6 +124,12 @@ export const tiebaAPI = {
             "see_lz": Number(lzOnly),
         })}`),
 
+    commentPage: (threadId: number, parentId: number, forumId: number, page: number) =>
+        fetch(`/p/comment?${requestBody({ tid: threadId, pid: parentId, pn: page, fid: forumId, t: Date.now() })}`, {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        }),
+
     subPostContent: (threadId: number, parentId: number, page = 1) => {
         const form = {
             kz: String(threadId),

@@ -277,8 +277,13 @@
     white-space: nowrap;
 }
 
-.tbr-floor-menu-item:hover {
+.tbr-floor-menu-item:hover:not(:disabled) {
     background: var(--default-hover, #f4f4f5);
+}
+
+.tbr-floor-menu-item:disabled {
+    cursor: wait;
+    opacity: 0.55;
 }
 
 .tbr-floor-menu-item-danger {

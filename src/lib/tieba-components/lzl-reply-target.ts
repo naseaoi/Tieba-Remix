@@ -3,6 +3,7 @@ import { currentPageType } from "@/lib/api/remixed";
 import { domrd } from "@/lib/elemental";
 import { createLucideIconElement } from "@/lib/lucide";
 import { threadCommentsObserver } from "@/lib/observers";
+import { renderLzlLoadMore } from "./lzl-load-more";
 import { renderLzlReplyTrees } from "./lzl-reply-tree";
 
 const CHECKED_ATTR = "data-tbr-lzl-reply-target";
@@ -12,6 +13,7 @@ export function installLzlReplyTarget(): void {
     if (installed || currentPageType() !== "thread") return;
     installed = true;
     threadCommentsObserver.addEvent(() => {
+        renderLzlLoadMore();
         renderLzlReplyTargets();
         renderLzlReplyTrees();
     });

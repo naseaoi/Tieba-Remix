@@ -7,6 +7,47 @@ $lzl-indent: 30px;
 $lzl-avatar-size: 34px;
 $lzl-rail-width: 2px;
 
+// 楼中楼内的展开类按钮：加载更多、继续此对话、返回全部回复
+%lzl-chip {
+    display: inline-flex;
+    height: 28px;
+    box-sizing: border-box;
+    align-items: center;
+    padding: 0 12px 0 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background-color: var(--default-background);
+    color: var(--light-fore);
+    cursor: pointer;
+    font: inherit;
+    font-size: $lzl-tail-font-size;
+    gap: 6px;
+    line-height: 1;
+    transition:
+        color var(--fast-duration) ease,
+        border-color var(--fast-duration) ease;
+    white-space: nowrap;
+
+    .tbr-action-icon {
+        width: 14px;
+        height: 14px;
+        flex: none;
+    }
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+        border-color: color-mix(in srgb, var(--tieba-theme-fore) 45%, var(--border-color));
+        color: var(--tieba-theme-fore);
+        outline: none;
+    }
+}
+
+@keyframes tbr-lzl-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 // 楼层尾巴 + 楼中楼
 .core_reply {
     margin-right: unset;
@@ -53,28 +94,18 @@ $lzl-rail-width: 2px;
         .core_reply_content {
             padding-right: 20px;
 
-            // 单个楼中楼内容
-            .lzl_single_post {
+            // 单个楼中楼内容与「继续此对话」折叠行共用缩进和连线
+            .lzl_single_post,
+            .tbr-lzl-fold {
                 --tbr-lzl-gap: #{$lzl-content-margin};
                 --tbr-lzl-avatar-top: 0px;
                 position: relative;
                 padding-left: calc(var(--tbr-lzl-depth, 0) * #{$lzl-indent});
                 margin-bottom: var(--tbr-lzl-gap);
-                animation: kf-slide-in var(--default-duration);
-                transform-origin: bottom;
 
-                &.first_no_border {
-                    --tbr-lzl-avatar-top: 10px;
-                }
-
-                &:not(.first_no_border) {
-                    padding-top: 0;
-                    margin-top: 0;
-                }
-
-                // 可视父节点就是被回复者时，连线已表达回复关系
-                &[data-tbr-lzl-linked] .tbr-lzl-reply-target {
-                    display: none;
+                // 聚焦视图之外或折叠子树中的回复
+                &[hidden] {
+                    display: none !important;
                 }
 
                 // 回复连线：列 n 的竖线对齐第 n 级头像中心
@@ -126,6 +157,30 @@ $lzl-rail-width: 2px;
                     border-top-width: 0;
                     border-right-width: 0;
                     content: "";
+                }
+            }
+
+            .lzl_single_post {
+                animation: kf-slide-in var(--default-duration);
+                transform-origin: bottom;
+
+                // 已建树的回复重排、或由展开过渡负责淡入时不再播放入场动画
+                &[data-tbr-lzl-static] {
+                    animation: none;
+                }
+
+                &.first_no_border {
+                    --tbr-lzl-avatar-top: 10px;
+                }
+
+                &:not(.first_no_border) {
+                    padding-top: 0;
+                    margin-top: 0;
+                }
+
+                // 可视父节点就是被回复者时，连线已表达回复关系
+                &[data-tbr-lzl-linked] .tbr-lzl-reply-target {
+                    display: none;
                 }
 
                 // 当前具体内容
@@ -214,6 +269,21 @@ $lzl-rail-width: 2px;
                 }
             }
 
+            // 超出可视深度的子树：高度与头像一致，使连线接入按钮中线
+            .tbr-lzl-fold {
+                display: flex;
+                height: $lzl-avatar-size;
+                align-items: center;
+            }
+
+            .tbr-lzl-focus-back {
+                margin-bottom: $lzl-content-margin;
+            }
+
+            .tbr-lzl-thread-button {
+                @extend %lzl-chip;
+            }
+
             // 楼中楼翻页
             .lzl_li_pager {
                 padding: 0;
@@ -227,6 +297,36 @@ $lzl-rail-width: 2px;
                     a {
                         @extend %anchor;
                     }
+                }
+
+                .tbr-lzl-load-more {
+                    @extend %lzl-chip;
+                    margin: 2px 0 8px;
+
+                    .tbr-lzl-load-more-spinner {
+                        display: none;
+                    }
+
+                    &[data-status="loading"] {
+                        cursor: wait;
+
+                        .tbr-lzl-load-more-icon {
+                            display: none;
+                        }
+
+                        .tbr-lzl-load-more-spinner {
+                            display: block;
+                            animation: tbr-lzl-spin 0.8s linear infinite;
+                        }
+                    }
+
+                    &[data-status="error"] {
+                        color: var(--error-color, #c00);
+                    }
+                }
+
+                [hidden] {
+                    display: none !important;
                 }
 
                 .j_pager {

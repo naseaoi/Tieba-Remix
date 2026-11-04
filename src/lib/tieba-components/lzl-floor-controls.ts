@@ -45,13 +45,16 @@ export function renderLzlFloorControls(): void {
     document.querySelectorAll<HTMLElement>(".lzl_li_pager").forEach(pager => {
         const more = pager.querySelector<HTMLElement>(".lzl_more");
         const hasMore = more != null && isElementVisible(more);
-        const hasPagerControls = [...pager.querySelectorAll<HTMLElement>(".j_pager a, .j_pager .tP")]
+        const hasPagerControls = [...pager.querySelectorAll<HTMLElement>(".j_pager a, .j_pager .tP, .tbr-lzl-load-more")]
             .some(control => (control.textContent ?? "").trim() !== "" && isElementVisible(control));
         const empty = !hasMore && !hasPagerControls;
         const list = pager.parentElement;
         const posts = [...(list?.querySelectorAll<HTMLElement>(".lzl_single_post") ?? [])];
-        posts.forEach(post => post.classList.remove(LAST_POST_CLASS));
-        if (empty) findLastVisible(posts)?.classList.add(LAST_POST_CLASS);
+        // 先删后加会让每次刷新都触发样式失效，只切换实际变化的节点
+        const last = empty ? findLastVisible(posts) : undefined;
+        posts.forEach(post => {
+            if (post.classList.contains(LAST_POST_CLASS) !== (post === last)) post.classList.toggle(LAST_POST_CLASS);
+        });
         pager.classList.toggle(PAGER_WITH_MORE_CLASS, hasMore);
         pager.classList.toggle(EMPTY_PAGER_CLASS, empty);
         list?.classList.toggle(LIST_WITHOUT_PAGER_CLASS, empty);
