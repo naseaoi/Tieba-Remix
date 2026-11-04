@@ -254,7 +254,8 @@ function measureExpandedHeight(element: HTMLElement, edges: Record<string, strin
 function collapse(element: HTMLElement, complete?: () => void): void {
     abortRunning(element);
 
-    if (collapsesWithList(element) || prefersReducedMotion()) {
+    // 懒加载占位（.hideLzl）高度恒为 0，原生 hide() 无需动画，也避免逐个强制样式与布局计算
+    if (element.classList.contains("hideLzl") || collapsesWithList(element) || prefersReducedMotion()) {
         element.style.display = "none";
         resetInlineStyles(element);
         complete?.call(element);

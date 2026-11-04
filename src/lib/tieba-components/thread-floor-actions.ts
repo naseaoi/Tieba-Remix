@@ -206,7 +206,9 @@ function normalizeLocationText(): void {
         elem.childNodes.forEach(node => {
             if (node.nodeType !== Node.TEXT_NODE) return;
             const text = node.textContent ?? "";
-            node.textContent = text.replace(/^(\s*)IP属地[:：]\s*/, "$1");
+            const normalized = text.replace(/^(\s*)IP属地[:：]\s*/, "$1");
+            // 每帧都会执行：只在内容变化时写入，避免无谓的样式与布局失效
+            if (normalized !== text) node.textContent = normalized;
         });
     });
 }

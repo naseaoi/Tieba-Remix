@@ -15,6 +15,9 @@ export default {
     entry: main,
 } as UserModule;
 
+// 楼层与楼中楼正文节点渲染后不再变化，已扫描的节点不重复遍历
+const scanned = new WeakSet<Element>();
+
 function main(): void {
     threadCommentsObserver.addEvent(biliPortal);
 }
@@ -26,6 +29,8 @@ function biliPortal(): void {
 
 function addBiliLinks(selector: string): void {
     (dom(selector, [])).forEach((elem) => {
+        if (scanned.has(elem)) return;
+        scanned.add(elem);
         linkVideoCodes(elem);
     });
 }
