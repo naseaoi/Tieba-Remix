@@ -1,6 +1,7 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { dom } from "@/lib/elemental";
+import { asyncdom, dom } from "@/lib/elemental";
 import { forumStickyNav } from "@/lib/user-values";
+import { FORUM_PAGELET_TIMEOUT_MS } from "./forum";
 
 const STUCK_ATTR = "data-forum-nav-stuck";
 // 与固定状态下的 top 保持一致，越过该位置即切换为吸顶
@@ -12,17 +13,14 @@ export function installForumStickyNav(): void {
     if (installed || currentPageType() !== "forum") return;
     installed = true;
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", setup, { once: true });
-    } else {
-        setup();
-    }
+    void setup();
 }
 
-function setup(): void {
+async function setup(): Promise<void> {
     if (!document.documentElement.classList.contains("style-vercel")) return;
 
-    const nav = dom<"div">(".nav_wrap");
+    // 导航嵌在标题卡 pagelet 内，导航出现时品牌所需的吧名与头像已就绪
+    const nav = await asyncdom<"div">(".nav_wrap", undefined, FORUM_PAGELET_TIMEOUT_MS);
     if (!nav) return;
 
     nav.prepend(createBrand());

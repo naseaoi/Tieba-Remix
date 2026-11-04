@@ -77,7 +77,20 @@ describe("forum aside layout", () => {
     async function install(): Promise<void> {
         const { installForumAsideLayout } = await import("./forum-aside-layout");
         installForumAsideLayout();
+        await new Promise(resolve => setTimeout(resolve));
     }
+
+    it("waits for the aside pagelet rendered after install", async () => {
+        const aside = document.querySelector(".forum_content > .aside")!;
+        aside.remove();
+        await install();
+        expect(document.documentElement.hasAttribute("data-forum-aside")).toBe(false);
+
+        document.querySelector(".forum_content")!.append(aside);
+        await vi.waitFor(() => expect(document.documentElement.getAttribute("data-forum-aside")).toBe("drawer"));
+        expect(document.querySelector(".trex-forum-drawer .aside")).toBe(aside);
+        expect(document.querySelector(".card_top .trex-forum-meta")).not.toBeNull();
+    });
 
     it("summarizes forum info and user level into the title card", async () => {
         await install();

@@ -38,6 +38,7 @@
 - 新版贴吧 SPA 不存在旧版 `PageData`；依赖 `PageData` 的逻辑只能在 `setupLegacyRedirect` 放行后的旧版页面运行。
 - `PageData.pager.cur_page > 1` 时帖子页没有首楼；修改首楼前必须判断当前页为第一页。
 - 页面范围使用 `currentPageType()` 和模块 `scope` 判断，不通过零散 URL 字符串重复判断。
+- 吧页的标题卡、导航、侧栏和帖子列表容器由 Bigpipe pagelet 异步渲染，冷缓存时晚于 DOMContentLoaded；依赖这些节点的初始化用 `asyncdom` 等待，不在 DOMContentLoaded 时一次性查询。
 - 规则或设置变更需要实时影响当前页面时，必须触发对应 observer 或同步更新当前 DOM 状态。
 
 ## 分支与发布

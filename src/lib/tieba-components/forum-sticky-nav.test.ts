@@ -33,7 +33,18 @@ describe("forum sticky nav", () => {
     async function install(): Promise<void> {
         const { installForumStickyNav } = await import("./forum-sticky-nav");
         installForumStickyNav();
+        await new Promise(resolve => setTimeout(resolve));
     }
+
+    it("waits for the nav pagelet rendered after install", async () => {
+        const holder = document.querySelector(".holder")!;
+        const nav = holder.querySelector(".nav_wrap")!;
+        nav.remove();
+        await install();
+
+        holder.append(nav);
+        await vi.waitFor(() => expect(nav.querySelector(".trex-forum-nav-brand")?.textContent).toBe("测试吧"));
+    });
 
     it("adds the forum brand to the nav", async () => {
         await install();

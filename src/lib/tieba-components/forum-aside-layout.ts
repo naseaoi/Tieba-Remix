@@ -1,7 +1,8 @@
 import { ChevronDown, X } from "@lucide/vue";
 import { currentPageType } from "@/lib/api/remixed";
-import { dom } from "@/lib/elemental";
+import { asyncdom, dom } from "@/lib/elemental";
 import { createLucideIconElement } from "@/lib/lucide";
+import { FORUM_PAGELET_TIMEOUT_MS } from "./forum";
 import { createFriendForumsView } from "./forum-friend-forums";
 
 const LINK_REGION_SELECTOR = ".zyq_mod_link";
@@ -15,19 +16,17 @@ export function installForumAsideLayout(): void {
     if (installed || currentPageType() !== "forum") return;
     installed = true;
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", setup, { once: true });
-    } else {
-        setup();
-    }
+    void setup();
 }
 
-function setup(): void {
+async function setup(): Promise<void> {
     if (!document.documentElement.classList.contains("style-vercel")) return;
 
-    const aside = dom<"div">(".forum_content > .aside");
-    const nav = dom<"div">(".nav_wrap");
-    const content = dom<"div">(".forum_content > #content_wrap");
+    const [aside, nav, content] = await Promise.all([
+        asyncdom<"div">(".forum_content > .aside", undefined, FORUM_PAGELET_TIMEOUT_MS),
+        asyncdom<"div">(".nav_wrap", undefined, FORUM_PAGELET_TIMEOUT_MS),
+        asyncdom<"div">(".forum_content > #content_wrap", undefined, FORUM_PAGELET_TIMEOUT_MS),
+    ]);
     if (!aside || !nav || !content) return;
 
     const drawer = createDrawer(aside);

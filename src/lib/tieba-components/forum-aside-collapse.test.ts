@@ -25,6 +25,7 @@ describe("forum aside collapse", () => {
 
         const { installForumAsideCollapse } = await import("./forum-aside-collapse");
         installForumAsideCollapse();
+        await new Promise(resolve => setTimeout(resolve));
 
         const nativeRegion = document.querySelector<HTMLElement>(".aside_region");
         const novelRanking = document.querySelector<HTMLElement>("#novel-ranking");
