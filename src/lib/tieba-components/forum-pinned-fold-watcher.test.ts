@@ -88,8 +88,6 @@ describe("forum pinned section", () => {
 
     it("skips the toggle for short lists and offers restoring hidden threads", async () => {
         const folder = render([pinnedItem(1001), pinnedItem(1002, "display: none")]);
-        const native = vi.fn();
-        folder.querySelector("#thread_top_folder")?.addEventListener("click", native);
         await install();
 
         expect(folder.querySelector<HTMLButtonElement>(".trex-pinned-toggle")?.hidden).toBe(true);
@@ -99,7 +97,9 @@ describe("forum pinned section", () => {
         expect(restore.hidden).toBe(false);
         expect(restore.textContent).toBe("恢复已隐藏的 1 条");
         restore.click();
-        expect(native).toHaveBeenCalledOnce();
+        expect(folder.querySelector<HTMLLIElement>("li[data-tid='1002']")?.style.display).toBe("");
+        expect(folder.querySelector(".trex-pinned-count")?.textContent).toBe("2");
+        expect(restore.hidden).toBe(true);
     });
 
     it("leaves the header untouched when a resync changes nothing", async () => {
@@ -156,14 +156,12 @@ describe("forum pinned section", () => {
         expect(replacement.hasAttribute("data-pinned-empty")).toBe(true);
     });
 
-    it("restores cookie-hidden threads without treating slideDown overflow as hidden", async () => {
+    // 原生恢复按钮缺少服务端写入的 data-field 时会直接抛错，不能依赖它清除 cookie
+    it("restores cookie-hidden threads itself and keeps other forums' hidden tids", async () => {
         document.cookie = "top_list=1001-1002-9999; path=/";
-        const folder = render([pinnedItem(1001), pinnedItem(1002)]);
+        const folder = render([pinnedItem(1001), pinnedItem(1002, "display: none")]);
         folder.querySelector("#thread_top_folder")!.addEventListener("click", () => {
-            document.cookie = "top_list=9999; path=/";
-            folder.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(item => {
-                item.style.cssText = "display: block; overflow: hidden; height: 1px";
-            });
+            throw new TypeError("Cannot read properties of undefined (reading 'length')");
         });
         await install();
         expect(folder.hasAttribute("data-pinned-empty")).toBe(true);
@@ -174,7 +172,9 @@ describe("forum pinned section", () => {
         expect(folder.querySelector(".trex-pinned-count")?.textContent).toBe("2");
         expect(folder.hasAttribute("data-pinned-empty")).toBe(false);
         expect(folder.querySelector<HTMLButtonElement>(".trex-pinned-action")?.hidden).toBe(true);
+        expect(folder.querySelector<HTMLLIElement>("li[data-tid='1002']")?.style.display).toBe("");
         expect(document.cookie).toContain("top_list=9999");
+        expect(document.cookie).not.toMatch(/top_list=[^;]*100[12]/);
     });
 
     it("keeps shield rules separate from native restoration", async () => {

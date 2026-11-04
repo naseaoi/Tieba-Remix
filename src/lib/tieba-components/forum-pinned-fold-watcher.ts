@@ -7,6 +7,8 @@ import { forumPinnedCollapsed, forumPinnedVisitedAt } from "@/lib/user-values";
 let installed = false;
 const EXPIRE_MS = 30 * 24 * 60 * 60 * 1000;
 const PREVIEW_COUNT = 3;
+// 与原生 util_top_cookie 写入的 72 天有效期一致
+const TOP_LIST_MAX_AGE = 72 * 24 * 60 * 60;
 const EXPANDED_ATTR = "data-pinned-expanded";
 const OVERFLOW_ATTR = "data-pinned-overflow";
 const HIDDEN_ATTR = "data-pinned-hidden";
@@ -111,6 +113,19 @@ function setPinnedExpanded(key: string, expanded: boolean): void {
     forumPinnedCollapsed.set(next);
 }
 
+// 原生恢复按钮只读取服务端渲染时写入的已隐藏 tid，本次浏览中新隐藏的置顶帖会让它抛错且不清 cookie，因此自行恢复
+function restoreHiddenPinned(folder: HTMLLIElement): void {
+    const restored = new Set<string>();
+    folder.querySelectorAll<HTMLLIElement>(".thread_top_list > li").forEach(li => {
+        if (isPinnedPlaceholder(li) || !isPinnedItemHidden(li)) return;
+        if (li.dataset.tid) restored.add(li.dataset.tid);
+        li.hidden = false;
+        li.style.removeProperty("display");
+    });
+    const remaining = [...readHiddenPinnedTids()].filter(tid => !restored.has(tid));
+    document.cookie = `top_list=${remaining.join("-")}; max-age=${TOP_LIST_MAX_AGE}; path=/`;
+}
+
 function isPinnedItemHidden(li: HTMLLIElement): boolean {
     return li.hasAttribute(HIDDEN_ATTR) ||
         li.style.display === "none" ||
@@ -148,9 +163,8 @@ function createHeader(folder: HTMLLIElement, forumKey: string): PinnedHeader {
     const restore = document.createElement("button");
     restore.type = "button";
     restore.className = "trex-pinned-action";
-    // 原生按钮负责清除 top_list cookie 并恢复被单独隐藏的置顶帖
     restore.addEventListener("click", () => {
-        folder.querySelector<HTMLElement>("#thread_top_folder")?.click();
+        restoreHiddenPinned(folder);
         syncFolder(folder, forumKey);
     });
 
