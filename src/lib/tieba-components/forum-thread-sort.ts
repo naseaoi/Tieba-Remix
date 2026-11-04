@@ -5,6 +5,7 @@ import { fetchForumThreads, type ForumThreadItem } from "@/lib/api/tieba-forum-t
 import { dom, domrd } from "@/lib/elemental";
 import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 import { forumThreadSort, type ForumThreadSort } from "@/lib/user-values";
+import { createForumThreadDensityToggle, installForumThreadDensity } from "./forum-thread-density";
 import { formatForumThreadTime } from "./forum-thread-time";
 
 const MODE_ATTR = "data-forum-sort";
@@ -37,6 +38,7 @@ let loadObserver: IntersectionObserver | undefined;
 export function installForumThreadSort(): void {
     if (installed || currentPageType() !== "forum") return;
     installed = true;
+    installForumThreadDensity();
     addCoalescedObserverEvent(sync, forumThreadsObserver);
 }
 
@@ -77,7 +79,8 @@ function createState(list: HTMLElement): SortState {
         createLucideIconElement(LayoutList, { size: 14 }),
         "全部帖子",
     ]);
-    const bar = domrd("li", { class: "trex-thread-sort" }, [title, group]);
+    const controls = domrd("div", { class: "trex-thread-sort-controls" }, [createForumThreadDensityToggle(), group]);
+    const bar = domrd("li", { class: "trex-thread-sort" }, [title, controls]);
     const next: SortState = {
         list, bar, buttons,
         nativeNodes: [], seen: new Set(), page: 0, hasMore: true, loading: false, token: 0,

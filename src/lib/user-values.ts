@@ -266,6 +266,11 @@ export type ForumThreadSort = "reply" | "create";
 export const forumThreadSort = new UserKey<ForumThreadSort>(
     "forumThreadSort", "reply", undefined, undefined, value => value === "reply" || value === "create",
 );
+export type ForumThreadDensity = "card" | "compact";
+/** 吧首页帖子列表密度 */
+export const forumThreadDensity = new UserKey<ForumThreadDensity>(
+    "forumThreadDensity", "card", undefined, undefined, value => value === "card" || value === "compact",
+);
 /** 主题色 */
 export const themeColor = new UserKey("themeColor", {
     light: "#589AFE",

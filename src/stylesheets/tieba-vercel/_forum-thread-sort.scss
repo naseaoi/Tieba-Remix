@@ -29,14 +29,35 @@
         font-weight: var(--font-weight-bold);
     }
 
-    .trex-thread-sort-group {
+    .trex-thread-sort-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    // 原生列表布局没有紧凑视图
+    &:not([data-forum-thread-modern]) .trex-thread-density-group {
+        display: none;
+    }
+
+    .trex-thread-density-group .trex-thread-density-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        padding: 0 !important;
+    }
+
+    .trex-thread-sort-group,
+    .trex-thread-density-group {
         display: inline-flex;
         padding: 2px;
         border-radius: $vercel-radius-md;
         background-color: var(--default-hover);
     }
 
-    .trex-thread-sort-option {
+    .trex-thread-sort-option,
+    .trex-thread-density-option {
         height: 24px;
         padding: 0 10px !important;
         border: none !important;

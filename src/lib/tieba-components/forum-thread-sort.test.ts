@@ -12,6 +12,11 @@ vi.mock("@/lib/user-values", () => ({
         get: () => store.sort,
         set: (value: "reply" | "create") => { store.sort = value; },
     },
+    forumThreadDensity: {
+        get: () => "card",
+        set: () => undefined,
+        on: () => undefined,
+    },
 }));
 
 vi.mock("@/lib/observers", () => ({

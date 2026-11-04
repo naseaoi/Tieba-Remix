@@ -1,5 +1,5 @@
 import { currentPageType } from "@/lib/api/remixed";
-import { EllipsisVertical, MessageSquare, Star, ThumbsUp, type LucideIcon } from "@lucide/vue";
+import { EllipsisVertical, MessageSquare, ThumbsUp, type LucideIcon } from "@lucide/vue";
 import { domrd } from "@/lib/elemental";
 import { createLucideIconElement } from "@/lib/lucide";
 import { addFavoriteTags, addFavorInstance, cancelFavorInstance, getFavoriteTagRecommendations, tiebaAPI } from "@/lib/api/tieba";
@@ -16,6 +16,8 @@ const ROOT_SELECTOR = "#pagelet_frs-list\\/pagelet\\/thread";
 const FLAG = "data-trex-modernized";
 const AGREE_FLAG = "data-trex-agree-loaded";
 const NATIVE_REPORT_FLAG = "data-tbr-native-report";
+const FAVORITED_ATTR = "data-tbr-favorited";
+const FAVORITE_PENDING_ATTR = "data-tbr-favorite-pending";
 let morePopup: HTMLElement | undefined;
 let moreOwner: HTMLElement | undefined;
 let favoriteTagPopup: HTMLElement | undefined;
@@ -23,7 +25,6 @@ let favoriteTagOwner: HTMLElement | undefined;
 
 const ICON_LIKE = ThumbsUp;
 const ICON_COMMENT = MessageSquare;
-const ICON_FAVORITE = Star;
 const ICON_MORE = EllipsisVertical;
 
 type ThreadField = {
@@ -61,9 +62,9 @@ function createMetaIcon(icon: LucideIcon): SVGSVGElement {
     });
 }
 
-function createFooter(item: HTMLElement, tid: number, replyCount: string): void {
-    const footer = document.createElement("div");
-    footer.className = "thread-modern-footer";
+function createActions(item: HTMLElement, tid: number, replyCount: string): void {
+    const actions = document.createElement("div");
+    actions.className = "thread-modern-actions";
 
     const agree = document.createElement("span");
     agree.className = "thread-modern-action thread-modern-agree agree-count-badge";
@@ -86,35 +87,8 @@ function createFooter(item: HTMLElement, tid: number, replyCount: string): void 
     replyValue.textContent = replyCount;
     replies.append(replyValue);
 
-    const favorite = document.createElement("button");
-    favorite.type = "button";
-    favorite.className = "thread-modern-action thread-modern-favorite";
-    favorite.title = "收藏帖子";
-    favorite.append(createMetaIcon(ICON_FAVORITE));
-    const favoriteLabel = document.createElement("span");
-    favoriteLabel.className = "thread-modern-label";
-    favoriteLabel.textContent = "收藏";
-    favorite.append(favoriteLabel);
-    favorite.addEventListener("click", event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (favorite.disabled) return;
-        favorite.disabled = true;
-        const isActive = favorite.classList.contains("is-active");
-        const request = isActive ? cancelFavorInstance : addFavorInstance;
-        void request(tid, Number(PageData.forum.forum_id || PageData.forum.id)).then(() => {
-            favorite.classList.toggle("is-active", !isActive);
-            favorite.title = isActive ? "收藏帖子" : "取消收藏";
-            favoriteLabel.textContent = isActive ? "收藏" : "已收藏";
-            if (isActive) closeFavoriteTagPopup();
-            else showFavoriteTagPopup(favorite, tid);
-        }).catch(() => undefined).finally(() => {
-            favorite.disabled = false;
-        });
-    });
-
-    footer.append(agree, replies, favorite);
-    item.querySelector(".t_con")?.append(footer);
+    actions.append(agree, replies);
+    item.querySelector(".thread-modern-more")?.before(actions);
     loadAgree(item, tid, agree);
 }
 
@@ -214,13 +188,52 @@ function createMoreButton(tid: number, firstPostId: number | undefined, names: s
             closeMoreMenu();
             return;
         }
-        openMoreMenu(more, () => addShieldUsers(names), () => reportThread(tid, firstPostId));
+        openMoreMenu(more, {
+            favorited: more.hasAttribute(FAVORITED_ATTR),
+            favoritePending: more.hasAttribute(FAVORITE_PENDING_ATTR),
+            onFavorite: () => toggleFavorite(more, tid),
+            onBlock: () => addShieldUsers(names),
+            onReport: () => reportThread(tid, firstPostId),
+        });
     });
     return more;
 }
 
-function openMoreMenu(owner: HTMLElement, onBlock: () => void, onReport: () => void): void {
+function toggleFavorite(owner: HTMLElement, tid: number): void {
+    if (owner.hasAttribute(FAVORITE_PENDING_ATTR)) return;
+    const isActive = owner.hasAttribute(FAVORITED_ATTR);
+    owner.setAttribute(FAVORITE_PENDING_ATTR, "");
+    const request = isActive ? cancelFavorInstance : addFavorInstance;
+    void request(tid, Number(PageData.forum.forum_id || PageData.forum.id)).then(() => {
+        owner.toggleAttribute(FAVORITED_ATTR, !isActive);
+        if (isActive) closeFavoriteTagPopup();
+        else showFavoriteTagPopup(owner, tid);
+    }).catch(() => undefined).finally(() => {
+        owner.removeAttribute(FAVORITE_PENDING_ATTR);
+    });
+}
+
+interface MoreMenuOptions {
+    favorited: boolean;
+    favoritePending: boolean;
+    onFavorite: () => void;
+    onBlock: () => void;
+    onReport: () => void;
+}
+
+function openMoreMenu(owner: HTMLElement, { favorited, favoritePending, onFavorite, onBlock, onReport }: MoreMenuOptions): void {
     closeMoreMenu();
+
+    const favorite = domrd("button", {
+        class: "tbr-floor-menu-item",
+        type: "button",
+        role: "menuitem",
+    }, favorited ? "取消收藏" : "收藏");
+    favorite.disabled = favoritePending;
+    favorite.addEventListener("click", () => {
+        closeMoreMenu();
+        onFavorite();
+    });
 
     const block = domrd("button", { class: "tbr-floor-menu-item tbr-floor-menu-item-danger", type: "button", role: "menuitem" }, "拉黑");
     block.addEventListener("click", () => {
@@ -234,7 +247,7 @@ function openMoreMenu(owner: HTMLElement, onBlock: () => void, onReport: () => v
         onReport();
     });
 
-    const popup = domrd("div", { class: "tbr-floor-menu-popup", role: "menu" }, [block, report]);
+    const popup = domrd("div", { class: "tbr-floor-menu-popup", role: "menu" }, [favorite, report, block]);
     document.body.appendChild(popup);
     positionMoreMenu(popup, owner);
 
@@ -359,7 +372,7 @@ function modernize(item: HTMLElement): void {
     if (item.classList.contains("thread_top")) {
         unobserveForumAgree(item);
         item.querySelector(".thread-modern-author-row")?.remove();
-        item.querySelector(".thread-modern-footer")?.remove();
+        item.querySelector(".thread-modern-actions")?.remove();
         item.removeAttribute(FLAG);
         return;
     }
@@ -413,7 +426,7 @@ function modernize(item: HTMLElement): void {
     item.querySelector(".t_con")?.prepend(authorRow);
     item.querySelector(".threadlist_rep_num")?.setAttribute("aria-hidden", "true");
     const replyCount = text(field.reply_num ?? item.querySelector(".threadlist_rep_num")?.textContent) || "0";
-    createFooter(item, tid, replyCount);
+    createActions(item, tid, replyCount);
     item.setAttribute(FLAG, "1");
 }
 
@@ -434,7 +447,7 @@ export function syncForumThreadModernLayout(): void {
     items.forEach(item => {
         unobserveForumAgree(item);
         item.querySelector(".thread-modern-author-row")?.remove();
-        item.querySelector(".thread-modern-footer")?.remove();
+        item.querySelector(".thread-modern-actions")?.remove();
         item.removeAttribute(FLAG);
     });
 }
