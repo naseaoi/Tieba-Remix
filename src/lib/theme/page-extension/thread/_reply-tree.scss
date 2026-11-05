@@ -1,0 +1,7 @@
+// 楼层与楼中楼共用的回复树几何：楼层头像是第 0 列，列 n 的竖线对齐第 n 级头像中心
+$lzl-indent: 30px;
+$lzl-avatar-size: 34px;
+$lzl-text-offset: 45px;
+$lzl-rail-width: 2px;
+// 不透明色：分支出口处竖线与弯线重叠，半透明会叠出深色接缝
+$lzl-rail-color: color-mix(in srgb, var(--minimal-fore) 45%, var(--default-background));

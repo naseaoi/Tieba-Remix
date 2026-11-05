@@ -1,4 +1,6 @@
 import { currentPageType } from "@/lib/api/remixed";
+import { asyncdom } from "@/lib/elemental";
+import { FORUM_PAGELET_TIMEOUT_MS } from "./forum";
 
 const MODULE_SELECTOR = ".aside_region, #novel-ranking";
 const HEADER_SELECTOR = ".region_header, .novel-ranking-frs-title";
@@ -9,10 +11,10 @@ export function installForumAsideCollapse(): void {
     if (installed || currentPageType() !== "forum") return;
     installed = true;
 
-    const onReady = (): void => {
+    const setup = async (): Promise<void> => {
         if (!document.documentElement.classList.contains("style-vercel")) return;
 
-        const aside = document.querySelector<HTMLElement>(".aside");
+        const aside = await asyncdom<"div">(".aside", undefined, FORUM_PAGELET_TIMEOUT_MS);
         if (!aside) return;
 
         initCollapseAll(aside);
@@ -40,11 +42,7 @@ export function installForumAsideCollapse(): void {
         observer.observe(aside, { childList: true, subtree: true });
     };
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", onReady, { once: true });
-    } else {
-        onReady();
-    }
+    void setup();
 }
 
 function initCollapseAll(root: ParentNode): void {
@@ -52,7 +50,7 @@ function initCollapseAll(root: ParentNode): void {
         if (module.dataset.collapseInit === "true") return;
 
         module.dataset.collapseInit = "true";
-        setCollapsed(module, true);
+        setCollapsed(module, false);
 
         const header = module.querySelector<HTMLElement>(HEADER_SELECTOR);
         if (!header) return;

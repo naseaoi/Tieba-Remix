@@ -12,6 +12,9 @@ const REPLY_CLASS = "tbr-floor-reply";
 const MENU_CLASS = "tbr-floor-menu";
 const MENU_BOUND = "data-tbr-floor-menu";
 const NATIVE_REPORT_FLAG = "data-tbr-native-report";
+const DELETE_LINK = ".p_post_del_my, .lzl_delate_in";
+// 在 JS 中识别而非用 CSS :has()：:has() 后接后代选择器会让任意内联 style 变更触发全页样式重算
+const CLIENT_DOWNLOAD_LINK = "a[href*=\"c.tieba.baidu.com/c/s/download/pc\"]";
 
 let installed = false;
 let popupEl: HTMLElement | undefined;
@@ -35,22 +38,23 @@ export function installThreadFloorActions(): void {
 }
 
 function renderReplyControls(): void {
-    document.querySelectorAll<HTMLElement>(
-        ".p_reply_first, .j_lzl_r .lzl_link_unfold, .j_lzl_r .lzl_link_fold",
-    ).forEach(link => {
-        link.classList.add(REPLY_CLASS);
-        prependActionIcon(link, MessageSquare);
-        const label = link.classList.contains("lzl_link_fold") ? "收起回复" : "回复";
-        link.setAttribute("aria-label", label);
-        link.title = label;
+    // 楼层的展开/收起链接只负责发表评论，标签由 renderLzlFloorControls 统一写入
+    document.querySelectorAll<HTMLElement>(".j_lzl_r .lzl_link_unfold, .j_lzl_r .lzl_link_fold").forEach(link => {
+        markReplyControl(link);
     });
 
-    document.querySelectorAll<HTMLElement>(".lzl_content_reply .lzl_s_r").forEach(link => {
-        link.classList.add(REPLY_CLASS);
-        prependActionIcon(link, MessageSquare);
-        link.setAttribute("aria-label", "回复");
-        link.title = "回复";
+    document.querySelectorAll<HTMLElement>(".p_reply_first, .lzl_content_reply .lzl_s_r").forEach(link => {
+        markReplyControl(link, "回复");
     });
+}
+
+// 每帧都会执行：同值写入 class/属性也会产生变动记录并触发样式失效
+function markReplyControl(link: HTMLElement, label?: string): void {
+    if (!link.classList.contains(REPLY_CLASS)) link.classList.add(REPLY_CLASS);
+    prependActionIcon(link, MessageSquare);
+    if (label === undefined) return;
+    if (link.getAttribute("aria-label") !== label) link.setAttribute("aria-label", label);
+    if (link.title !== label) link.title = label;
 }
 
 function renderFloorMenus(): void {
@@ -86,6 +90,8 @@ function renderFloorMenus(): void {
 
 function setupFloorMenu(menu: HTMLElement, reportTarget: HTMLElement | null): void {
     let allowReport = false;
+    // 自己的发言原生放的是删除链接
+    const isOwnPost = reportTarget?.matches(DELETE_LINK) === true;
 
     if (reportTarget && reportTarget !== menu) {
         reportTarget.addEventListener("click", event => {
@@ -117,10 +123,12 @@ function setupFloorMenu(menu: HTMLElement, reportTarget: HTMLElement | null): vo
             closeMenu();
             return;
         }
-        openMenu(menu, doReport, doBlock);
+        openMenu(menu, isOwnPost
+            ? [{ label: "删除", danger: true, run: runNativeAction }]
+            : [{ label: "举报", run: runNativeAction }, { label: "拉黑", danger: true, run: doBlock }]);
     }
 
-    function doReport(): void {
+    function runNativeAction(): void {
         closeMenu();
         if (!reportTarget) return;
         allowReport = true;
@@ -133,18 +141,26 @@ function setupFloorMenu(menu: HTMLElement, reportTarget: HTMLElement | null): vo
     }
 }
 
-function openMenu(owner: HTMLElement, onReport: () => void, onBlock: () => void): void {
+interface MenuItem {
+    label: string;
+    danger?: boolean;
+    run: () => void;
+}
+
+function openMenu(owner: HTMLElement, items: MenuItem[]): void {
     closeMenu();
 
-    const report = domrd("button", { class: "tbr-floor-menu-item", type: "button", role: "menuitem" });
-    report.textContent = "举报";
-    report.addEventListener("click", onReport);
+    const buttons = items.map(item => {
+        const button = domrd("button", {
+            class: item.danger ? "tbr-floor-menu-item tbr-floor-menu-item-danger" : "tbr-floor-menu-item",
+            type: "button",
+            role: "menuitem",
+        }, item.label);
+        button.addEventListener("click", item.run);
+        return button;
+    });
 
-    const block = domrd("button", { class: "tbr-floor-menu-item tbr-floor-menu-item-danger", type: "button", role: "menuitem" });
-    block.textContent = "拉黑";
-    block.addEventListener("click", onBlock);
-
-    const popup = domrd("div", { class: "tbr-floor-menu-popup", role: "menu" }, [report, block]);
+    const popup = domrd("div", { class: "tbr-floor-menu-popup", role: "menu" }, buttons);
     document.body.appendChild(popup);
     positionPopup(popup, owner);
 
@@ -204,7 +220,9 @@ function normalizeLocationText(): void {
         elem.childNodes.forEach(node => {
             if (node.nodeType !== Node.TEXT_NODE) return;
             const text = node.textContent ?? "";
-            node.textContent = text.replace(/^(\s*)IP属地[:：]\s*/, "$1");
+            const normalized = text.replace(/^(\s*)IP属地[:：]\s*/, "$1");
+            // 每帧都会执行：只在内容变化时写入，避免无谓的样式与布局失效
+            if (normalized !== text) node.textContent = normalized;
         });
     });
 }
@@ -212,10 +230,10 @@ function normalizeLocationText(): void {
 function renderPlatformIcons(): void {
     document.querySelectorAll<HTMLElement>(".post-tail-wrap .tail-info, .core_reply_tail .tail-info, .core_reply_tail .p_tail_wap, .lzl_content_reply .tbr-lzl-source").forEach(elem => {
         const text = (elem.title || elem.textContent || "").trim();
-        if (!/移动端|Android|iPhone|iPad/i.test(text)) return;
+        if (!/移动端|Android|iPhone|iPad/i.test(text) && !elem.querySelector(CLIENT_DOWNLOAD_LINK)) return;
 
-        elem.setAttribute("data-tbr-platform", "mobile");
-        elem.title = text;
+        if (elem.getAttribute("data-tbr-platform") !== "mobile") elem.setAttribute("data-tbr-platform", "mobile");
+        if (elem.title !== text) elem.title = text;
         prependActionIcon(elem, Smartphone);
     });
 }

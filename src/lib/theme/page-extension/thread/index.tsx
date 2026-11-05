@@ -15,12 +15,15 @@ import TogglePanel, { TogglePanelProps } from "@/components/toggle-panel.vue";
 import { currentPageType } from "@/lib/api/remixed";
 import { getAllThreadImages, levelToClass, tiebaAPI } from "@/lib/api/tieba";
 import { asyncdom, dom, domrd, findParent } from "@/lib/elemental";
+import { onDOMReady } from "@/lib/elemental/ready";
 import { CSSRule, overwriteCSS, parseCSSRule } from "@/lib/elemental/styles";
 import { THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_READY } from "@/lib/legacy-redirect";
 import { addCoalescedObserverEvent, threadCommentsObserver, threadFloorsObserver } from "@/lib/observers";
 import { RenderedComponent, renderDialog } from "@/lib/render";
 import { appendJSX, insertJSX } from "@/lib/render/jsx-extension";
 import { floatBar, setFloatButtonTooltip } from "@/lib/tieba-components/float-bar";
+import { installLzlReplyComposer } from "@/lib/tieba-components/lzl-reply-composer";
+import { installLzlReplyTarget } from "@/lib/tieba-components/lzl-reply-target";
 import { pager } from "@/lib/tieba-components/pager";
 import { installThreadFavoriteTagPopup } from "@/lib/tieba-components/thread-favorite-tag-popup";
 import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
@@ -220,6 +223,7 @@ export default async function () {
             <div class="forum-wrapper-button">
                 <a class="forum-icon-link" href={tiebaAPI.URL_forum(PageData.forum.forum_name)} title={`进入${PageData.forum.forum_name}吧`}>
                     <img class="forum-icon" src={forumIconLink} alt="吧头像" />
+                    <span class="forum-name">{PageData.forum.forum_name}吧</span>
                 </a>
                 <div class="button-container">
                     <UserButton
@@ -244,7 +248,7 @@ export default async function () {
         // 楼层举报按钮的文本只在刷新帖子时才会出现，翻页时不会出现
         // 缺少文本时手动插入
         // 由于一些动态加载行为，在 DOMContentLoaded 后判断举报按钮中的文字节点是否存在更为妥当
-        document.addEventListener("DOMContentLoaded", function () {
+        onDOMReady(function () {
             threadFloorsObserver.addEvent(function () {
                 (dom<"a">(".j_jb_ele a", [])).forEach(el => {
                     if (el.lastChild?.nodeType !== Node.TEXT_NODE) {
@@ -252,13 +256,11 @@ export default async function () {
                     }
                 });
             });
+        });
 
-            // 帖子主楼层显示分隔符，但无人回帖时不显示
-            if (PageData.pager.cur_page === 1 && PageData.thread.reply_num > 1) {
-                const firstFloor = dom<"div">(".l_post", threadList);
-                if (firstFloor) firstFloor.style.borderBottom = "2px solid var(--tieba-theme-fore) !important";
-            }
-        }, { once: true });
+        // AJAX 翻页会替换楼层节点并更新 cur_page，需随楼层变化重新标记主楼
+        markMainFloor(threadList);
+        addCoalescedObserverEvent(() => markMainFloor(threadList), threadFloorsObserver);
 
         addCoalescedObserverEvent(function () {
             if (dom(".d_author", threadList, []).length === 0) return;
@@ -421,6 +423,8 @@ export default async function () {
             });
         });
 
+        installLzlReplyTarget();
+        installLzlReplyComposer();
         setupCommentEmotionPanel();
 
         threadFloorsObserver.observe();
@@ -431,9 +435,10 @@ export default async function () {
 
     // pager 相关
     const pagerVNodes: VNode[] = [];
-    const insertPager = (parent: Element, position: Node | null, additionalStyles?: CSSRule) => {
-        const { vnode: pagerVNode } = insertJSX(createPager(additionalStyles), parent, position ?? undefined);
+    const insertPager = (placement: "top" | "bottom", parent: Element, position: Node | null, additionalStyles?: CSSRule) => {
+        const { root, vnode: pagerVNode } = insertJSX(createPager(additionalStyles), parent, position ?? undefined);
         pagerVNodes.push(pagerVNode);
+        if (root instanceof HTMLElement) root.dataset.threadPager = placement;
 
         function createPager(additionalStyles?: CSSRule) {
             const pagerComponent =
@@ -460,7 +465,7 @@ export default async function () {
             return pagerComponent;
         }
     };
-    insertPager(pbContentRoot, pbContentRoot.firstChild, {
+    insertPager("top", pbContentRoot, pbContentRoot.firstChild, {
         marginBottom: "24px",
         position: PageData.pager.total_page <= 1 ? "absolute" : "",
         right: PageData.pager.total_page <= 1 ? "48px" : "",
@@ -482,7 +487,7 @@ export default async function () {
         setFloatButtonTooltip(commentButton.el, "评论");
 
         // 添加末尾帖子回复入口
-        insertPager(pbContentRoot, pbContentRoot.lastChild, {
+        insertPager("bottom", pbContentRoot, pbContentRoot.lastChild, {
             paddingTop: "24px",
         });
         appendJSX(
@@ -554,6 +559,27 @@ function isThreadUnavailablePage(): boolean {
     if (document.querySelector(".page404")) return true;
     if (PageData?.thread?.thread_id) return false;
     return document.querySelector("#j_p_postlist, #pb_content") == null;
+}
+
+const MAIN_FLOOR_ATTR = "data-main-floor";
+const REPLY_LABEL_ATTR = "data-reply-label";
+
+/** 仅第一页存在主楼；回复数用于主楼与回复区之间的分节标题 */
+function markMainFloor(threadList: HTMLElement): void {
+    const first = threadList.querySelector<HTMLElement>(":scope > .l_post");
+    threadList.querySelectorAll(`[${MAIN_FLOOR_ATTR}]`).forEach(el => {
+        if (el !== first) {
+            el.removeAttribute(MAIN_FLOOR_ATTR);
+            el.removeAttribute(REPLY_LABEL_ATTR);
+        }
+    });
+    if (!first) return;
+
+    const isMainFloor = PageData.pager.cur_page === 1;
+    first.toggleAttribute(MAIN_FLOOR_ATTR, isMainFloor);
+    const replyCount = PageData.thread.reply_num - 1;
+    if (isMainFloor && replyCount > 0) first.setAttribute(REPLY_LABEL_ATTR, `全部回复 · ${replyCount}`);
+    else first.removeAttribute(REPLY_LABEL_ATTR);
 }
 
 function markThreadLayoutReady(): void {

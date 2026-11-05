@@ -2,9 +2,13 @@ import { currentPageType } from "@/lib/api/remixed";
 import { GM_addStyle } from "@/lib/monkey";
 
 let installed = false;
-const DETECT_DELAY_MS = 0;
+const DETECT_DELAY_MS = 1500;
 const BANNER_ID = "trex-forum-load-failure-banner";
 const THREAD_ITEM_SELECTOR = ".j_thread_list[data-tid], .j_thread_list[data-field]";
+// Bigpipe 渲染成功后会移除该节点；节点残留说明原生列表脚本未执行
+const THREAD_LIST_PAGELET_ID = "pagelet_html_frs-list/pagelet/thread_list";
+const AUTO_RELOAD_KEY = "tiebaRemix:forumListAutoReload";
+const AUTO_RELOAD_TTL_MS = 30_000;
 let detectTimer: number | undefined;
 let pageObserver: MutationObserver | undefined;
 
@@ -73,7 +77,7 @@ function showBanner(): void {
     banner.id = BANNER_ID;
 
     const text = document.createElement("span");
-    text.textContent = "⚠ 帖子列表未加载,可能是广告拦截器误伤了贴吧脚本";
+    text.textContent = "帖子列表未加载，可能是广告拦截器或网络问题拦截了贴吧脚本";
 
     const reloadBtn = document.createElement("button");
     reloadBtn.type = "button";
@@ -116,12 +120,31 @@ function handlePageChange(): void {
     stopDetection();
 }
 
+function isThreadListPageletPending(): boolean {
+    return document.getElementById(THREAD_LIST_PAGELET_ID) !== null;
+}
+
+// 同一地址短时间内只自动刷新一次，避免持续失败时循环刷新
+function tryAutoReload(): boolean {
+    try {
+        const raw = sessionStorage.getItem(AUTO_RELOAD_KEY);
+        const last = raw ? JSON.parse(raw) as { url?: string; at?: number } : null;
+        if (last?.url === location.href && Date.now() - (last.at ?? 0) < AUTO_RELOAD_TTL_MS) return false;
+        sessionStorage.setItem(AUTO_RELOAD_KEY, JSON.stringify({ url: location.href, at: Date.now() }));
+    } catch {
+        return false;
+    }
+    window.location.reload();
+    return true;
+}
+
 function detect(): void {
     detectTimer = undefined;
     if (hasThreadItem()) {
         stopDetection();
         return;
     }
+    if (isThreadListPageletPending() && tryAutoReload()) return;
     showBanner();
 }
 

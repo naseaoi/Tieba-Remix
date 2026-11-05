@@ -1,7 +1,13 @@
 <template>
     <div ref="rootRef" class="setting-select" :class="{ open }">
         <button type="button" class="select-trigger" :class="{ active: open }" @click="toggleOpen">
-            <span class="trigger-text">{{ currentText }}</span>
+            <!-- 所有选项叠放在同一网格格子里，触发器宽度按最长选项计算 -->
+            <span class="trigger-text">
+                <span v-for="(item, idx) in data" :key="idx" class="trigger-option"
+                    :class="{ current: item.value === currentValue }" :aria-hidden="item.value !== currentValue">
+                    {{ item.text }}
+                </span>
+            </span>
             <ChevronDown class="trigger-icon" aria-hidden="true" />
         </button>
 
@@ -21,7 +27,7 @@
 
 <script lang="ts" setup generic="T">
 import { ChevronDown } from "@lucide/vue";
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 interface SelectItem {
     value: T;
@@ -51,11 +57,6 @@ const hoverIdx = ref<number>(-1);
 
 watch(() => props.defaultValue, v => {
     currentValue.value = v;
-});
-
-const currentText = computed(() => {
-    const found = props.data.find(d => d.value === currentValue.value);
-    return found?.text ?? "";
 });
 
 function toggleOpen() {
@@ -143,11 +144,23 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
     gap: 8px;
 
     .trigger-text {
+        display: grid;
         overflow: hidden;
         flex: 1;
+        min-width: 0;
         text-align: left;
+    }
+
+    .trigger-option {
+        overflow: hidden;
+        grid-area: 1 / 1;
         text-overflow: ellipsis;
+        visibility: hidden;
         white-space: nowrap;
+
+        &.current {
+            visibility: visible;
+        }
     }
 
     .trigger-icon {
@@ -178,8 +191,11 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2025;
     top: calc(100% + 4px);
     right: 0;
-    left: 0;
     display: flex;
+    width: max-content;
+    min-width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
     overflow: hidden;
     padding: 4px;
     border: 1px solid var(--border-color);

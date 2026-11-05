@@ -93,6 +93,15 @@ const commonConfig = defineConfig({
                 find: "@",
                 replacement: resolve(__dirname, "./src"),
             },
+            // UMD 依赖经 require("vue") 会解析到含模板编译器的 CJS 完整版；项目只用预编译 SFC/JSX
+            {
+                find: /^vue$/,
+                replacement: "vue/dist/vue.runtime.esm-bundler.js",
+            },
+            {
+                find: /^lodash$/,
+                replacement: resolve(__dirname, "./src/lib/utils/lodash-shim.ts"),
+            },
         ],
     },
     server: {

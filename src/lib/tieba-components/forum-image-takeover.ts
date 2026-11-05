@@ -21,6 +21,7 @@ const prefetchedThreadIds = new Set<number>();
 interface ForumImageTarget {
     tid: number;
     index: number;
+    firstPostId?: number;
     mediaList: HTMLElement;
 }
 
@@ -63,7 +64,7 @@ export function installForumImageTakeover(): void {
 
         const target = getForumImageTarget(e.target);
         if (!target) return;
-        const { tid, index, mediaList } = target;
+        const { tid, index, firstPostId, mediaList } = target;
 
         e.preventDefault();
         e.stopPropagation();
@@ -72,7 +73,13 @@ export function installForumImageTakeover(): void {
             const thumbCount = mediaList.querySelectorAll("img").length;
             void (async () => {
                 const allImages = await fetchThreadImages(tid);
-                const filtered = allImages.slice(0, Math.max(thumbCount, 1));
+                // 列表缩略图最多 3 张，首楼完整图片按 post_id 从整帖图片中筛出
+                const firstFloorImages = firstPostId
+                    ? allImages.filter(image => image.postId === firstPostId)
+                    : [];
+                const filtered = firstFloorImages.length > 0
+                    ? firstFloorImages
+                    : allImages.slice(0, Math.max(thumbCount, 1));
                 void imagesViewer({
                     content: filtered,
                     defaultIndex: Math.max(0, Math.min(index, filtered.length - 1)),
@@ -102,8 +109,19 @@ function getForumImageTarget(eventTarget: EventTarget | null): ForumImageTarget 
     return {
         tid,
         index: Math.max(0, Array.prototype.indexOf.call(mediaList.children, picLi)),
+        firstPostId: parseFirstPostId(threadLi),
         mediaList,
     };
+}
+
+function parseFirstPostId(threadLi: HTMLElement): number | undefined {
+    try {
+        const field = JSON.parse(threadLi.getAttribute("data-field") ?? "null") as { first_post_id?: unknown } | null;
+        const id = Number(field?.first_post_id);
+        return Number.isSafeInteger(id) && id > 0 ? id : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 function clearIntentPrefetch(): void {

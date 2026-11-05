@@ -1,4 +1,3 @@
-import { dom } from "@/lib/elemental";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver } from "@/lib/observers";
 import _ from "@/lib/utils/_";
 
@@ -72,60 +71,13 @@ function main() {
     ];
     const emojiByFile = new Map(transformed.map((file, index) => [file, emojis[index]]));
 
-    // 看贴页面
-    threadCommentsObserver.addEvent(() => {
-        try {
-            (dom(`
-                .p_author_name:has(.nicknameEmoji),
-                .at:has(.nicknameEmoji),
-                .lzl_content_main:has(.nicknameEmoji)
-            `, [])).forEach((el) => {
-                updateEmojis(el);
-            });
-        } catch (error) {
-            (dom(".p_author_name, .at, .lzl_content_main", [])).forEach((el) => {
-                if (el.classList.contains("nicknameEmoji")) {
-                    updateEmojis(el);
-                }
-            });
-        }
-    });
+    // 直接查询表情图片：observer 每次 DOM 变动都会执行，全文档 :has() 查询代价高
+    threadCommentsObserver.addEvent(() => replaceEmojiImages(".p_author_name, .at, .lzl_content_main"));
+    legacyIndexFeedsObserver.addEvent(() => replaceEmojiImages(".new_list .post_author, .userinfo_username"));
+    forumThreadsObserver.addEvent(() => replaceEmojiImages(".threadlist_author a"));
 
-    // 首页
-    legacyIndexFeedsObserver.addEvent(() => {
-        try {
-            (dom(`
-                .new_list .post_author:has(.nicknameEmoji),
-                .userinfo_username:has(.nicknameEmoji)
-            `, [])).forEach((el) => {
-                updateEmojis(el);
-            });
-        } catch (error) {
-            (dom(".newlist .post_author, .userinfo_username", [])).forEach((el) => {
-                if (el.classList.contains("nicknameEmoji")) {
-                    updateEmojis(el);
-                }
-            });
-        }
-    });
-
-    // 进吧页面
-    forumThreadsObserver.addEvent(() => {
-        try {
-            (dom(".threadlist_author a:has(.nicknameEmoji)", [])).forEach((el) => {
-                updateEmojis(el);
-            });
-        } catch (error) {
-            (dom(".threadlist_author a", [])).forEach((el) => {
-                if (el.classList.contains("nicknameEmoji")) {
-                    updateEmojis(el);
-                }
-            });
-        }
-    });
-
-    function updateEmojis(elem: Element) {
-        elem.querySelectorAll<HTMLImageElement>('img[src*="nickemoji/"]').forEach(image => {
+    function replaceEmojiImages(containers: string) {
+        document.querySelectorAll<HTMLImageElement>(`:is(${containers}) img[src*="nickemoji/"]`).forEach(image => {
             const file = /nickemoji\/([^/?#]+\.png)/i.exec(image.src)?.[1];
             const emoji = file ? emojiByFile.get(file) : undefined;
             if (emoji) image.replaceWith(document.createTextNode(emoji));

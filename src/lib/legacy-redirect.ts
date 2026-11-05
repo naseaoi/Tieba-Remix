@@ -1,6 +1,8 @@
 // document-start 给 <html> 上 inline !important 样式锁定遮罩与滚动条占位；
 // 旧版/新版判定与百度安全验证拦截页都在此模块统一处理。
 
+import { prefetchThreadPageSnapshot } from "@/modules/thread-agree-count/api";
+import { hideCloakIndicator, showCloakIndicator } from "./cloak-indicator";
 import { GM_getValue } from "./monkey";
 import { installEarlyThreadImageLoading } from "./tieba-components/thread-image-loading";
 
@@ -191,14 +193,22 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
 
     installThreadLoadingLayoutStyle();
     installEarlyThreadImageLoading();
+    // 点赞数与属地数据不依赖 DOM，提前请求可与原生页面加载并行
+    if (isThreadPath() && threadAgreeCountEnabled()) prefetchThreadPageSnapshot();
 
-    if (document.readyState === "loading") {
+    // 生产构建经 System.import 异步求值，到这里 readyState 常已是 interactive，
+    // 只有 complete 才说明原生页面已完整绘制、此时遮罩已无意义
+    if (document.readyState !== "complete") {
         applyCloak();
         window.setTimeout(removeCloak, CLOAK_SAFETY_MS);
     }
 
-    // 早期：仅处理「百度安全验证」拦截页
-    waitForBody(() => { handleSecurityPage(); });
+    // 早期：处理「百度安全验证」拦截页；<body> 插入时属性已由解析器写好，
+    // 新版标记 cos-tieba 一出现就切换，不必等新版 SPA 资源加载到 DOMContentLoaded
+    waitForBody(() => {
+        if (handleSecurityPage()) return;
+        if (isNewVersionBody()) finalize();
+    });
 
     // 最终版本判定：等 DOMContentLoaded，确保 body class、PageData 都已就位
     if (document.readyState === "loading") {
@@ -211,8 +221,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         if (bootstrapped || redirectTriggered) return;
         if (handleSecurityPage()) return;
 
-        const isNewVersion = document.body?.classList.contains("cos-tieba") === true
-            || isForumPageWithoutPageData();
+        const isNewVersion = isNewVersionBody() || isForumPageWithoutPageData();
 
         if (isNewVersion) {
             if (hasRecentLegacySwitchAttempt()) {
@@ -231,14 +240,24 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
     }
 }
 
+function isNewVersionBody(): boolean {
+    return document.body?.classList.contains("cos-tieba") === true;
+}
+
 function isForumPageWithoutPageData(): boolean {
     return location.pathname.toLowerCase() === "/f" && typeof PageData === "undefined";
 }
 
 function applyCloak(): void {
-    if (!document.documentElement) return;
+    if (cloakRemoved) return;
+    // document-start 下 <html> 可能尚未建立，重试到安全阀置起 cloakRemoved 为止
+    if (!document.documentElement) {
+        window.setTimeout(applyCloak, 0);
+        return;
+    }
     installThreadLoadingLayoutStyle();
     cloakApplied = true;
+    showCloakIndicator();
     document.documentElement.style.setProperty("overflow-y", "scroll", "important");
     document.documentElement.style.setProperty("scrollbar-gutter", "stable", "important");
     document.documentElement.style.setProperty("visibility", "hidden", "important");
@@ -250,6 +269,10 @@ function applyCloak(): void {
 function installThreadLoadingLayoutStyle(): void {
     if (!isThreadPath()) return;
     if (!threadPageExtensionEnabled()) return;
+    if (!document.documentElement) {
+        window.setTimeout(installThreadLoadingLayoutStyle, 0);
+        return;
+    }
     document.documentElement.setAttribute(THREAD_LAYOUT_STATUS_ATTR, THREAD_LAYOUT_STATUS_LOADING);
     document.documentElement.dataset.navBarMode = readNavBarHideMode();
     const agreeCountEnabled = threadAgreeCountEnabled();
@@ -285,13 +308,19 @@ function threadAgreeCountEnabled(): boolean {
 }
 
 function removeCloak(): void {
-    if (cloakRemoved || !cloakApplied) return;
+    if (cloakRemoved) return;
     cloakRemoved = true;
+    if (!cloakApplied) return;
+    hideCloakIndicator();
     document.documentElement?.style.removeProperty("visibility");
 }
 
 function waitForBody(cb: () => void): void {
     if (document.body) { cb(); return; }
+    if (!document.documentElement) {
+        window.setTimeout(() => waitForBody(cb), 0);
+        return;
+    }
     const obs = new MutationObserver(() => {
         if (document.body) {
             obs.disconnect();

@@ -1,7 +1,7 @@
 import { dom } from "@/lib/elemental";
 import { threadCommentsObserver } from "@/lib/observers";
 
-const VIDEO_CODE_REGEXP = /\b(?<id>av[1-9]\d*|BV[1-9A-HJ-NP-Za-km-z]{10})\b/g;
+const VIDEO_CODE_REGEXP = /\b(?<id>[aA][vV][1-9]\d*|BV[1-9A-HJ-NP-Za-km-z]{10})\b/g;
 
 export default {
     id: "portal",
@@ -11,28 +11,31 @@ export default {
     brief: "为贴子中的b站番号添加跳转链接",
     description: `该模块可以识别贴子中的 av/BV 号并将其转换为超链接`,
     scope: ["thread"],
-    runAt: "immediately",
+    runAt: "DOMLoaded",
     entry: main,
 } as UserModule;
 
-function main(): void {
-    document.addEventListener("DOMContentLoaded", () => {
-        threadCommentsObserver.addEvent(biliPortal);
-    });
+// 楼层与楼中楼正文节点渲染后不再变化，已扫描的节点不重复遍历
+const scanned = new WeakSet<Element>();
 
-    function biliPortal() {
-        addBiliLinks(".d_post_content");
-        addBiliLinks(".lzl_cnt .lzl_content_main");
-    }
+function main(): void {
+    threadCommentsObserver.addEvent(biliPortal);
+}
+
+function biliPortal(): void {
+    addBiliLinks(".d_post_content");
+    addBiliLinks(".lzl_cnt .lzl_content_main");
 }
 
 function addBiliLinks(selector: string): void {
     (dom(selector, [])).forEach((elem) => {
+        if (scanned.has(elem)) return;
+        scanned.add(elem);
         linkVideoCodes(elem);
     });
 }
 
-function linkVideoCodes(root: Element): void {
+export function linkVideoCodes(root: Element): void {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!(node instanceof Text)) return NodeFilter.FILTER_REJECT;

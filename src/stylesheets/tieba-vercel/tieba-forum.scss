@@ -1,9 +1,12 @@
+@use "./forum-aside-layout" as aside-layout;
 @use "./forum-header" as header;
 @use "./forum-title-card" as title;
 @use "./forum-nav-sidebar" as nav;
 @use "./forum-thread-list" as threads;
 @use "./forum-live-thread" as live;
 @use "./forum-footer" as footer;
+@use "./forum-sticky-nav" as sticky-nav;
+@use "./forum-thread-sort" as thread-sort;
 @use "./tokens" as *;
 
 html.style-vercel {
@@ -13,6 +16,9 @@ html.style-vercel {
     @include live.forum-live-thread;
     @include threads.forum-thread-list;
     @include footer.forum-footer;
+    @include aside-layout.forum-aside-layout;
+    @include sticky-nav.forum-sticky-nav;
+    @include thread-sort.forum-thread-sort;
 
     .thread-modern-tag-popup {
         position: absolute !important;
@@ -87,10 +93,6 @@ html.style-vercel {
     }
 }
 
-html.style-vercel[data-forum-pinned="folded"] .threadlist_bright > li.thread_top_list_folder {
-    @include threads.pinned-folded-state;
-}
-
 html.style-vercel:not([data-forum-thread-modern]) {
     .threadlist_bright {
         > li.j_thread_list:not(.thread_top) {
@@ -107,16 +109,17 @@ html.style-vercel:not([data-forum-thread-modern]) {
         }
 
         .thread-modern-author-row,
-        .thread-modern-footer {
+        .thread-modern-actions {
             display: none !important;
         }
 
-        > li.j_thread_list:not(.thread_top) .threadlist_author,
+        // 只放出主题作者，最后回复人保持隐藏
+        > li.j_thread_list:not(.thread_top) .threadlist_lz > .threadlist_author,
         > li.j_thread_list:not(.thread_top) .threadlist_rep_num {
             display: inline-flex !important;
         }
 
-        .threadlist_author {
+        .threadlist_lz > .threadlist_author {
             grid-area: author !important;
             justify-self: end !important;
         }

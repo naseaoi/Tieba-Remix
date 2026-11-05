@@ -2,66 +2,6 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
-// 折叠态展开按钮
-@mixin pinned-folded-state {
-    display: block !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -24px !important;
-    right: auto !important;
-    width: 28px !important;
-    min-height: 0 !important;
-    height: 28px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    background: none !important;
-    box-shadow: none !important;
-    transform: none !important;
-    z-index: 100 !important;
-    grid-template-areas: none !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    overflow: visible !important;
-
-    > ul,
-    > ul.thread_top_list,
-    > .thread_top_list {
-        display: none !important;
-    }
-
-    #thread_top_folder {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        margin: 0;
-        padding: 0;
-        border: 1px solid var(--border-color);
-        border-radius: $vercel-radius-sm;
-        background: var(--default-background);
-        cursor: pointer;
-        transition: border-color $vercel-trans-normal $vercel-ease;
-
-        &::before {
-            @include lucide-mask-icon($lucide-chevron-down);
-            width: 14px;
-            height: 14px;
-            background-color: var(--light-fore);
-            transition: background-color $vercel-trans-normal $vercel-ease;
-        }
-
-        &:hover {
-            border-color: var(--minimal-fore);
-
-            &::before {
-                background-color: var(--default-fore);
-            }
-        }
-    }
-}
-
 /// 帖子列表
 @mixin forum-thread-list {
     .threadlist_bright {
@@ -131,27 +71,38 @@
             display: none !important;
         }
 
-        // 置顶帖
+        // 置顶区：整体一张卡片，标题栏 + 紧凑行
         > li.thread_top_list_folder,
         > li.thread_top_list_folder:hover {
+            display: block !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: $vercel-radius-md !important;
             background-color: var(--default-background) !important;
-            border-left: 2px solid var(--default-fore) !important;
-        }
-
-        // 置顶帖展开态
-        > li.thread_top_list_folder:not(.pinned-folded) {
-            display: contents !important;
+            box-shadow: $vercel-shadow-sm !important;
 
             > ul.thread_top_list,
             > .thread_top_list {
-                display: contents !important;
+                display: block !important;
                 list-style: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
         }
 
-        // 内层置顶帖卡片
+        > li.thread_top_list_folder[data-pinned-empty] > .thread_top_list,
+        > li.thread_top_list_folder[data-pinned-none] {
+            display: none !important;
+        }
+
+        .thread_top_list > li.j_thread_list.thread_top[data-pinned-overflow] {
+            display: none !important;
+        }
+
+        // 置顶行
         .thread_top_list > li.j_thread_list.thread_top {
             display: grid !important;
             position: relative !important;
@@ -163,41 +114,30 @@
             align-items: center !important;
             column-gap: 12px !important;
             row-gap: 0 !important;
-            min-height: 56px !important;
-            padding: 12px 16px !important;
+            min-height: 44px !important;
+            padding: 8px 32px 8px 16px !important;
             margin: 0 !important;
-            border: 1px solid var(--border-color) !important;
-            border-left: 2px solid var(--default-fore) !important;
-            border-radius: $vercel-radius-md !important;
-            background-color: var(--default-background) !important;
-            box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+            border: none !important;
+            border-top: 1px solid var(--border-color) !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
             float: none !important;
             width: auto !important;
             height: auto !important;
             overflow: visible !important;
-            transition: border-color $vercel-trans-normal $vercel-ease,
-                        box-shadow $vercel-trans-normal $vercel-ease !important;
+            transition: background-color $vercel-trans-normal $vercel-ease !important;
 
             &:hover {
-                border-color: var(--minimal-fore) !important;
-                background-color: var(--default-background) !important;
-                box-shadow: 0 2px 6px rgb(0 0 0 / 8%) !important;
-            }
-
-            html.dark-theme & {
-                box-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
-
-                &:hover {
-                    box-shadow: 0 2px 8px rgb(0 0 0 / 50%) !important;
-                }
+                background-color: var(--default-hover) !important;
             }
         }
 
         // 隐藏内层关闭项
         .thread_top_list > li.j_thread_list.thread_top[style*="display: none"],
         .thread_top_list > li.j_thread_list.thread_top[style*="display:none"],
-        .thread_top_list > li.j_thread_list.thread_top[style*="overflow: hidden"],
-        .thread_top_list > li.j_thread_list.thread_top[data-tid="1"]:has(.threadlist_title a.j_th_tit[href*="/bawu2/errorPage"]),
+        .thread_top_list > li.j_thread_list.thread_top[data-pinned-hidden],
+        .thread_top_list > li.j_thread_list.thread_top[data-tbr-shield-hidden],
         .thread_top_list > li.j_thread_list.thread_top[hidden] {
             display: none !important;
         }
@@ -238,16 +178,13 @@
             vertical-align: middle !important;
         }
 
+        // 置顶区标题栏已标明身份，行内不再重复「顶」
         .thread_top_list .threadlist_title .icon-top {
-            background-color: var(--error-color) !important;
+            display: none !important;
         }
 
         .thread_top_list .threadlist_title .icon-good {
             background-color: var(--warning-color) !important;
-        }
-
-        .thread_top_list .threadlist_title .icon-top::before {
-            content: "顶";
         }
 
         .thread_top_list .threadlist_title .icon-good::before {
@@ -297,6 +234,7 @@
         // 隐藏外层关闭项
         > li[style*="display: none"],
         > li[style*="display:none"],
+        > li[data-tbr-shield-hidden],
         > li[hidden] {
             display: none !important;
         }
@@ -319,9 +257,72 @@
             display: none !important;
         }
 
-        // 置顶折叠态
-        > li.thread_top_list_folder.pinned-folded {
-            @include pinned-folded-state;
+        .trex-pinned-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 40px;
+            padding: 0 12px 0 16px;
+            color: var(--light-fore);
+            font-size: $vercel-fs-sm;
+        }
+
+        .trex-pinned-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--default-fore);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .trex-pinned-count {
+            padding: 0 6px;
+            border-radius: $vercel-radius-xs;
+            background-color: var(--default-hover);
+            color: var(--light-fore);
+            font-family: $vercel-font-mono;
+            font-size: $vercel-fs-xs;
+            font-weight: var(--font-weight-normal);
+            line-height: 18px;
+        }
+
+        .trex-pinned-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trex-pinned-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            height: 26px;
+            padding: 0 8px !important;
+            border: none !important;
+            border-radius: $vercel-radius-sm !important;
+            background: none !important;
+            color: var(--light-fore) !important;
+            font: inherit;
+            font-size: $vercel-fs-xs;
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--default-hover) !important;
+                color: var(--default-fore) !important;
+            }
+
+            &[hidden] {
+                display: none;
+            }
+
+            svg {
+                transition: transform $vercel-trans-normal $vercel-ease;
+            }
+
+            &[aria-expanded="true"] svg {
+                transform: rotate(180deg);
+            }
         }
 
         // 中间 wrapper
@@ -363,24 +364,9 @@
             display: none !important;
         }
 
-        // 数量标签
+        // 数量由最后一张缩略图上的 +N 遮罩表达
         .small_pic_num {
-            flex-shrink: 0 !important;
-            align-self: center !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 4px 10px !important;
-            margin: 0 !important;
-            border-radius: $vercel-radius-xs !important;
-            background-color: var(--default-hover) !important;
-            color: var(--light-fore) !important;
-            font-family: $vercel-font-mono !important;
-            font-size: $vercel-fs-xs !important;
-            line-height: 1 !important;
-            white-space: nowrap !important;
-            float: none !important;
-            position: static !important;
+            display: none !important;
         }
 
         // 标题
@@ -607,8 +593,31 @@
                 max-height: none !important;
                 line-height: 0 !important;
                 flex: 0 0 auto !important;
+                position: relative !important;
                 border-radius: $vercel-radius-sm !important;
                 overflow: hidden !important;
+
+                &[data-trex-more]::after {
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: rgb(0 0 0 / 45%);
+                    color: #fff;
+                    font-size: $vercel-fs-lg;
+                    font-weight: 600;
+                    font-feature-settings: "tnum" 1;
+                    line-height: 1;
+                    letter-spacing: 0.02em;
+                    pointer-events: none;
+                    content: attr(data-trex-more);
+                    transition: background-color $vercel-trans-fast $vercel-ease;
+                }
+
+                &[data-trex-more]:hover::after {
+                    background-color: rgb(0 0 0 / 60%);
+                }
             }
 
             a,
@@ -705,21 +714,20 @@
             margin: 0 !important;
         }
 
-        // 三段式帖子信息布局
+        // 作者与互动在首行，标题摘要在左，缩略图在右
         > li.j_thread_list:not(.thread_top) {
             grid-template-columns: minmax(0, 1fr) auto !important;
-            grid-template-rows: auto auto auto auto auto !important;
+            grid-template-rows: auto auto 1fr !important;
             grid-template-areas:
                 "modern-author modern-author"
-                "title title"
-                "abs abs"
-                "media media"
-                "footer footer" !important;
+                "title media"
+                "abs media" !important;
             grid-auto-rows: auto !important;
             align-items: start !important;
-            row-gap: 10px !important;
+            column-gap: 0 !important;
+            row-gap: 6px !important;
             min-height: 0 !important;
-            padding: 14px 16px 8px !important;
+            padding: 12px 16px 14px !important;
         }
 
         .thread-modern-author-row {
@@ -731,6 +739,7 @@
             gap: 12px !important;
             width: 100% !important;
             min-height: 32px !important;
+            margin-bottom: 4px !important;
         }
 
         .thread-modern-author {
@@ -788,7 +797,7 @@
             height: 32px !important;
             flex: 0 0 32px !important;
             border: 1px solid var(--border-color) !important;
-            border-radius: 50% !important;
+            border-radius: var(--avatar-radius) !important;
             background: var(--default-hover) !important;
             object-fit: cover !important;
         }
@@ -799,6 +808,15 @@
             font-size: $vercel-fs-xs !important;
             line-height: 1 !important;
             white-space: nowrap !important;
+        }
+
+        // 陈旧时间分级
+        .thread-modern-time[data-age="month"] {
+            color: var(--level-orange-fore) !important;
+        }
+
+        .thread-modern-time[data-age="year"] {
+            color: var(--error-color) !important;
         }
 
         > li.j_thread_list:not(.thread_top) .threadlist_author,
@@ -819,16 +837,11 @@
             min-height: 0 !important;
         }
 
-        .thread-modern-footer {
-            grid-area: footer !important;
-            display: grid !important;
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        .thread-modern-actions {
+            display: flex !important;
+            flex: 0 0 auto !important;
             align-items: center !important;
-            gap: 0 !important;
-            width: 100% !important;
-            min-height: 24px !important;
-            padding: 0 !important;
-            border-top: none !important;
+            gap: 2px !important;
             color: var(--light-fore) !important;
             font-size: $vercel-fs-sm !important;
             line-height: 1 !important;
@@ -861,11 +874,12 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 5px !important;
-            width: 100% !important;
-            min-height: 24px !important;
+            gap: 4px !important;
+            min-width: 28px !important;
+            height: 28px !important;
             padding: 0 8px !important;
             border: 0 !important;
+            border-radius: $vercel-radius-sm !important;
             background: none !important;
             color: var(--light-fore) !important;
             font: inherit !important;
@@ -874,8 +888,7 @@
         }
 
         .thread-modern-action > .thread-meta-icon,
-        .thread-modern-action > .thread-modern-value,
-        .thread-modern-action > .thread-modern-label {
+        .thread-modern-action > .thread-modern-value {
             display: inline-flex !important;
             align-items: center !important;
             height: 18px !important;
@@ -884,6 +897,8 @@
         }
 
         .thread-modern-action > .thread-modern-value {
+            font-family: $vercel-font-mono !important;
+            font-size: $vercel-fs-sm !important;
             font-variant-numeric: tabular-nums !important;
         }
 
@@ -893,32 +908,163 @@
 
         .thread-modern-action:hover,
         .thread-modern-action:focus-visible {
+            background-color: var(--default-hover) !important;
             color: var(--default-fore) !important;
+            outline: none !important;
         }
 
-        .thread-modern-action.is-active,
         .thread-modern-agree.agree-count-liked {
             color: var(--tieba-theme-color) !important;
         }
 
-        .thread-modern-action.is-active .thread-meta-icon,
         .thread-modern-agree.agree-count-liked .thread-meta-icon {
             fill: currentcolor;
         }
 
         .thread-meta-icon {
             display: block !important;
-            width: 18px !important;
-            height: 18px !important;
-            flex: 0 0 18px !important;
+            width: 16px !important;
+            height: 16px !important;
+            flex: 0 0 16px !important;
             line-height: 1 !important;
             user-select: none !important;
         }
+    }
 
-        .thread-modern-favorite:disabled {
-            cursor: wait !important;
-            opacity: 0.55 !important;
+    // 卡片视图：缩略图统一为方形裁切小图，放在标题摘要右侧
+    &[data-forum-thread-modern] .threadlist_bright > li.j_thread_list:not(.thread_top) {
+        .threadlist_abs,
+        .threadlist_abs_onlyline {
+            white-space: normal !important;
         }
 
+        .small_wrap,
+        .j_small_wrap {
+            align-self: start !important;
+            justify-content: flex-end !important;
+            margin-left: 24px !important;
+        }
+
+        .threadlist_media {
+            flex: 0 0 auto !important;
+            gap: 6px !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+
+            img {
+                width: 88px !important;
+                height: 88px !important;
+                max-height: none !important;
+                object-fit: cover !important;
+            }
+        }
+    }
+
+    // 紧凑视图：每帖一行，右侧信息列定宽以便跨行对齐
+    &[data-forum-thread-modern][data-forum-thread-density="compact"] .threadlist_bright {
+        row-gap: 0 !important;
+
+        > li:not(.j_thread_list) {
+            margin-bottom: 12px !important;
+        }
+
+        > li.trex-thread-sort-more {
+            margin: 12px 0 0 !important;
+        }
+
+        > li.j_thread_list:not(.thread_top) {
+            grid-template-columns: minmax(0, max-content) auto minmax(16px, 1fr) auto !important;
+            grid-template-rows: auto !important;
+            grid-template-areas: "title media . modern-author" !important;
+            align-items: center !important;
+            column-gap: 0 !important;
+            row-gap: 0 !important;
+            min-height: 44px !important;
+            padding: 6px 8px 6px 12px !important;
+            border-width: 0 0 1px !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+
+            &:hover {
+                border-color: var(--border-color) !important;
+                background-color: var(--default-hover) !important;
+                box-shadow: none !important;
+            }
+
+            &:last-child {
+                border-bottom-color: transparent !important;
+            }
+        }
+
+        .threadlist_title a,
+        a.j_th_tit {
+            font-size: $vercel-fs-md !important;
+            -webkit-line-clamp: 1 !important;
+        }
+
+        .threadlist_abs,
+        .threadlist_abs_onlyline {
+            display: none !important;
+        }
+
+        // 有图帖只保留一个图标提示，紧跟标题
+        > li.j_thread_list:not(.thread_top) :is(.small_wrap, .j_small_wrap) {
+            align-self: center !important;
+            margin: 0 0 0 8px !important;
+
+            > * {
+                display: none !important;
+            }
+
+            &::before {
+                @include lucide-mask-icon($lucide-image);
+                width: 16px;
+                height: 16px;
+                background-color: var(--minimal-fore);
+            }
+        }
+
+        .thread-modern-author-row {
+            gap: 4px !important;
+            width: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+        }
+
+        .thread-modern-author {
+            flex: 0 0 auto !important;
+            gap: 0 !important;
+        }
+
+        .thread-modern-avatar-link {
+            display: none !important;
+        }
+
+        .thread-modern-author-details {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .thread-modern-author-name {
+            width: 112px !important;
+            padding: 0 !important;
+            color: var(--light-fore) !important;
+            font-weight: normal !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        .thread-modern-time {
+            width: 80px !important;
+            text-align: right !important;
+        }
+
+        .thread-modern-action {
+            justify-content: flex-start !important;
+            width: 72px !important;
+        }
     }
 }

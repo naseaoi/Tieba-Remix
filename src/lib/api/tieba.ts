@@ -3,7 +3,14 @@ import { requestBody, requestInstance } from "@/lib/utils";
 import _ from "@/lib/utils/_";
 import { Except } from "type-fest";
 import { toast } from "user-view";
+import { md5 } from "@/modules/poll-display/md5";
 import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values";
+
+const PC_SIGN_SALT = "36770b1f34c9bbf2e7d1a99d2b82fa9e";
+
+function signPcForm(form: Record<string, string>): string {
+    return md5(Object.keys(form).sort().map(key => `${key}=${form[key]}`).join("") + PC_SIGN_SALT);
+}
 
 /** 贴吧 API */
 export const tiebaAPI = {
@@ -117,6 +124,52 @@ export const tiebaAPI = {
             "see_lz": Number(lzOnly),
         })}`),
 
+    commentPage: (threadId: number, parentId: number, forumId: number, page: number) =>
+        fetch(`/p/comment?${requestBody({ tid: threadId, pid: parentId, pn: page, fid: forumId, t: Date.now() })}`, {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        }),
+
+    subPostContent: (threadId: number, parentId: number, page = 1) => {
+        const form = {
+            kz: String(threadId),
+            pid: String(parentId),
+            pn: String(page),
+            rn: "100",
+            subapp_type: "pc",
+            _client_type: "20",
+        };
+        const sign = signPcForm(form);
+        return fetch("/c/f/pb/floor", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: new URLSearchParams({ ...form, sign }),
+        });
+    },
+
+    forumThreads: (kw: string, pn: number, sortType: 0 | 1) => {
+        const form = {
+            kw,
+            pn: String(pn),
+            rn: "30",
+            sort_type: String(sortType),
+            subapp_type: "pc",
+            _client_type: "20",
+        };
+        const sign = signPcForm(form);
+        return fetch("/c/f/frs/page", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: new URLSearchParams({ ...form, sign }),
+        });
+    },
+
     /** 获取热门话题相关贴 */
     topicRelatedThreads: (topicName: string, page: number, lastId: number, topicId: number, sortType = 1) =>
         fetch(`/hottopic/browse/getTopicRelateThread?${requestBody({
@@ -226,6 +279,72 @@ export const tiebaAPI = {
         })}`);
     },
 };
+
+interface PcSubPostContent {
+    type?: number;
+    origin_src?: string;
+    big_cdn_src?: string;
+    cdn_src?: string;
+}
+
+interface PcSubPostResponse {
+    error_code: number;
+    error_msg?: string;
+    subpost_list?: {
+        id?: number;
+        content?: PcSubPostContent[];
+    }[];
+    page?: {
+        current_page?: number;
+        total_page?: number;
+    };
+}
+
+export interface SubPostImage {
+    original: string;
+    thumbnail: string;
+}
+
+export async function fetchSubPostImagePage(threadId: number, parentId: number, page = 1): Promise<{
+    imagesById: Map<number, SubPostImage[]>;
+    hasMore: boolean;
+}> {
+    const response = await tiebaAPI.subPostContent(threadId, parentId, page);
+    if (!response.ok) throw new Error(`楼中楼请求失败 (${response.status})`);
+
+    const body = await response.json() as PcSubPostResponse;
+    if (body.error_code !== 0) throw new Error(`楼中楼接口错误 ${body.error_code}: ${body.error_msg ?? ""}`);
+
+    const posts = body.subpost_list ?? [];
+    const imagesById = new Map<number, SubPostImage[]>();
+    posts.forEach(post => {
+        if (!Number.isSafeInteger(post.id) || !post.id || post.id <= 0) return;
+        const images = post.content?.flatMap(item => {
+            if (item.type !== 3) return [];
+            const original = normalizeSubPostImageUrl(item.origin_src)
+                ?? normalizeSubPostImageUrl(item.big_cdn_src)
+                ?? normalizeSubPostImageUrl(item.cdn_src);
+            const thumbnail = normalizeSubPostImageUrl(item.cdn_src) ?? original;
+            return original && thumbnail ? [{ original, thumbnail }] : [];
+        }) ?? [];
+        imagesById.set(post.id, images);
+    });
+    // 接口忽略 rn，每页固定 30 条
+    const { current_page: current = page, total_page: total = 1 } = body.page ?? {};
+    return { imagesById, hasMore: current < total };
+}
+
+function normalizeSubPostImageUrl(value: unknown): string | undefined {
+    if (typeof value !== "string") return;
+    try {
+        const url = new URL(value);
+        if (url.hostname !== "tiebapic.baidu.com" || !["http:", "https:"].includes(url.protocol)) return;
+        url.protocol = "https:";
+        return url.href;
+    } catch {
+        return;
+    }
+}
 
 /** 贴吧请求收到的响应 */
 export interface TiebaResponse1 {

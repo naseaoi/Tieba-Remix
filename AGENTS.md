@@ -2,9 +2,11 @@
 
 ## 修改与验证
 
-- 代码修改完成后必须运行 `pnpm build` 和 `pnpm lint`。
-- 修改 Vue、SCSS 或 CSS 时，对相关文件运行 Stylelint。
-- 不直接修改 `build/tieba-remix.user.js`，该文件由构建生成。
+- 开发过程中按改动范围做快速验证：逻辑改动运行相关测试 `pnpm test <文件或关键字>`，类型改动运行 `pnpm typecheck`，Vue/SCSS/CSS 改动运行 `pnpm exec stylelint <文件>`。
+- 交付前运行与 CI 一致的完整检查并全部通过：`pnpm lint`、`pnpm lint:styles`、`pnpm test`、`pnpm build`（`build` 已包含类型检查）。
+- 新增或修改可脱离页面验证的逻辑（解析、匹配、计算、DOM 转换）时，在同目录补充或更新 `*.test.ts`（Vitest + jsdom）。
+- 页面布局、样式和交互改动通过 `pnpm dev` 在真实贴吧页面确认效果；无法确认时在交付说明中注明。
+- `build/` 是构建产物且不入库，不手动修改。
 
 ## 用户模块
 
@@ -36,10 +38,12 @@
 - 新版贴吧 SPA 不存在旧版 `PageData`；依赖 `PageData` 的逻辑只能在 `setupLegacyRedirect` 放行后的旧版页面运行。
 - `PageData.pager.cur_page > 1` 时帖子页没有首楼；修改首楼前必须判断当前页为第一页。
 - 页面范围使用 `currentPageType()` 和模块 `scope` 判断，不通过零散 URL 字符串重复判断。
+- 吧页的标题卡、导航、侧栏和帖子列表容器由 Bigpipe pagelet 异步渲染，冷缓存时晚于 DOMContentLoaded；依赖这些节点的初始化用 `asyncdom` 等待，不在 DOMContentLoaded 时一次性查询。
 - 规则或设置变更需要实时影响当前页面时，必须触发对应 observer 或同步更新当前 DOM 状态。
 
 ## 分支与发布
 
-- 预览版改动只进入 `preview` 分支。
-- 正式版通过 PR 从 `preview` 合并到 `main`。
+- 日常开发直接在 `preview` 上提交；实验性、可能放弃或需要多次会话完成的改动，从 `preview` 切出功能分支，合并后删除该分支（本地与远端）。
+- `main` 只接收来自 `preview` 的发布 PR，不直接提交。
+- 提交信息使用 Conventional Commits（`feat:`、`fix:`、`refactor:` 等）。
 - 发布流程和 tag 规则以 `docs/push-git.md` 为准。

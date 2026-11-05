@@ -196,7 +196,7 @@ body {
 .media_left img,
 .media-left img {
     /* 头像 */
-    border-radius: 16px;
+    border-radius: var(--avatar-radius);
 }
 
 #nameValue {

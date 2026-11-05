@@ -15,15 +15,6 @@ body[compact-layout] {
         padding-bottom: 0 !important;
     }
 
-    .author-container .floor-avatar {
-        margin-bottom: 0 !important;
-
-        img {
-            width: 32px;
-            height: 32px;
-        }
-    }
-
     .post-tail-wrap,
     .core_reply_tail:not(.clearfix) {
         gap: 6px;
@@ -35,7 +26,7 @@ body[compact-layout] {
 
     // 楼中楼单个回复
     .core_reply .core_reply_wrapper .core_reply_content .lzl_single_post {
-        margin-bottom: 0;
+        --tbr-lzl-gap: 0px;
     }
 
     .core_reply .core_reply_wrapper .core_reply_content {

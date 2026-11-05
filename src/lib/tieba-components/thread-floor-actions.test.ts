@@ -40,8 +40,14 @@ describe("legacy thread floor metadata", () => {
                         </ul>
                         <div class="ip-location"><span>IP属地:广东</span></div>
                     </div>
+                    <div class="lzl_content_reply own-reply">
+                        <span class="lzl_jb"><a class="lzl_delate_in" href="#">删除</a> | </span>
+                    </div>
                     <div class="lzl_content_reply">
                         <span class="tbr-lzl-source" data-tbr-platform="mobile" title="移动端">移动端</span>
+                    </div>
+                    <div class="post-tail-wrap">
+                        <span class="tail-info"><a href="https://c.tieba.baidu.com/c/s/download/pc?src=webtbGF">来自客户端</a></span>
                     </div>
                 </div>
             </div>
@@ -68,14 +74,19 @@ describe("legacy thread floor metadata", () => {
         expect(platform?.title).toBe("iPhone客户端");
         expect(platform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
         expect(subPostPlatform?.querySelector("svg.lucide-smartphone")).not.toBeNull();
+        expect(document.querySelector<HTMLElement>(".post-tail-wrap .tail-info")?.dataset.tbrPlatform).toBe("mobile");
         expect(menu?.parentElement).toBe(tail);
         expect(menu?.getAttribute("aria-label")).toBe("更多操作");
         expect(reply?.querySelector("svg.lucide-message-square")).not.toBeNull();
-        expect(reply?.getAttribute("aria-label")).toBe("回复");
+        expect(reply?.getAttribute("aria-label")).toBe("评论");
         expect(collapseReply?.querySelector("svg.lucide-message-square")).not.toBeNull();
-        expect(collapseReply?.getAttribute("aria-label")).toBe("收起回复");
+        expect(collapseReply?.getAttribute("aria-label")).toBe("评论");
 
         menu?.click();
         expect(document.querySelector(".tbr-floor-menu-popup")?.textContent).toBe("举报拉黑");
+
+        document.querySelector<HTMLElement>(".own-reply .tbr-floor-menu")?.click();
+        expect(document.querySelectorAll(".tbr-floor-menu-popup")).toHaveLength(1);
+        expect(document.querySelector(".tbr-floor-menu-popup")?.textContent).toBe("删除");
     });
 });

@@ -122,7 +122,7 @@ html.style-vercel {
 
     .p_author_face,
     .icon_relative {
-        border-radius: $vercel-radius-sm !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .p_author_face {
@@ -130,7 +130,7 @@ html.style-vercel {
     }
 
     .icon_relative img {
-        border-radius: $vercel-radius-sm !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .d_name .p_author_name {
@@ -269,9 +269,6 @@ html.style-vercel {
     .core_reply_wrapper {
         overflow: hidden !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 8px !important;
-        background: var(--very-light-background) !important;
         color: var(--default-fore) !important;
         box-shadow: none !important;
     }
@@ -285,8 +282,6 @@ html.style-vercel {
 
     .l_post_bright .core_reply_wrapper .core_reply_content {
         border: none !important;
-        padding-left: 16px !important;
-        margin-left: 12px !important;
         background: transparent !important;
     }
 
@@ -296,12 +291,6 @@ html.style-vercel {
 
     .core_reply div.hideLzl {
         background-color: var(--default-background) !important;
-    }
-
-    .core_reply_content .lzl_li_pager {
-        padding-top: 5px !important;
-        margin-top: 5px !important;
-        border-top: 1px dashed var(--border-color) !important;
     }
 
     .lzl_more {
@@ -385,11 +374,11 @@ html.style-vercel {
 
     .lzl_p_p {
         border: none !important;
-        border-radius: $vercel-radius-xs !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     .lzl_p_p img {
-        border-radius: $vercel-radius-xs !important;
+        border-radius: var(--avatar-radius) !important;
     }
 
     // 纯文本链接
@@ -460,29 +449,113 @@ html.style-vercel {
         @include vercel-button($vercel-radius-sm);
     }
 
+    // 标题区作为帖子卡片的头部：吧名面包屑在上，标题在下，与下方 .pb_content 拼成一张卡
     #title-wrapper {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 28px 48px 8px;
+        margin: 0;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        border-radius: $vercel-radius-md $vercel-radius-md 0 0;
+        background-color: var(--default-background);
+
         .thread-title {
+            align-self: stretch;
+            padding-left: 0 !important;
+            border-left: none !important;
             color: var(--default-fore) !important;
-            font-size: 24px !important;
-            font-weight: var(--font-weight-normal) !important;
-            line-height: 1.45 !important;
-            border-left-color: var(--tieba-theme-color) !important;
+            font-size: 26px !important;
+            font-weight: var(--font-weight-bold) !important;
+            line-height: 1.4 !important;
+            overflow-wrap: anywhere;
         }
 
         .forum-wrapper-button {
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            background-color: var(--default-background) !important;
+            gap: 4px !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: none !important;
             backdrop-filter: none !important;
-            gap: 3px !important;
+
+            .forum-icon-link {
+                gap: 6px;
+                color: var(--light-fore);
+                font-size: $vercel-fs-sm;
+                line-height: 20px;
+                transition: color $vercel-trans-fast $vercel-ease;
+
+                &:hover {
+                    color: var(--default-fore);
+                    opacity: 1;
+                }
+            }
 
             .forum-icon {
-                border-radius: 8px !important;
+                width: 20px;
+                height: 20px;
+                border: 1px solid var(--border-color);
+                border-radius: $vercel-radius-xs !important;
+            }
+
+            .forum-name {
+                display: inline;
+            }
+
+            .button-container,
+            .forum-button {
+                height: 20px;
             }
 
             .forum-button {
-                color: var(--default-fore) !important;
+                width: 20px;
+                border-radius: $vercel-radius-xs !important;
+                color: var(--light-fore) !important;
+
+                &:hover {
+                    background-color: var(--default-hover) !important;
+                    color: var(--default-fore) !important;
+                }
             }
+        }
+    }
+
+    // 有主楼的第一页：回帖数由分节标题承担，翻页交给底部分页条，标题与主楼之间不放分页
+    .pb_content:has([data-main-floor]) [data-thread-pager="top"] {
+        display: none !important;
+    }
+
+    #j_p_postlist > .l_post[data-main-floor] {
+        .d_post_content {
+            line-height: 1.8;
+        }
+
+        .vercel-floor-tag {
+            display: none !important;
+        }
+
+        .poll-display {
+            margin: 16px 0;
+            border: none;
+            border-radius: $vercel-radius-md;
+            background-color: var(--very-light-background);
+        }
+
+        // 覆盖 clearfix 的隐形 ::after，输出主楼与回复区之间的分节标题
+        &[data-reply-label]::after {
+            content: attr(data-reply-label);
+            display: block;
+            visibility: visible;
+            height: auto;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--default-fore);
+            font-size: $vercel-fs-md;
+            font-weight: var(--font-weight-bold);
+            line-height: $vercel-lh-normal;
         }
     }
 
@@ -492,7 +565,8 @@ html.style-vercel {
 
     #container .content .pb_content {
         border: 1px solid var(--border-color) !important;
-        border-radius: $vercel-radius-md $vercel-radius-md 0 0 !important;
+        border-top: none !important;
+        border-radius: 0 !important;
         background-color: var(--default-background) !important;
         box-shadow: none !important;
     }
@@ -500,10 +574,10 @@ html.style-vercel {
     .content-wrapper {
         .author-container {
             .floor-avatar {
-                border-radius: $vercel-radius-sm !important;
+                border-radius: var(--avatar-radius) !important;
 
                 img {
-                    border-radius: $vercel-radius-sm !important;
+                    border-radius: var(--avatar-radius) !important;
                 }
             }
 
@@ -546,10 +620,10 @@ html.style-vercel {
 
         .floor-wrapper {
             .floor-avatar {
-                border-radius: $vercel-radius-sm !important;
+                border-radius: var(--avatar-radius) !important;
 
                 img {
-                    border-radius: $vercel-radius-sm !important;
+                    border-radius: var(--avatar-radius) !important;
                 }
             }
 
@@ -620,21 +694,8 @@ html.style-vercel {
             background-color: var(--minimal-fore);
         }
 
-        #thread-editor-actions {
-            .editor-action {
-                @include vercel-button($vercel-radius-sm);
-                padding: 6px;
-
-                svg {
-                    width: 18px;
-                    height: 18px;
-                    fill: currentColor;
-                }
-            }
-
-            #thread-editor-submit svg {
-                fill: var(--tieba-theme-color);
-            }
+        .editor-title {
+            font-size: $vercel-fs-md;
         }
 
         .title-editor {
@@ -644,69 +705,52 @@ html.style-vercel {
             font-size: $vercel-fs-xl;
         }
 
+        .editor-composer {
+            border-radius: $vercel-radius-md;
+            transition:
+                border-color $vercel-trans-normal $vercel-ease,
+                box-shadow $vercel-trans-normal $vercel-ease;
+
+            &:hover:not(:focus-within) {
+                border-color: var(--minimal-fore);
+            }
+        }
+
+        .editor-action,
+        .editor-submit,
+        #thread-editor-slot .edui-toolbar .edui-btn-toolbar .edui-btn {
+            border-radius: $vercel-radius-sm;
+        }
+
+        .editor-submit {
+            font-size: $vercel-fs-sm;
+        }
+
         #thread-editor-slot {
             min-height: 0;
 
-            .edui-container {
-                .edui-editor-body {
-                    border: 1px solid var(--border-color) !important;
-                    border-radius: $vercel-radius-sm !important;
-                    height: auto !important;
-                    overflow: hidden !important;
-                    transition: border-color $vercel-trans-normal $vercel-ease;
+            .edui-body-container {
+                font-size: $vercel-fs-md;
+                line-height: $vercel-lh-normal;
+                scrollbar-color: var(--minimal-fore) transparent;
 
-                    &:hover {
-                        border-color: var(--minimal-fore) !important;
-                    }
-
-                    &:focus-within {
-                        border-color: var(--tieba-theme-color) !important;
-                        box-shadow: 0 0 0 1px var(--tieba-theme-color) !important;
-                    }
+                &::-webkit-scrollbar {
+                    width: 6px;
                 }
 
-                .edui-body-container {
-                    overflow-y: auto !important;
-                    min-height: calc(1em * $vercel-lh-normal + 16px) !important;
-                    padding: 8px 12px !important;
-                    font-size: $vercel-fs-md;
-                    line-height: $vercel-lh-normal;
-                    scrollbar-width: thin;
-                    scrollbar-color: var(--minimal-fore) transparent;
-
-                    &::-webkit-scrollbar {
-                        width: 6px;
-                    }
-
-                    &::-webkit-scrollbar-track {
-                        background: transparent;
-                    }
-
-                    &::-webkit-scrollbar-thumb {
-                        border-radius: 3px;
-                        background-color: var(--minimal-fore);
-                    }
+                &::-webkit-scrollbar-track {
+                    background: transparent;
                 }
 
-                .edui-editor-bottom,
-                .edui-editor-msg,
-                .edui-toolbar {
-                    border: none !important;
+                &::-webkit-scrollbar-thumb {
+                    border-radius: 3px;
+                    background-color: var(--minimal-fore);
                 }
+            }
 
-                .edui-toolbar .edui-btn-toolbar .edui-btn {
-                    @include vercel-button;
-                    padding: 2px 8px;
-                    font-size: $vercel-fs-sm;
-
-                    .edui-icon {
-                        font-size: $vercel-fs-sm;
-
-                        &::before {
-                            font-size: 14px;
-                        }
-                    }
-                }
+            .edui-editor-bottom,
+            .edui-editor-msg {
+                border: none !important;
             }
         }
     }

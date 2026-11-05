@@ -28,7 +28,7 @@ export const userModuleManifests: UserModuleManifest[] = [
     {
         id: "portal",
         scope: ["thread"],
-        runAt: "immediately",
+        runAt: "DOMLoaded",
         loader: () => import("./portal"),
     },
     {

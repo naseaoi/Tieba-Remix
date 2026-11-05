@@ -74,6 +74,7 @@
     margin-left: 0 !important;
 }
 
+.lzl_content_reply .lzl_jb:empty,
 .lzl_content_reply .lzl_op_list:empty {
     display: none !important;
 }
@@ -277,8 +278,13 @@
     white-space: nowrap;
 }
 
-.tbr-floor-menu-item:hover {
+.tbr-floor-menu-item:hover:not(:disabled) {
     background: var(--default-hover, #f4f4f5);
+}
+
+.tbr-floor-menu-item:disabled {
+    cursor: wait;
+    opacity: 0.55;
 }
 
 .tbr-floor-menu-item-danger {
@@ -294,8 +300,6 @@
     white-space: nowrap;
 }
 
-.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
-.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]),
 .lzl_content_reply .tbr-lzl-source,
 .tail-info[data-tbr-platform],
 .p_tail_wap[data-tbr-platform],
@@ -314,8 +318,7 @@
     white-space: nowrap;
 }
 
-.post-tail-wrap .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
-.core_reply_tail:not(.clearfix) .tail-info:has(a[href*="c.tieba.baidu.com/c/s/download/pc"]) a,
+.tail-info[data-tbr-platform] a,
 .lzl_content_reply .tbr-lzl-source {
     font-size: 0 !important;
 }

@@ -25,40 +25,37 @@ export function installLzlFloorControls(): void {
     document.addEventListener("keydown", handleKeydown, true);
 }
 
+// observer 每次回调都会执行：classList.add 与同值 setAttribute 仍会产生变动记录，先比较再写入
 export function renderLzlFloorControls(): void {
     document.querySelectorAll<HTMLElement>(REPLY_SELECTOR).forEach(link => {
-        link.classList.add("tbr-floor-reply");
-        link.setAttribute("aria-label", "评论");
-        link.title = "评论";
-        if (!(link instanceof HTMLAnchorElement)) {
-            link.setAttribute("role", "button");
-            link.tabIndex = 0;
-        }
+        setOnce(link, { class: "tbr-floor-reply", "aria-label": "评论", title: "评论" });
+        if (!(link instanceof HTMLAnchorElement)) setOnce(link, { role: "button", tabindex: "0" });
     });
 
     document.querySelectorAll<HTMLElement>(COMMENT_ENTRY_SELECTOR).forEach(entry => {
-        entry.classList.add(COMMENT_ENTRY_CLASS);
-        entry.setAttribute("aria-hidden", "true");
-        entry.tabIndex = -1;
+        setOnce(entry, { class: COMMENT_ENTRY_CLASS, "aria-hidden": "true", tabindex: "-1" });
     });
 
     document.querySelectorAll<HTMLElement>(".lzl_li_pager").forEach(pager => {
         const more = pager.querySelector<HTMLElement>(".lzl_more");
         const hasMore = more != null && isElementVisible(more);
-        const hasPagerControls = [...pager.querySelectorAll<HTMLElement>(".j_pager a, .j_pager .tP")]
+        const hasPagerControls = [...pager.querySelectorAll<HTMLElement>(".j_pager a, .j_pager .tP, .tbr-lzl-load-more")]
             .some(control => (control.textContent ?? "").trim() !== "" && isElementVisible(control));
         const empty = !hasMore && !hasPagerControls;
         const list = pager.parentElement;
         const posts = [...(list?.querySelectorAll<HTMLElement>(".lzl_single_post") ?? [])];
-        posts.forEach(post => post.classList.remove(LAST_POST_CLASS));
-        if (empty) findLastVisible(posts)?.classList.add(LAST_POST_CLASS);
+        // 先删后加会让每次刷新都触发样式失效，只切换实际变化的节点
+        const last = empty ? findLastVisible(posts) : undefined;
+        posts.forEach(post => {
+            if (post.classList.contains(LAST_POST_CLASS) !== (post === last)) post.classList.toggle(LAST_POST_CLASS);
+        });
         pager.classList.toggle(PAGER_WITH_MORE_CLASS, hasMore);
         pager.classList.toggle(EMPTY_PAGER_CLASS, empty);
         list?.classList.toggle(LIST_WITHOUT_PAGER_CLASS, empty);
     });
 
     document.querySelectorAll<HTMLElement>(".core_reply_wrapper .core_reply_border_bottom").forEach(boundary => {
-        boundary.classList.add(BOUNDARY_CLASS);
+        setOnce(boundary, { class: BOUNDARY_CLASS });
         if (boundary.querySelector(COLLAPSE_SELECTOR)) return;
 
         const button = domrd("button", {
@@ -137,6 +134,17 @@ function requestNativeToggle(target: HTMLElement): void {
     nativeToggleTargets.add(target);
     target.click();
     nativeToggleTargets.delete(target);
+}
+
+// class 键表示追加单个类名，其余键按属性值写入
+function setOnce(element: HTMLElement, values: Record<string, string>): void {
+    for (const [name, value] of Object.entries(values)) {
+        if (name === "class") {
+            if (!element.classList.contains(value)) element.classList.add(value);
+        } else if (element.getAttribute(name) !== value) {
+            element.setAttribute(name, value);
+        }
+    }
 }
 
 function isElementVisible(element: HTMLElement): boolean {

@@ -4,10 +4,14 @@ import "user-view/build/index.css";
 import { checkUpdateAndNotify, currentPageType, setTheme } from "./lib/api/remixed";
 import { openSettingsDialog } from "./lib/common/open-settings";
 import { parseUserModules } from "./lib/common/packer";
+import { onWindowLoaded } from "./lib/elemental/ready";
 import type { BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
 import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
+import { installForumAsideLayout } from "./lib/tieba-components/forum-aside-layout";
+import { installForumStickyNav } from "./lib/tieba-components/forum-sticky-nav";
+import { installForumThreadSort } from "./lib/tieba-components/forum-thread-sort";
 import { installForumAuthorFullId } from "./lib/tieba-components/forum-author-full-id";
 import { installForumFloatingSearch } from "./lib/tieba-components/forum-floating-search";
 import { installForumImageTakeover } from "./lib/tieba-components/forum-image-takeover";
@@ -15,16 +19,19 @@ import { installForumLoadFailureBanner } from "./lib/tieba-components/forum-load
 import { installForumNovelRankingFallback } from "./lib/tieba-components/forum-novel-ranking";
 import { installForumPinnedFoldWatcher } from "./lib/tieba-components/forum-pinned-fold-watcher";
 import { installForumStatsCard } from "./lib/tieba-components/forum-stats-card";
+import { installForumThumbnailMore } from "./lib/tieba-components/forum-thumbnail-more";
 import { installForumThumbnailRecovery } from "./lib/tieba-components/forum-thumbnail-recovery";
 import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
 import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
 import { installForumThreadListModernizer } from "./lib/tieba-components/forum-thread-list-modernizer";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
+import { installThreadNativeScrollBlock } from "./lib/tieba-components/thread-native-scroll-block";
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
-import { REMIXED, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
+import { installSubPostImages } from "./lib/tieba-components/sub-post-images";
+import { REMIXED, avatarShape, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 import { userModuleManifests } from "./modules/manifest";
 
@@ -44,13 +51,21 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     document.documentElement.dataset.navBarMode = navBarHideMode.get();
 
+    document.documentElement.dataset.avatarShape = avatarShape.get();
+
     document.documentElement.dataset.pageType = currentPageType();
 
     installThreadImageLoading();
+    installThreadNativeScrollBlock();
 
     installForumImageTakeover();
 
     installForumAsideCollapse();
+
+    installForumAsideLayout();
+
+    installForumStickyNav();
+    installForumThreadSort();
 
     installForumPinnedFoldWatcher();
 
@@ -61,6 +76,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     installForumNovelRankingFallback();
 
     installForumThumbnailRecovery();
+    installForumThumbnailMore();
 
     installForumVideoFit();
 
@@ -75,6 +91,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     installThreadFloorTag();
 
     installThreadFloorActions();
+    installSubPostImages();
 
     installThreadImageGrid();
 
@@ -108,12 +125,10 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     }
 
     const firstPaintReady = Promise.all([cssReady, pageExtensionReady, modulesReady]);
-    firstPaintReady.then(
-        () => requestAnimationFrame(() => requestAnimationFrame(onReady)),
-        onReady,
-    );
+    const revealAfterPaint = () => requestAnimationFrame(() => requestAnimationFrame(onReady));
+    firstPaintReady.then(revealAfterPaint, revealAfterPaint);
 
-    window.addEventListener("load", function () {
+    onWindowLoaded(() => {
         checkUpdateAndNotify();
     });
 

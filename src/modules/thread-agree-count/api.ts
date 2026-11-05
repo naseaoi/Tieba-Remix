@@ -2,10 +2,14 @@ import { gmRequest } from "@/lib/monkey";
 import { md5 } from "@/modules/poll-display/md5";
 
 const PB_PAGE_API_URL = "https://tiebac.baidu.com/c/f/pb/page";
-const PB_FLOOR_API_URL = "https://tiebac.baidu.com/c/f/pb/floor";
-const USER_PROFILE_API_URL = "https://tiebac.baidu.com/c/u/user/profile";
 const TOTAL_COMMENT_URL = "/p/totalComment";
 const SIGN_SALT = "tiebaclient!!!";
+const PC_PAGE_URL = "/c/f/pb/page_pc";
+const PC_NESTED_FLOOR_URL = "/c/f/pb/nestedFloor";
+const PC_SIGN_SALT = "36770b1f34c9bbf2e7d1a99d2b82fa9e";
+// page_pc 每批固定约 15 楼且不接受条数参数，旧版一页 30 楼对应连续两批
+const PC_BATCHES_PER_LEGACY_PAGE = 2;
+const PC_RETRY_DELAY = 500;
 
 interface AgreeInfo {
     agree_num?: number | string;
@@ -35,33 +39,40 @@ interface PbPageResponse {
     user_list?: PbUser[];
 }
 
-interface PbSubPost {
+interface PcSubPost {
     id?: number | string;
     agree?: AgreeInfo;
-    ip_address?: string;
-    location?: string | {
-        name?: string;
-        ip_address?: string;
-    };
-    author?: {
-        id?: number | string;
-        portrait?: string;
-        ip_address?: string;
+    author_id?: number | string;
+}
+
+interface PcPost {
+    id?: number | string;
+    agree?: AgreeInfo;
+    sub_post_list?: {
+        sub_post_list?: PcSubPost[];
     };
 }
 
-interface PbFloorResponse {
-    error_code: number | string;
-    error_msg?: string;
-    subpost_list?: PbSubPost[];
+interface PcPageResponse {
+    thread?: {
+        agree?: AgreeInfo;
+    };
+    first_floor?: PcPost;
+    post_list?: PcPost[];
     user_list?: PbUser[];
 }
 
-interface UserProfileResponse {
-    error_code: number | string;
-    error_msg?: string;
-    user?: {
-        ip_address?: string;
+interface PcNestedFloorResponse {
+    data?: {
+        post_list?: Array<{
+            id?: number | string;
+            agree?: AgreeInfo;
+            author?: PbUser;
+        }>;
+        page?: {
+            offset?: number | string;
+            has_more?: number | string;
+        };
     };
 }
 
@@ -100,16 +111,28 @@ export interface FetchAgreeSnapshotOptions {
 export interface SubPostAgreeSnapshot {
     subPostAgreeById: Map<number, number>;
     subPostHasAgreeById: Map<number, boolean>;
-    subPostAuthorIdById: Map<number, number>;
-    subPostPortraitById: Map<number, string>;
     subPostIpById: Map<number, string>;
 }
 
-export interface FetchSubPostAgreeSnapshotOptions {
+export interface ThreadPageSnapshot extends AgreeSnapshot {
+    subPosts: SubPostAgreeSnapshot;
+}
+
+export interface ThreadPageOptions {
+    tid: number | string;
+    pn: number;
+    lzOnly: boolean;
+}
+
+export interface NestedFloorPage extends SubPostAgreeSnapshot {
+    nextOffset: number;
+    hasMore: boolean;
+}
+
+export interface FetchNestedFloorOptions {
     tid: number | string;
     pid: number | string;
-    pn?: number;
-    rn?: number;
+    offset: number;
 }
 
 export interface FetchSubPostSourceSnapshotOptions {
@@ -233,118 +256,172 @@ export async function fetchAgreeSnapshot(opts: FetchAgreeSnapshotOptions): Promi
     };
 }
 
-export async function fetchSubPostAgreeSnapshot(opts: FetchSubPostAgreeSnapshotOptions): Promise<SubPostAgreeSnapshot> {
-    const form = createClientForm({
-        kz: String(opts.tid),
-        pid: String(opts.pid),
-        pn: String(opts.pn ?? 1),
-        rn: String(opts.rn ?? 100),
-    });
-    form.sign = signForm(form);
-
-    const res = await gmRequest<"json">({
-        method: "POST",
-        url: PB_FLOOR_API_URL,
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: buildFormBody(form),
-        responseType: "json",
-        timeout: 10_000,
-    });
-
-    const body = res.response as PbFloorResponse | null;
-    if (!body) {
-        throw new Error(`pb/floor returned empty body (status=${res.status})`);
-    }
-
-    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
-    if (errno !== 0) {
-        throw new Error(`pb/floor error ${errno}: ${body.error_msg || "unknown"}`);
-    }
-
-    const subPostAgreeById = new Map<number, number>();
-    const subPostHasAgreeById = new Map<number, boolean>();
-    const subPostAuthorIdById = new Map<number, number>();
-    const subPostPortraitById = new Map<number, string>();
-    const subPostIpById = new Map<number, string>();
-    const userIpById = new Map<number, string>();
-    const userIpByPortrait = new Map<string, string>();
-    for (const user of body.user_list ?? []) {
-        const ip = parseText(user.ip_address);
-        if (!ip) continue;
-
-        const userId = parseCount(user.id);
-        if (userId != null) userIpById.set(userId, ip);
-
-        const portrait = normalizePortrait(user.portrait);
-        if (portrait) userIpByPortrait.set(portrait, ip);
-    }
-
-    for (const post of body.subpost_list ?? []) {
-        const id = parseCount(post.id);
-        if (id == null) continue;
-        const count = parseCount(post.agree?.agree_num);
-        if (count != null) subPostAgreeById.set(id, count);
-        subPostHasAgreeById.set(id, parseBool(post.agree?.has_agree));
-
-        const authorId = parseCount(post.author?.id);
-        if (authorId != null) subPostAuthorIdById.set(id, authorId);
-
-        const portrait = normalizePortrait(post.author?.portrait);
-        if (portrait) subPostPortraitById.set(id, portrait);
-
-        const ip = parseSubPostIp(post)
-            ?? (authorId != null ? userIpById.get(authorId) : undefined)
-            ?? (portrait ? userIpByPortrait.get(portrait) : undefined);
-        if (ip) subPostIpById.set(id, ip);
-    }
-
+export function createSubPostAgreeSnapshot(): SubPostAgreeSnapshot {
     return {
-        subPostAgreeById,
-        subPostHasAgreeById,
-        subPostAuthorIdById,
-        subPostPortraitById,
-        subPostIpById,
+        subPostAgreeById: new Map(),
+        subPostHasAgreeById: new Map(),
+        subPostIpById: new Map(),
     };
 }
 
-function parseSubPostIp(post: PbSubPost): string | undefined {
-    return parseText(post.ip_address)
-        ?? parseText(post.author?.ip_address)
-        ?? (typeof post.location === "string" ? parseText(post.location) : undefined)
-        ?? (typeof post.location === "object" ? parseText(post.location.ip_address) : undefined)
-        ?? (typeof post.location === "object" ? parseText(post.location.name) : undefined);
+export function mergeSubPostAgreeSnapshot(target: SubPostAgreeSnapshot, source: SubPostAgreeSnapshot): void {
+    source.subPostAgreeById.forEach((count, id) => target.subPostAgreeById.set(id, count));
+    source.subPostHasAgreeById.forEach((liked, id) => target.subPostHasAgreeById.set(id, liked));
+    source.subPostIpById.forEach((ip, id) => target.subPostIpById.set(id, ip));
 }
 
-export async function fetchUserProfileIp(uid: number | string): Promise<string | undefined> {
-    const form = createClientForm({
-        uid: String(uid),
-    });
-    form.sign = signForm(form);
+const threadPageRequests = new Map<string, Promise<ThreadPageSnapshot>>();
 
-    const res = await gmRequest<"json">({
+// 同一页只发一次；document-start 预取与模块启动后的读取共用同一个请求，失败后允许重新请求
+export function loadThreadPageSnapshot(opts: ThreadPageOptions, fresh = false): Promise<ThreadPageSnapshot> {
+    const key = `${opts.tid}:${opts.pn}:${Number(opts.lzOnly)}`;
+    const cached = threadPageRequests.get(key);
+    if (cached && !fresh) return cached;
+
+    const request = fetchThreadPageSnapshot(opts);
+    threadPageRequests.set(key, request);
+    request.catch(() => {
+        if (threadPageRequests.get(key) === request) threadPageRequests.delete(key);
+    });
+    return request;
+}
+
+export function prefetchThreadPageSnapshot(): void {
+    const tid = /^\/p\/(\d+)/.exec(location.pathname)?.[1];
+    if (!tid) return;
+    const params = new URLSearchParams(location.search);
+    const pn = Math.max(1, Math.trunc(Number(params.get("pn"))) || 1);
+    loadThreadPageSnapshot({ tid, pn, lzOnly: params.get("see_lz") === "1" }).catch((err: unknown) => {
+        console.warn("[thread-agree-count] 预取帖子数据失败:", err);
+    });
+}
+
+async function fetchThreadPageSnapshot(opts: ThreadPageOptions): Promise<ThreadPageSnapshot> {
+    const firstBatch = (opts.pn - 1) * PC_BATCHES_PER_LEGACY_PAGE + 1;
+    const results = await Promise.allSettled(Array.from({ length: PC_BATCHES_PER_LEGACY_PAGE }, (_, i) => withRetry(() => postPcForm<PcPageResponse>(PC_PAGE_URL, {
+        kz: String(opts.tid),
+        pn: String(firstBatch + i),
+        r: "0",
+        lz: String(Number(opts.lzOnly)),
+        mark_type: "0",
+        back: "0",
+    }))));
+    const batches = results.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
+    if (batches.length === 0) throw (results[0] as PromiseRejectedResult).reason;
+
+    const snapshot: ThreadPageSnapshot = {
+        threadHasAgree: false,
+        postAgreeById: new Map(),
+        postHasAgreeById: new Map(),
+        userIpByPortrait: new Map(),
+        subPosts: createSubPostAgreeSnapshot(),
+    };
+    const userIpById = new Map<number, string>();
+    const subPostAuthorById = new Map<number, number>();
+
+    for (const body of batches) {
+        const threadAgree = parseCount(body.thread?.agree?.agree_num);
+        if (threadAgree != null) {
+            snapshot.threadAgree = threadAgree;
+            snapshot.threadHasAgree = parseBool(body.thread?.agree?.has_agree);
+        }
+
+        for (const user of body.user_list ?? []) {
+            const ip = parseText(user.ip_address);
+            if (!ip) continue;
+            const userId = parseCount(user.id);
+            if (userId != null) userIpById.set(userId, ip);
+            const portrait = normalizePortrait(user.portrait);
+            if (portrait) snapshot.userIpByPortrait.set(portrait, ip);
+        }
+
+        const posts = body.first_floor ? [body.first_floor, ...body.post_list ?? []] : body.post_list ?? [];
+        for (const post of posts) {
+            const id = parseCount(post.id);
+            if (id == null) continue;
+            const count = parseCount(post.agree?.agree_num);
+            if (count != null) snapshot.postAgreeById.set(id, count);
+            snapshot.postHasAgreeById.set(id, parseBool(post.agree?.has_agree));
+
+            for (const subPost of post.sub_post_list?.sub_post_list ?? []) {
+                const subPostId = parseCount(subPost.id);
+                if (subPostId == null) continue;
+                setSubPostAgree(snapshot.subPosts, subPostId, subPost.agree);
+                const authorId = parseCount(subPost.author_id);
+                if (authorId != null) subPostAuthorById.set(subPostId, authorId);
+            }
+        }
+    }
+
+    subPostAuthorById.forEach((authorId, subPostId) => {
+        const ip = userIpById.get(authorId);
+        if (ip) snapshot.subPosts.subPostIpById.set(subPostId, ip);
+    });
+    return snapshot;
+}
+
+export async function fetchNestedFloorPage(opts: FetchNestedFloorOptions): Promise<NestedFloorPage> {
+    const body = await withRetry(() => postPcForm<PcNestedFloorResponse>(PC_NESTED_FLOOR_URL, {
+        post_id: String(opts.pid),
+        thread_id: String(opts.tid),
+        offset: String(opts.offset),
+    }));
+
+    const page: NestedFloorPage = {
+        ...createSubPostAgreeSnapshot(),
+        nextOffset: parseCount(body.data?.page?.offset) ?? opts.offset,
+        hasMore: parseBool(body.data?.page?.has_more),
+    };
+    for (const subPost of body.data?.post_list ?? []) {
+        const id = parseCount(subPost.id);
+        if (id == null) continue;
+        setSubPostAgree(page, id, subPost.agree);
+        const ip = parseText(subPost.author?.ip_address);
+        if (ip) page.subPostIpById.set(id, ip);
+    }
+    return page;
+}
+
+function setSubPostAgree(snapshot: SubPostAgreeSnapshot, id: number, agree: AgreeInfo | undefined): void {
+    const count = parseCount(agree?.agree_num);
+    if (count != null) snapshot.subPostAgreeById.set(id, count);
+    snapshot.subPostHasAgreeById.set(id, parseBool(agree?.has_agree));
+}
+
+async function postPcForm<T>(url: string, form: Record<string, string>): Promise<T> {
+    const signed: Record<string, string> = { ...form, subapp_type: "pc", _client_type: "20" };
+    signed.sign = md5(Object.keys(signed).sort().map(key => `${key}=${signed[key]}`).join("") + PC_SIGN_SALT);
+
+    const res = await fetch(url, {
         method: "POST",
-        url: USER_PROFILE_API_URL,
         headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         },
-        data: buildFormBody(form),
-        responseType: "json",
-        timeout: 10_000,
+        body: buildFormBody(signed),
+        credentials: "include",
     });
+    if (!res.ok) {
+        throw new Error(`${url} request failed (status=${res.status})`);
+    }
 
-    const body = res.response as UserProfileResponse | null;
+    const body = await res.json() as (T & { error_code?: number | string; error_msg?: string }) | null;
     if (!body) {
-        throw new Error(`user/profile returned empty body (status=${res.status})`);
+        throw new Error(`${url} returned empty body`);
     }
-
-    const errno = typeof body.error_code === "string" ? Number(body.error_code) : body.error_code;
+    const errno = Number(body.error_code);
     if (errno !== 0) {
-        throw new Error(`user/profile error ${errno}: ${body.error_msg || "unknown"}`);
+        throw new Error(`${url} error ${body.error_code}: ${body.error_msg || "unknown"}`);
     }
+    return body;
+}
 
-    return parseText(body.user?.ip_address);
+async function withRetry<T>(task: () => Promise<T>): Promise<T> {
+    try {
+        return await task();
+    } catch {
+        await new Promise(resolve => setTimeout(resolve, PC_RETRY_DELAY));
+        return task();
+    }
 }
 
 export async function fetchSubPostSourceSnapshot(opts: FetchSubPostSourceSnapshotOptions): Promise<Map<number, string>> {

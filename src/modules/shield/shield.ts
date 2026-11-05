@@ -107,6 +107,13 @@ export function matchShield(rule: ShieldRule, str: string, scope: ShieldScope): 
     return false;
 }
 
+/**
+ * 返回首条命中的规则；各节点文本分别匹配，拼接会让 `^xx$` 等锚定正则失效
+ */
+export function findShieldRule(rules: ShieldRule[], texts: string[], scope: ShieldScope): ShieldRule | undefined {
+    return rules.find(rule => texts.some(text => matchShield(rule, text, scope)));
+}
+
 export function getShieldRuleValidationError(rule: Pick<ShieldRule, "content" | "type" | "scopes">): string | undefined {
     if (rule.content.trim().length === 0) return "请输入屏蔽规则";
     if (rule.scopes.length === 0) return "请至少选择一个应用范围";

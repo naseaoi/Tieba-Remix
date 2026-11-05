@@ -105,40 +105,41 @@ function enqueueRequest<T>(target: Element, request: () => Promise<T>): Promise<
     });
 }
 
+// 每轮只批量读一次布局，避免出队循环里反复 getBoundingClientRect 触发强制回流
 function drainRequestQueue(): void {
-    while (requestQueue.length > 0) {
-        const index = findHighestPriorityRequest();
-        const queued = requestQueue[index];
-        const limit = isVisible(queued.target) ? MAX_VISIBLE_REQUESTS : MAX_BACKGROUND_REQUESTS;
-        if (activeRequests >= limit) return;
-        requestQueue.splice(index, 1);
-        queued.start();
+    if (requestQueue.length === 0) return;
+    if (activeRequests >= MAX_VISIBLE_REQUESTS) return;
+
+    const viewportHeight = window.innerHeight;
+    const metrics = requestQueue.map(queued => measure(queued.target, viewportHeight));
+    const order = metrics
+        .map((metric, index) => ({ index, metric }))
+        .sort((a, b) => a.metric.priority - b.metric.priority);
+
+    let projected = activeRequests;
+    const started = new Set<number>();
+    for (const { index, metric } of order) {
+        const limit = metric.visible ? MAX_VISIBLE_REQUESTS : MAX_BACKGROUND_REQUESTS;
+        if (projected >= limit) break;
+        started.add(index);
+        projected++;
     }
+    if (started.size === 0) return;
+
+    const pending = requestQueue.filter((_, index) => started.has(index));
+    const remaining = requestQueue.filter((_, index) => !started.has(index));
+    requestQueue.length = 0;
+    requestQueue.push(...remaining);
+    pending.forEach(queued => { queued.start(); });
 }
 
-function findHighestPriorityRequest(): number {
-    let bestIndex = 0;
-    let bestPriority = viewportPriority(requestQueue[0].target);
-    for (let index = 1; index < requestQueue.length; index++) {
-        const priority = viewportPriority(requestQueue[index].target);
-        if (priority < bestPriority) {
-            bestIndex = index;
-            bestPriority = priority;
-        }
+function measure(target: Element, viewportHeight: number): { priority: number; visible: boolean } {
+    const rect = target.getBoundingClientRect();
+    const visible = rect.bottom > 0 && rect.top < viewportHeight;
+    if (visible) {
+        const targetCenter = (rect.top + rect.bottom) / 2;
+        return { priority: Math.abs(targetCenter - viewportHeight / 2), visible };
     }
-    return bestIndex;
-}
-
-function viewportPriority(target: Element): number {
-    const rect = target.getBoundingClientRect();
-    const viewportCenter = window.innerHeight / 2;
-    const targetCenter = (rect.top + rect.bottom) / 2;
-    if (isVisible(target)) return Math.abs(targetCenter - viewportCenter);
-    if (rect.bottom <= 0) return window.innerHeight + Math.abs(rect.bottom);
-    return window.innerHeight + Math.max(0, rect.top - window.innerHeight);
-}
-
-function isVisible(target: Element): boolean {
-    const rect = target.getBoundingClientRect();
-    return rect.bottom > 0 && rect.top < window.innerHeight;
+    if (rect.bottom <= 0) return { priority: viewportHeight + Math.abs(rect.bottom), visible };
+    return { priority: viewportHeight + Math.max(0, rect.top - viewportHeight), visible };
 }

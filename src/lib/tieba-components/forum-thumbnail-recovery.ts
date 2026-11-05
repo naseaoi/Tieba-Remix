@@ -1,11 +1,11 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { dom } from "@/lib/elemental";
-import { forumThreadsObserver } from "@/lib/observers";
+import { onWindowLoaded } from "@/lib/elemental/ready";
+import { addCoalescedObserverEvent, forumThreadsObserver } from "@/lib/observers";
 
 let installed = false;
 let pendingRestoreTimer: Maybe<number>;
 let lastRestoreTime = 0;
-let pageObserver: Maybe<MutationObserver>;
 let rootObserver: Maybe<MutationObserver>;
 let observedRoot: Maybe<Element>;
 
@@ -49,7 +49,7 @@ function normalizeImageUrl(value: Maybe<string | null>): Maybe<string> {
 }
 
 function markRestored(img: HTMLImageElement): void {
-    img.dataset.trexThumbnailRestored = "1";
+    if (img.dataset.trexThumbnailRestored !== "1") img.dataset.trexThumbnailRestored = "1";
 }
 
 function setBackgroundFallback(img: HTMLImageElement, url: string): void {
@@ -102,13 +102,13 @@ function restoreImage(img: HTMLImageElement): void {
 }
 
 function restoreAll(): void {
-    dom<"img">(IMAGE_SELECTOR, []).forEach(restoreImage);
+    if (!observedRoot) return;
+    dom<"img">(IMAGE_SELECTOR, observedRoot, []).forEach(restoreImage);
 }
 
 function connectRoot(): void {
     if (!observedRoot || !rootObserver) return;
     rootObserver.observe(observedRoot, {
-        childList: true,
         subtree: true,
         attributes: true,
         attributeFilter: OBSERVED_ATTRS,
@@ -116,12 +116,19 @@ function connectRoot(): void {
 }
 
 function observeRoot(): void {
-    const root = dom(ROOT_SELECTOR);
-    if (!root || root === observedRoot) return;
+    const pagelet = dom(ROOT_SELECTOR);
+    const root = pagelet ? dom("#thread_list", pagelet) ?? pagelet : undefined;
+    if (root === observedRoot) return;
 
-    observedRoot = root;
+    // 原生 AJAX 翻页会替换列表根，属性监听随共享结构事件重新绑定。
     rootObserver?.disconnect();
-    rootObserver = new MutationObserver(() => scheduleRestore());
+    observedRoot = root;
+    if (!root) return;
+    rootObserver ??= new MutationObserver(records => {
+        if (records.some(({ target }) => target instanceof HTMLImageElement && target.matches(IMAGE_SELECTOR))) {
+            scheduleRestore();
+        }
+    });
     connectRoot();
 }
 
@@ -157,38 +164,20 @@ function flushRestore(): void {
     runRestore();
 }
 
-function startObservers(): void {
-    observeRoot();
-    if (!document.body || pageObserver) return;
-
-    pageObserver = new MutationObserver(() => scheduleRestore());
-    pageObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-}
-
 export function installForumThumbnailRecovery(): void {
     if (installed) return;
     if (currentPageType() !== "forum") return;
     installed = true;
 
-    forumThreadsObserver.addEvent(() => scheduleRestore());
-
-    const start = () => {
-        startObservers();
-        flushRestore();
-    };
+    addCoalescedObserverEvent(flushRestore, forumThreadsObserver);
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start, { once: true });
-    } else {
-        start();
+        document.addEventListener("DOMContentLoaded", flushRestore, { once: true });
     }
 
-    window.addEventListener("load", () => {
+    onWindowLoaded(() => {
         window.setTimeout(flushRestore, 200);
         window.setTimeout(flushRestore, 1200);
         window.setTimeout(flushRestore, 2500);
-    }, { once: true });
+    });
 }
