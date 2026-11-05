@@ -24,7 +24,7 @@ function clickMore(list: HTMLElement) {
 
 beforeEach(() => {
     vi.mocked(tiebaAPI.commentPage).mockReset();
-    vi.stubGlobal("PageData", { thread: { thread_id: 456 }, forum: { id: "789" } });
+    vi.stubGlobal("PageData", { thread: { thread_id: 456 }, forum: { id: "789" }, power: {}, user: { user_name: "me" } });
 });
 
 describe("parseCommentPage", () => {
@@ -69,7 +69,7 @@ describe("楼中楼加载更多", () => {
         expect(tiebaAPI.commentPage).toHaveBeenCalledExactlyOnceWith(456, 123, 789, 2);
         renderLzlReplyTrees();
         expect(list.querySelectorAll(":scope > .lzl_single_post")).toHaveLength(3);
-        expect(list.querySelectorAll<HTMLElement>(".lzl_single_post")[2].style.getPropertyValue("--tbr-lzl-depth")).toBe("1");
+        expect(list.querySelectorAll<HTMLElement>(".lzl_single_post")[2].style.getPropertyValue("--tbr-lzl-depth")).toBe("2");
         expect(list.querySelector("button")?.hidden).toBe(true);
         renderLzlFloorControls();
         expect(list.querySelector(".lzl_li_pager")?.classList.contains("tbr-lzl-empty-pager")).toBe(true);
@@ -170,6 +170,22 @@ describe("楼中楼加载更多", () => {
         await new Promise(done => setTimeout(done, 0));
         expect(ids(list)).toEqual([8]);
         expect(list.querySelector("button")?.disabled).toBe(false);
+    });
+
+    it("追加的接口回复按原生规则补齐举报/删除入口，已有入口不重复写入", () => {
+        const list = fixture();
+        const reply = (id: number, name: string) =>
+            `<li class="lzl_single_post j_lzl_s_p" data-field='{"spid":${id}}'><a class="j_user_card" username="${name}"></a><div class="lzl_content_reply"><span class="lzl_jb" style="display:none;"></span></div></li>`;
+        const anchor = list.querySelector<HTMLElement>(".lzl_li_pager")!;
+        appendCommentPosts(list, parseCommentPage(reply(3, "other") + reply(4, "me") + pager(2)).posts, anchor);
+        const entries = [...list.querySelectorAll(".lzl_jb")];
+        expect(entries[0].querySelector("a.lzl_jb_in")).not.toBeNull();
+        expect(entries[1].querySelector("a.lzl_delate_in")?.textContent).toBe("删除");
+
+        list.querySelectorAll(".lzl_single_post").forEach(x => x.remove());
+        vi.stubGlobal("PageData", { ...PageData, power: { can_mask_delete: true } });
+        appendCommentPosts(list, parseCommentPage(reply(5, "other") + pager(2)).posts, anchor);
+        expect(list.querySelector(".lzl_jb")?.childElementCount).toBe(0);
     });
 
     it("追加节点触发共享楼中楼 observer", async () => {

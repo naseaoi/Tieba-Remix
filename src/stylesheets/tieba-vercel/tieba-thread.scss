@@ -269,9 +269,6 @@ html.style-vercel {
     .core_reply_wrapper {
         overflow: hidden !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 8px !important;
-        background: var(--very-light-background) !important;
         color: var(--default-fore) !important;
         box-shadow: none !important;
     }
@@ -285,8 +282,6 @@ html.style-vercel {
 
     .l_post_bright .core_reply_wrapper .core_reply_content {
         border: none !important;
-        padding-left: 16px !important;
-        margin-left: 12px !important;
         background: transparent !important;
     }
 
@@ -296,12 +291,6 @@ html.style-vercel {
 
     .core_reply div.hideLzl {
         background-color: var(--default-background) !important;
-    }
-
-    .core_reply_content .lzl_li_pager {
-        padding-top: 5px !important;
-        margin-top: 5px !important;
-        border-top: 1px dashed var(--border-color) !important;
     }
 
     .lzl_more {

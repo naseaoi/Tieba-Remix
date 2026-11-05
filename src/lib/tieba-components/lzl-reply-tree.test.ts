@@ -94,6 +94,17 @@ describe("buildReplyTree", () => {
         ]);
         expect(nodes.some(node => node.fold)).toBe(false);
     });
+
+    it("以楼层为根时顶层回复接入第 0 列且不计入折叠深度", () => {
+        const nodes = buildReplyTree([{ author: "a" }, { author: "b", target: "a" }, { author: "c" }], undefined, true);
+
+        expect(nodes.map(({ index, depth, rails, linked }) => [index, depth, rails, linked])).toEqual([
+            [0, 1, ["tee"], false], [1, 2, ["pass", "elbow"], true], [2, 1, ["elbow"], false],
+        ]);
+        const deep = buildReplyTree(chain(MAX_REPLY_DEPTH + 3), undefined, true);
+        expect(deep).toHaveLength(MAX_REPLY_DEPTH + 1);
+        expect(deep.at(-1)?.depth).toBe(MAX_REPLY_DEPTH + 1);
+    });
 });
 
 describe("renderLzlReplyTrees", () => {
@@ -257,6 +268,19 @@ describe("renderLzlReplyTrees", () => {
         expect(getAttribute.mock.calls.some(([name]) => name === "data-field")).toBe(false);
         computed.mockRestore();
         getAttribute.mockRestore();
+    });
+
+    it("楼层内的回复树以楼层为根并标记楼层", () => {
+        document.body.innerHTML = `<div class="l_post"><ul class="j_lzl_m_w">${post("1", "a")}${post("2", "b", "a")}</ul></div>
+            <div class="l_post empty"><ul class="j_lzl_m_w"></ul></div>`;
+        renderLzlReplyTrees();
+
+        const [first, second] = document.querySelectorAll<HTMLElement>("li");
+        expect(document.querySelector(".l_post")!.hasAttribute("data-tbr-lzl-root")).toBe(true);
+        expect(document.querySelector(".l_post.empty")!.hasAttribute("data-tbr-lzl-root")).toBe(false);
+        expect(first.style.getPropertyValue("--tbr-lzl-depth")).toBe("1");
+        expect(first.querySelector(".tbr-lzl-rail-elbow")).not.toBeNull();
+        expect(second.style.getPropertyValue("--tbr-lzl-depth")).toBe("2");
     });
 
     it("新回复加入后重建连线而不重复插入", () => {

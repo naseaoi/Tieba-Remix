@@ -1,11 +1,9 @@
 @use "@/stylesheets/modules/lucide-masks" as *;
+@use "./reply-tree" as *;
 
 $lzl-content-font-size: 15px;
 $lzl-tail-font-size: 13px;
 $lzl-content-margin: 12px;
-$lzl-indent: 30px;
-$lzl-avatar-size: 34px;
-$lzl-rail-width: 2px;
 
 // 楼中楼内的展开类按钮：加载更多、继续此对话、返回全部回复
 %lzl-chip {
@@ -52,21 +50,16 @@ $lzl-rail-width: 2px;
 .core_reply {
     margin-right: unset;
 
-    // 楼中楼包装（包括 padding）
+    // 楼中楼包装：不画卡片，回复树直接从楼层头像延伸
     .core_reply_wrapper {
         position: relative;
         overflow: hidden;
         box-sizing: border-box;
         width: 100%;
+        padding: 0 !important;
         border: none !important;
-        border-radius: 10px !important;
-        border-top-left-radius: 10px !important;
-        border-top-right-radius: 10px !important;
-        background-color: var(--very-light-background) !important;
-
-        html.dark-theme & {
-            --very-light-background: #292929;
-        }
+        border-radius: 0 !important;
+        background: none !important;
 
         // 楼中楼展开 / 折叠过渡
         &.tbr-lzl-toggling {
@@ -92,11 +85,14 @@ $lzl-rail-width: 2px;
 
         // 楼中楼容器
         .core_reply_content {
-            padding-right: 20px;
+            padding: 0 !important;
+            border: none !important;
+            margin: 0 !important;
 
-            // 单个楼中楼内容与「继续此对话」折叠行共用缩进和连线
+            // 单个楼中楼内容、「继续此对话」折叠行与「返回全部回复」行共用缩进和连线
             .lzl_single_post,
-            .tbr-lzl-fold {
+            .tbr-lzl-fold,
+            .tbr-lzl-focus-back {
                 --tbr-lzl-gap: #{$lzl-content-margin};
                 --tbr-lzl-avatar-top: 0px;
                 position: relative;
@@ -121,7 +117,7 @@ $lzl-rail-width: 2px;
                     position: absolute;
                     left: calc(var(--tbr-lzl-col) * #{$lzl-indent} + #{$lzl-avatar-size * 0.5 - $lzl-rail-width * 0.5});
                     box-sizing: border-box;
-                    border: 0 solid color-mix(in srgb, var(--minimal-fore) 45%, transparent);
+                    border: 0 solid $lzl-rail-color;
                     transition: border-color var(--fast-duration) ease;
                 }
 
@@ -276,19 +272,16 @@ $lzl-rail-width: 2px;
                 align-items: center;
             }
 
-            .tbr-lzl-focus-back {
-                margin-bottom: $lzl-content-margin;
-            }
-
             .tbr-lzl-thread-button {
                 @extend %lzl-chip;
             }
 
             // 楼中楼翻页
+            // 翻页与加载更多属于楼层的回复，对齐一级回复头像
             .lzl_li_pager {
-                padding: 0;
+                padding: 0 0 0 $lzl-indent !important;
                 border-top: none !important;
-                margin-top: -$lzl-content-margin;
+                margin-top: -$lzl-content-margin !important;
 
                 // 点击查看（更多）
                 .lzl_more {
@@ -360,14 +353,14 @@ $lzl-rail-width: 2px;
                 font-size: $lzl-tail-font-size;
             }
 
-            // 楼中楼编辑器：回复对象标签 + 输入区 + 操作栏合成一张卡片
+            // 楼中楼编辑器：回复对象标签 + 输入区 + 操作栏合成一张卡片，与一级回复对齐
             .lzl_editor_container {
                 box-sizing: border-box;
-                width: 100% !important;
+                width: auto !important;
                 padding: 8px 8px 6px 12px;
                 border: 1px solid var(--border-color);
                 border-radius: 12px;
-                margin-top: 4px;
+                margin: 4px 0 12px $lzl-indent;
                 background-color: var(--default-background);
 
                 // 展开 / 收起期间让位给 .tbr-lzl-toggling 的高度过渡

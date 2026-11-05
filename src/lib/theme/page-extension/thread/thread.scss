@@ -1,9 +1,10 @@
+@use "./reply-tree" as *;
+
 $content-padding-x: 48px;
 $content-padding-y: 24px;
 $content-font-size: 16px;
 $tail-font-size: 13px;
-$author-container-gap: 6px;
-$avatar-size: 36px;
+$avatar-size: $lzl-avatar-size;
 $floor-padding: 8px;
 $tail-gap: 12px;
 
@@ -184,10 +185,6 @@ body.special_conf_skin {
 
 .left_section {
     width: 100%;
-}
-
-.core_reply_wrapper {
-    padding-left: $avatar-size + $author-container-gap;
 }
 
 // 楼层尾部信息
@@ -429,24 +426,82 @@ body.special_conf_skin {
     flex-direction: column;
     gap: 16px;
 
-    .author-container {
+    // 楼层与楼中楼回复同一布局：头像列 + 内容列；楼中楼通栏，楼层头像即回复树第 0 列
+    > .l_post > .d_post_content_main {
         display: grid;
-        align-items: center;
-        margin-bottom: -4px;
-        column-gap: 8px;
-        row-gap: 0;
-        grid-template:
-            "avatar name" auto
-            "avatar tags" auto
-            / $avatar-size 1fr;
+        grid-template-columns: $avatar-size minmax(0, 1fr);
+        column-gap: $lzl-text-offset - $avatar-size;
 
+        > * {
+            grid-column: 2;
+        }
+
+        > .author-container {
+            grid-column: 1 / -1;
+            grid-row: 1;
+        }
+
+        > .l_post_anchor {
+            grid-row: 1;
+        }
+
+        > .p_content {
+            grid-row: 2;
+        }
+
+        > .core_reply {
+            display: contents;
+
+            > .core_reply_tail {
+                grid-column: 2;
+                grid-row: 3;
+            }
+
+            > .core_reply_wrapper {
+                grid-column: 1 / -1;
+                grid-row: 4;
+            }
+        }
+    }
+
+    // 楼层头像下方的竖线，止于楼中楼顶部，由首批回复的连线接续
+    > .l_post[data-tbr-lzl-root] > .d_post_content_main::before {
+        width: 0;
+        border-left: $lzl-rail-width solid $lzl-rail-color;
+        margin-top: $avatar-size + 4px;
+        content: "";
+        grid-column: 1;
+        grid-row: 1 / 4;
+        justify-self: center;
+    }
+
+    // 构建会把 :is() 列表拆成多条规则，只能写成正向匹配后隐藏
+    > .l_post[data-tbr-lzl-root] > .d_post_content_main:has(> .core_reply > .core_reply_wrapper:is(.hideLzl, [style*="display: none"], [style*="display:none"]))::before {
+        content: none;
+    }
+
+    .author-container {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        min-height: 23px;
+        box-sizing: border-box;
+        align-items: center;
+        padding-left: $lzl-text-offset;
+        gap: 6px;
+
+        // 与楼中楼头像一样不占行高，正文紧随名字行
         .floor-avatar {
+            position: absolute;
+            top: 0;
+            left: 0;
             overflow: hidden;
             width: max-content !important;
             height: max-content !important;
             padding: 0 !important;
             border-radius: var(--avatar-radius) !important;
-            grid-area: avatar;
+            margin: 0 !important;
+            line-height: 0;
 
             img {
                 @extend %avatar-fit;
@@ -459,30 +514,34 @@ body.special_conf_skin {
         }
 
         .floor-name {
-            width: fit-content;
+            overflow: hidden;
+            min-width: 0;
+            flex: 0 1 auto;
             color: var(--highlight-fore);
             font-size: 14px;
             font-weight: var(--font-weight-bold);
-            line-height: 18px;
-            transform: translateY(-5px);
-            grid-area: name;
+            line-height: 23px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
 
             @extend %anchor;
         }
 
+        > .jsx-wrapper {
+            display: contents;
+        }
+
         .badge-container {
             display: flex;
+            flex: none;
             align-items: center;
-            margin-top: -4px;
             gap: 4px;
-            transform: translateY(-5px);
-            grid-area: tags;
 
             .floor-badge {
                 display: flex;
                 align-items: center;
                 width: fit-content;
-                height: 14px;
+                height: 16px;
                 padding: 0 4px;
                 border-radius: 3px;
                 background-color: var(--trans-light-background);
@@ -490,7 +549,8 @@ body.special_conf_skin {
                 font-family: inherit;
                 font-size: 11px;
                 gap: 4px;
-                line-height: 14px;
+                line-height: 16px;
+                white-space: nowrap;
 
                 .badge-level {
                     font-weight: var(--font-weight-bold);
@@ -500,10 +560,6 @@ body.special_conf_skin {
             .floor-owner-badge {
                 background-color: #7c3aed;
                 color: #fff;
-
-                > span {
-                    transform: translateY(-0.5px);
-                }
             }
         }
     }

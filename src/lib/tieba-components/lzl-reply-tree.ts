@@ -7,6 +7,8 @@ export const MAX_REPLY_DEPTH = 5;
 
 const TREE_ATTR = "data-tbr-lzl-tree";
 const LINKED_ATTR = "data-tbr-lzl-linked";
+// 楼层作为回复树的根，由样式据此画出头像下方的竖线
+const ROOT_ATTR = "data-tbr-lzl-root";
 const FOCUS_DATA = "tbrLzlFocus";
 const RAILS_CLASS = "tbr-lzl-rails";
 const FOLD_CLASS = "tbr-lzl-fold";
@@ -39,7 +41,8 @@ interface TreeEntry {
 }
 
 // 优先延续双方对话，其次回复独立发言；focus 指定时只展示以该回复为根的子树
-export function buildReplyTree(items: readonly ReplyItem[], focus?: number): ReplyNode[] {
+// rooted 时以楼层为虚拟根：顶层回复深度为 1，第 0 列连线接入楼层头像
+export function buildReplyTree(items: readonly ReplyItem[], focus?: number, rooted = false): ReplyNode[] {
     const roots: TreeEntry[] = [];
     const entries: TreeEntry[] = [];
 
@@ -65,6 +68,7 @@ export function buildReplyTree(items: readonly ReplyItem[], focus?: number): Rep
         (parent ? parent.children : roots).push(entry);
     });
 
+    const base = rooted ? 1 : 0;
     const nodes: ReplyNode[] = [];
     const visit = (entry: TreeEntry, depth: number, ancestorRails: RailKind[], isLast: boolean): void => {
         const rails = depth > 0 ? [...ancestorRails, isLast ? "elbow" : "tee"] as RailKind[] : [];
@@ -74,17 +78,18 @@ export function buildReplyTree(items: readonly ReplyItem[], focus?: number): Rep
             depth,
             rails,
             hasChildren: entry.children.length > 0,
-            linked: depth > 0,
+            linked: depth > base,
         };
         nodes.push(node);
-        if (depth >= MAX_REPLY_DEPTH && node.hasChildren) {
+        if (depth - base >= MAX_REPLY_DEPTH && node.hasChildren) {
             node.fold = { count: countDescendants(entry), rails: [...childRails, "elbow"] };
             return;
         }
         entry.children.forEach((child, i) => visit(child, depth + 1, childRails, i === entry.children.length - 1));
     };
     const focused = focus === undefined ? undefined : entries[focus];
-    (focused ? [focused] : roots).forEach(root => visit(root, 0, [], true));
+    const tops = focused ? [focused] : roots;
+    tops.forEach((root, i) => visit(root, base, [], i === tops.length - 1));
     return nodes;
 }
 
@@ -129,6 +134,8 @@ function renderReplyTree(list: HTMLElement): void {
     const domPosts = [...list.querySelectorAll<HTMLElement>(":scope > li.lzl_single_post")];
     const anchor = domPosts.at(-1)?.nextSibling ?? null;
     const posts = chronological(domPosts);
+    const floor = list.closest<HTMLElement>(".l_post");
+    floor?.toggleAttribute(ROOT_ATTR, posts.length > 0);
     if (posts.length === 0) return;
 
     const focusId = list.dataset[FOCUS_DATA];
@@ -138,31 +145,46 @@ function renderReplyTree(list: HTMLElement): void {
         author: normalizePortrait(readLzlField(post, "portrait")),
         names: [readLzlField(post, "user_name"), readLzlField(post, "showname")].filter(Boolean),
         target: normalizePortrait(post.dataset.tbrReplyTo) || undefined,
-    })), focus < 0 ? undefined : focus);
+    })), focus < 0 ? undefined : focus, floor != null);
 
-    if (focus >= 0) list.insertBefore(createFocusBack(list), anchor);
+    const ordered: HTMLElement[] = [];
+    if (focus >= 0) ordered.push(createFocusBack(list, floor != null));
     const shown = new Set<HTMLElement>();
     nodes.forEach(node => {
         const post = posts[node.index];
         shown.add(post);
-        if (post.hasAttribute(TREE_ATTR)) post.setAttribute(STATIC_ATTR, "");
-        post.setAttribute(TREE_ATTR, "");
+        markBuilt(post);
         post.hidden = false;
         post.toggleAttribute(LINKED_ATTR, node.linked);
-        post.style.setProperty("--tbr-lzl-depth", String(node.depth));
-        post.querySelector(`:scope > .${RAILS_CLASS}`)?.remove();
-        const rails = createRails(node.rails, node.hasChildren ? node.depth : undefined);
-        if (rails) post.prepend(rails);
-        list.insertBefore(post, anchor);
-        if (node.fold) list.insertBefore(createFold(list, post, node.depth + 1, node.fold), anchor);
+        const depth = String(node.depth);
+        if (post.style.getPropertyValue("--tbr-lzl-depth") !== depth) post.style.setProperty("--tbr-lzl-depth", depth);
+        updateRails(post, node.rails, node.hasChildren ? node.depth : undefined);
+        ordered.push(post);
+        if (node.fold) ordered.push(createFold(list, post, node.depth + 1, node.fold));
     });
     // 聚焦或折叠时其余回复留在列表中，以便返回时原位重建
     posts.filter(post => !shown.has(post)).forEach(post => {
-        if (post.hasAttribute(TREE_ATTR)) post.setAttribute(STATIC_ATTR, "");
-        post.setAttribute(TREE_ATTR, "");
-        post.hidden = true;
-        list.insertBefore(post, anchor);
+        markBuilt(post);
+        if (!post.hidden) post.hidden = true;
+        ordered.push(post);
     });
+    placeInOrder(list, ordered, anchor);
+}
+
+// 重建时同值写入属性也会产生变动记录，只在首次建树和首次重建时写入
+function markBuilt(post: HTMLElement): void {
+    if (!post.hasAttribute(TREE_ATTR)) post.setAttribute(TREE_ATTR, "");
+    else if (!post.hasAttribute(STATIC_ATTR)) post.setAttribute(STATIC_ATTR, "");
+}
+
+// 移动节点会让整条回复重新计算样式与布局，已在正确位置的回复保持不动
+function placeInOrder(list: HTMLElement, ordered: HTMLElement[], anchor: Node | null): void {
+    let next = anchor;
+    for (let i = ordered.length - 1; i >= 0; i--) {
+        const node = ordered[i];
+        if (node.parentNode !== list || node.nextSibling !== next) list.insertBefore(node, next);
+        next = node;
+    }
 }
 
 function createFold(list: HTMLElement, post: HTMLElement, depth: number, fold: NonNullable<ReplyNode["fold"]>): HTMLElement {
@@ -178,13 +200,20 @@ function createFold(list: HTMLElement, post: HTMLElement, depth: number, fold: N
     return row;
 }
 
-function createFocusBack(list: HTMLElement): HTMLElement {
+function createFocusBack(list: HTMLElement, rooted: boolean): HTMLElement {
     const button = domrd("button", { type: "button", class: "tbr-lzl-thread-button" }, [
         createLucideIconElement(ArrowLeft, { class: "tbr-action-icon", strokeWidth: 1.75 }),
         "返回全部回复",
     ]);
     button.addEventListener("click", () => setReplyFocus(list, undefined));
-    return domrd("li", { class: FOCUS_BACK_CLASS }, [button]);
+    const row = domrd("li", { class: FOCUS_BACK_CLASS }, [button]);
+    // 位于楼层连线与聚焦子树之间，需让楼层竖线穿过
+    const rails = rooted ? createRails(["pass"]) : null;
+    if (rails) {
+        row.style.setProperty("--tbr-lzl-depth", "1");
+        row.prepend(rails);
+    }
+    return row;
 }
 
 function setReplyFocus(list: HTMLElement, spid: string | undefined): void {
@@ -196,6 +225,18 @@ function setReplyFocus(list: HTMLElement, spid: string | undefined): void {
     const wrapper = list.closest<HTMLElement>(".core_reply_wrapper") ?? list;
     const top = wrapper.getBoundingClientRect().top;
     if (top < 0) window.scrollBy({ top: top - 80, behavior: "smooth" });
+}
+
+// 连线形状不变时保留原节点，避免重建整列表时每条回复都重新布局
+function updateRails(post: HTMLElement, kinds: RailKind[], stemColumn?: number): void {
+    const shape = `${kinds.join(",")}|${stemColumn ?? ""}`;
+    const current = post.querySelector<HTMLElement>(`:scope > .${RAILS_CLASS}`);
+    if ((current?.dataset.shape ?? "|") === shape) return;
+    current?.remove();
+    const rails = createRails(kinds, stemColumn);
+    if (!rails) return;
+    rails.dataset.shape = shape;
+    post.prepend(rails);
 }
 
 function createRails(kinds: RailKind[], stemColumn?: number): HTMLElement | null {

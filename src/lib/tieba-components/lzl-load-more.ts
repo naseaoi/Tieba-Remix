@@ -60,7 +60,27 @@ export function appendCommentPosts(list: HTMLElement, posts: HTMLElement[], anch
         if (ids.has(id)) continue;
         ids.add(id);
         post.classList.remove("first_no_border");
+        fillReportEntry(post);
         list.insertBefore(post, anchor);
+    }
+}
+
+// 原生只在自身加载楼中楼后调用 _showLzlJubao 填充举报/删除入口，接口返回的 .lzl_jb 为空，需按同一规则补齐
+function fillReportEntry(post: HTMLElement): void {
+    const entry = dom<"span">(".lzl_jb", post);
+    if (!entry || entry.childElementCount > 0) return;
+    const { power, user } = PageData;
+    if (power.can_mask_delete || power.lz_del) return;
+    const author = post.querySelector("a[username]")?.getAttribute("username");
+    if (author && author === user.user_name) {
+        entry.append(domrd("a", {
+            rel: "noopener",
+            href: "#",
+            class: "lzl_delate_in",
+            "data-field": `{'delete_mine': 1, 'user_name' : '${author}'}`,
+        }, "删除"), " | ");
+    } else {
+        entry.append(domrd("a", { href: "###", class: "lzl_jb_in" }));
     }
 }
 

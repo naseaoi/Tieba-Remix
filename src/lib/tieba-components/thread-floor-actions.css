@@ -74,6 +74,7 @@
     margin-left: 0 !important;
 }
 
+.lzl_content_reply .lzl_jb:empty,
 .lzl_content_reply .lzl_op_list:empty {
     display: none !important;
 }
