@@ -25,6 +25,7 @@ import { installForumVideoFit } from "./lib/tieba-components/forum-video-fit";
 import { installForumLiveThreadCollapse } from "./lib/tieba-components/forum-live-thread-collapse";
 import { installForumThreadListModernizer } from "./lib/tieba-components/forum-thread-list-modernizer";
 import { decorateFloatBarTooltips, floatBar } from "./lib/tieba-components/float-bar";
+import { installThreadNativeScrollBlock } from "./lib/tieba-components/thread-native-scroll-block";
 import { installThreadFloorActions } from "./lib/tieba-components/thread-floor-actions";
 import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
@@ -55,6 +56,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     document.documentElement.dataset.pageType = currentPageType();
 
     installThreadImageLoading();
+    installThreadNativeScrollBlock();
 
     installForumImageTakeover();
 
