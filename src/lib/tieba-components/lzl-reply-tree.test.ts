@@ -96,14 +96,28 @@ describe("buildReplyTree", () => {
     });
 
     it("以楼层为根时顶层回复接入第 0 列且不计入折叠深度", () => {
-        const nodes = buildReplyTree([{ author: "a" }, { author: "b", target: "a" }, { author: "c" }], undefined, true);
+        const nodes = buildReplyTree([{ author: "a" }, { author: "b", target: "a" }, { author: "c" }], undefined, { author: "floor" });
 
         expect(nodes.map(({ index, depth, rails, linked }) => [index, depth, rails, linked])).toEqual([
             [0, 1, ["tee"], false], [1, 2, ["pass", "elbow"], true], [2, 1, ["elbow"], false],
         ]);
-        const deep = buildReplyTree(chain(MAX_REPLY_DEPTH + 3), undefined, true);
+        const deep = buildReplyTree(chain(MAX_REPLY_DEPTH + 3), undefined, { author: "floor" });
         expect(deep).toHaveLength(MAX_REPLY_DEPTH + 1);
         expect(deep.at(-1)?.depth).toBe(MAX_REPLY_DEPTH + 1);
+    });
+
+    it("回复层主的顶层回复由楼层连线表达，按层主别名匹配", () => {
+        const root = { author: "floor", names: ["层主"] };
+        const nodes = buildReplyTree([
+            { author: "a" },
+            { author: "b", target: "floor" },
+            { author: "c", target: "层主" },
+            { author: "d", target: "missing" },
+        ], undefined, root);
+
+        expect(nodes.map(({ index, depth, linked }) => [index, depth, linked])).toEqual([
+            [0, 1, false], [1, 1, true], [2, 1, true], [3, 1, false],
+        ]);
     });
 });
 
@@ -281,6 +295,17 @@ describe("renderLzlReplyTrees", () => {
         expect(first.style.getPropertyValue("--tbr-lzl-depth")).toBe("1");
         expect(first.querySelector(".tbr-lzl-rail-elbow")).not.toBeNull();
         expect(second.style.getPropertyValue("--tbr-lzl-depth")).toBe("2");
+    });
+
+    it("楼层内回复层主时标记已连线", () => {
+        document.body.innerHTML = `<div class="l_post" data-field='{"author":{"user_name":"甲","portrait":"f?t=1"}}'>
+            <ul class="j_lzl_m_w">${post("1", "a")}${post("2", "b", "f")}${post("3", "c", "甲")}</ul></div>`;
+        renderLzlReplyTrees();
+
+        const [, second, third] = document.querySelectorAll<HTMLElement>("li");
+        expect(second.style.getPropertyValue("--tbr-lzl-depth")).toBe("1");
+        expect(second.hasAttribute("data-tbr-lzl-linked")).toBe(true);
+        expect(third.hasAttribute("data-tbr-lzl-linked")).toBe(true);
     });
 
     it("新回复加入后重建连线而不重复插入", () => {

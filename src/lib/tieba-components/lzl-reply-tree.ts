@@ -41,8 +41,8 @@ interface TreeEntry {
 }
 
 // 优先延续双方对话，其次回复独立发言；focus 指定时只展示以该回复为根的子树
-// rooted 时以楼层为虚拟根：顶层回复深度为 1，第 0 列连线接入楼层头像
-export function buildReplyTree(items: readonly ReplyItem[], focus?: number, rooted = false): ReplyNode[] {
+// 传入 root（层主）时以楼层为虚拟根：顶层回复深度为 1，第 0 列连线接入楼层头像，回复层主的顶层回复视为已连线
+export function buildReplyTree(items: readonly ReplyItem[], focus?: number, root?: ReplyItem): ReplyNode[] {
     const roots: TreeEntry[] = [];
     const entries: TreeEntry[] = [];
 
@@ -68,7 +68,7 @@ export function buildReplyTree(items: readonly ReplyItem[], focus?: number, root
         (parent ? parent.children : roots).push(entry);
     });
 
-    const base = rooted ? 1 : 0;
+    const base = root ? 1 : 0;
     const nodes: ReplyNode[] = [];
     const visit = (entry: TreeEntry, depth: number, ancestorRails: RailKind[], isLast: boolean): void => {
         const rails = depth > 0 ? [...ancestorRails, isLast ? "elbow" : "tee"] as RailKind[] : [];
@@ -78,7 +78,7 @@ export function buildReplyTree(items: readonly ReplyItem[], focus?: number, root
             depth,
             rails,
             hasChildren: entry.children.length > 0,
-            linked: depth > base,
+            linked: depth > base || (root !== undefined && isRootReply(items[entry.index], root)),
         };
         nodes.push(node);
         if (depth - base >= MAX_REPLY_DEPTH && node.hasChildren) {
@@ -95,6 +95,10 @@ export function buildReplyTree(items: readonly ReplyItem[], focus?: number, root
 
 function countDescendants(entry: TreeEntry): number {
     return entry.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
+}
+
+function isRootReply(item: ReplyItem, root: ReplyItem): boolean {
+    return item.target !== undefined && matchesAuthor(root, item.target);
 }
 
 function matchesAuthor(item: ReplyItem, name: string): boolean {
@@ -145,7 +149,7 @@ function renderReplyTree(list: HTMLElement): void {
         author: normalizePortrait(readLzlField(post, "portrait")),
         names: [readLzlField(post, "user_name"), readLzlField(post, "showname")].filter(Boolean),
         target: normalizePortrait(post.dataset.tbrReplyTo) || undefined,
-    })), focus < 0 ? undefined : focus, floor != null);
+    })), focus < 0 ? undefined : focus, floor ? readFloorAuthor(floor) : undefined);
 
     const ordered: HTMLElement[] = [];
     if (focus >= 0) ordered.push(createFocusBack(list, floor != null));
@@ -299,6 +303,21 @@ export function readLzlField(element: HTMLElement, key: string): string {
     }
     const match = field.match(pattern);
     return match?.[1] ?? match?.[2] ?? "";
+}
+
+// 楼层 data-field 是 JSON；解析失败时仍以楼层为根，只是无法识别回复层主
+function readFloorAuthor(floor: HTMLElement): ReplyItem {
+    let author: Record<string, unknown> | undefined;
+    try {
+        author = (JSON.parse(floor.getAttribute("data-field") ?? "") as { author?: Record<string, unknown> }).author;
+    } catch {
+        author = undefined;
+    }
+    const text = (value: unknown) => typeof value === "string" ? value : "";
+    return {
+        author: normalizePortrait(text(author?.portrait)),
+        names: [text(author?.user_name), text(author?.user_nickname)].filter(Boolean),
+    };
 }
 
 function normalizePortrait(portrait: string | undefined): string {
