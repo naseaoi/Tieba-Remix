@@ -1,7 +1,10 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
+@use "./thread-card" as *;
 
 html.style-vercel {
+    @include thread-card-theme-vars;
+
     body {
         background-color: var(--page-background);
         color: var(--default-fore);

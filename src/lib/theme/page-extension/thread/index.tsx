@@ -26,7 +26,8 @@ import { installLzlReplyComposer } from "@/lib/tieba-components/lzl-reply-compos
 import { installLzlReplyTarget } from "@/lib/tieba-components/lzl-reply-target";
 import { pager } from "@/lib/tieba-components/pager";
 import { installThreadFavoriteTagPopup } from "@/lib/tieba-components/thread-favorite-tag-popup";
-import { compactLayout, navBarHideMode, pageExtension, threadImageQueueScope } from "@/lib/user-values";
+import { installNavTopCollapse } from "@/lib/theme/nav-top-collapse";
+import { compactLayout, pageExtension, threadImageQueueScope } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import { requestUEditorInit, resolveReadyUEditor, waitForReadyUEditor } from "@/lib/utils/use-ueditor";
 import _ from "@/lib/utils/_";
@@ -66,44 +67,7 @@ export default async function () {
         }
     });
 
-    // 滚动隐藏模式：与 nav-bar 协同，首次向下滚动后永久收紧顶部空白（不再恢复）
-    (function setupScrollCollapse() {
-        let collapsed = false;
-        let lastScrollY = 0;
-        let userScrollIntent = false;
-        const markUserScrollIntent = () => {
-            userScrollIntent = true;
-        };
-        const markKeyboardScrollIntent = (event: KeyboardEvent) => {
-            if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) userScrollIntent = true;
-        };
-        window.addEventListener("wheel", markUserScrollIntent, { passive: true });
-        window.addEventListener("touchstart", markUserScrollIntent, { passive: true });
-        window.addEventListener("keydown", markKeyboardScrollIntent);
-        const handle = _.throttle(function () {
-            if (collapsed) return;
-            if (navBarHideMode.get() !== "fold") return;
-            const scrollY = window.scrollY;
-            if (!userScrollIntent) {
-                lastScrollY = scrollY;
-                return;
-            }
-            if (scrollY > lastScrollY && scrollY > 8) {
-                document.documentElement.toggleAttribute("thread-top-collapsed", true);
-                collapsed = true;
-            }
-            lastScrollY = scrollY;
-        }, 100);
-        window.addEventListener("scroll", handle, { passive: true });
-
-        navBarHideMode.on("setter", (mode) => {
-            if (mode !== "fold") {
-                document.documentElement.removeAttribute("thread-top-collapsed");
-                collapsed = false;
-                lastScrollY = window.scrollY;
-            }
-        });
-    })();
+    installNavTopCollapse();
 
     waitUntil(() => !(floatBar.get() == null)).then(function () {
         let settingsPanel: RenderedComponent | undefined;

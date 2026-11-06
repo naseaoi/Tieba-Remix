@@ -17,7 +17,8 @@ const recentThreadAgreeStates = new UserKeyTS<Record<string, StoredThreadAgreeSt
 );
 
 function getViewerKey(): string {
-    return String(PageData.user?.portrait || PageData.user?.user_name || "anonymous");
+    const user = typeof PageData === "undefined" ? undefined : PageData.user;
+    return String(user?.portrait || user?.user_name || "anonymous");
 }
 
 function getThreadKey(tid: number | string): string {

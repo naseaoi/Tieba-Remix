@@ -27,11 +27,13 @@ const inlineStyleLoaders = {
     "tieba-forum-search": () => import("@/stylesheets/tieba/tieba-forum-search.scss?inline"),
     "tieba-home": () => import("@/stylesheets/tieba/tieba-home.scss?inline"),
     "tieba-main": () => import("@/stylesheets/tieba/tieba-main.scss?inline"),
+    "tieba-search": () => import("@/stylesheets/tieba/tieba-search.scss?inline"),
     "tieba-thread": () => import("@/stylesheets/tieba/tieba-thread.scss?inline"),
     "vercel-error": () => import("@/stylesheets/tieba-vercel/tieba-error.scss?inline"),
     "vercel-forum": () => import("@/stylesheets/tieba-vercel/tieba-forum.scss?inline"),
     "vercel-home": () => import("@/stylesheets/tieba-vercel/tieba-home.scss?inline"),
     "vercel-main": () => import("@/stylesheets/tieba-vercel/tieba-main.scss?inline"),
+    "vercel-search": () => import("@/stylesheets/tieba-vercel/tieba-search.scss?inline"),
     "vercel-settings": () => import("@/stylesheets/tieba-vercel/settings.scss?inline"),
     "vercel-thread": () => import("@/stylesheets/tieba-vercel/tieba-thread.scss?inline"),
 } satisfies Record<string, () => Promise<InlineStyleModule>>;
@@ -46,6 +48,9 @@ function pageBucketKey() {
 
         case "thread":
             return "page:thread";
+
+        case "search":
+            return "page:search";
 
         default:
             return "page:error";
@@ -113,6 +118,12 @@ async function ensurePageCSS() {
         ]));
     }
 
+    if (pageType === "search") {
+        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+            "tieba-search",
+        ]));
+    }
+
     return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
         "tieba-error",
     ]));
@@ -141,6 +152,13 @@ async function ensureThemeCSS(theme: ThemeStyle) {
         return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
             "vercel-main",
             "vercel-thread",
+        ]));
+    }
+
+    if (pageType === "search") {
+        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+            "vercel-main",
+            "vercel-search",
         ]));
     }
 

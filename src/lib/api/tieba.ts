@@ -5,10 +5,11 @@ import { Except } from "type-fest";
 import { toast } from "user-view";
 import { md5 } from "@/modules/poll-display/md5";
 import { currentStorage, highQualityImage, THREAD_IMAGES } from "../user-values";
+import { parseForumSidebar, parseSearchResult, type ForumSidebar, type SearchQuery, type SearchResultPage } from "./tieba-search";
 
 const PC_SIGN_SALT = "36770b1f34c9bbf2e7d1a99d2b82fa9e";
 
-function signPcForm(form: Record<string, string>): string {
+export function signPcForm(form: Record<string, string>): string {
     return md5(Object.keys(form).sort().map(key => `${key}=${form[key]}`).join("") + PC_SIGN_SALT);
 }
 
@@ -279,6 +280,67 @@ export const tiebaAPI = {
         })}`);
     },
 };
+
+async function requestSearchData(path: string, params: Record<string, string>, errorKey: "no" | "error_code"): Promise<Record<string, unknown>> {
+    const form = { ...params, subapp_type: "pc", _client_type: "20" };
+    const response = await fetch(`${path}?${new URLSearchParams({ ...form, sign: signPcForm(form) })}`, { credentials: "same-origin" });
+    if (!response.ok) throw new Error(`贴吧请求失败 (${response.status})`);
+    const raw: unknown = await response.json();
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("贴吧接口返回格式错误");
+    const body = raw as Record<string, unknown>;
+    if (body[errorKey] !== 0 && body[errorKey] !== "0") {
+        const message = body.error_msg ?? body.error ?? body.message;
+        throw new Error(typeof message === "string" && message ? message : "贴吧接口返回错误");
+    }
+    return body;
+}
+
+export async function searchForumPosts(query: SearchQuery): Promise<SearchResultPage> {
+    const word = query.word.trim();
+    if (!word) throw new Error("请输入搜索关键词");
+    const page = Number.isSafeInteger(query.page) && query.page > 0 ? query.page : 1;
+    const pageSize = query.pageSize ?? 20;
+    const params: Record<string, string> = {
+        st: query.sort === "relevance" ? "2" : "5",
+        tt: query.type === "comment" ? "3" : "1",
+        word,
+        pn: String(page),
+        rn: String(Number.isSafeInteger(pageSize) && pageSize > 0 ? Math.min(pageSize, 100) : 20),
+    };
+    if (query.forumName?.trim()) params.fname = query.forumName.trim();
+    return parseSearchResult(await requestSearchData("/mo/q/search/thread", params, "no"));
+}
+
+export async function fetchForumSidebar(forumName: string): Promise<ForumSidebar> {
+    const name = forumName.trim();
+    if (!name) throw new Error("请输入吧名");
+    const [sidebar, bottom] = await Promise.all([
+        requestSearchData("/c/f/pc/frsSidebarRight", { forum_name: name }, "error_code"),
+        requestSearchData("/c/f/frs/frsBottom_pc", { kw: name }, "error_code"),
+    ]);
+    return parseForumSidebar({ ...sidebar, forum: bottom.forum, area_data: bottom.area_data });
+}
+
+let tbsRequest: Promise<string> | undefined;
+
+export async function getTbs(): Promise<string> {
+    if (typeof PageData !== "undefined" && typeof PageData.tbs === "string" && PageData.tbs) return PageData.tbs;
+    if (!tbsRequest) {
+        tbsRequest = (async () => {
+            const response = await tiebaAPI.tbs();
+            if (!response.ok) throw new Error(`获取贴吧凭证失败 (${response.status})`);
+            const raw: unknown = await response.json();
+            if (!raw || typeof raw !== "object" || !("tbs" in raw) || typeof raw.tbs !== "string" || !raw.tbs.trim()) {
+                throw new Error("贴吧凭证不存在");
+            }
+            return raw.tbs;
+        })().catch(error => {
+            tbsRequest = undefined;
+            throw error;
+        });
+    }
+    return tbsRequest;
+}
 
 interface PcSubPostContent {
     type?: number;
@@ -753,7 +815,7 @@ async function favoritePostInstance(
     request: (tbs: string, tid: number, fid: number) => Promise<Response>,
     action: string,
 ) {
-    const pageFollowSign = typeof PageData.follow_sign === "string" ? PageData.follow_sign.trim() : "";
+    const pageFollowSign = typeof PageData !== "undefined" && typeof PageData.follow_sign === "string" ? PageData.follow_sign.trim() : "";
     const followSign = pageFollowSign || await getThreadFollowSign(tid);
 
     const result = await requestInstance(request(followSign, tid, fid)) as AddFavoritePostResponse | undefined;
@@ -773,7 +835,7 @@ export function addFavorInstance(tid: number, fid: number) {
 
 export async function cancelFavorInstance(tid: number, fid: number) {
     const result = await favoritePostInstance(tid, fid, tiebaAPI.cancelFavoritePost, "取消收藏");
-    await requestInstance(tiebaAPI.deleteFavoriteTags(PageData.tbs, tid));
+    await requestInstance(tiebaAPI.deleteFavoriteTags(await getTbs(), tid));
     return result;
 }
 
@@ -787,7 +849,7 @@ export async function getFavoriteTagRecommendations(tid: number): Promise<string
 }
 
 export async function addFavoriteTags(tid: number, tags: string[]) {
-    const result = await requestInstance(tiebaAPI.addFavoriteTags(PageData.tbs, tid, tags)) as FavoriteTagResponse | undefined;
+    const result = await requestInstance(tiebaAPI.addFavoriteTags(await getTbs(), tid, tags)) as FavoriteTagResponse | undefined;
     if (!result || Number(result.no) !== 0) throw new Error(result?.error || "添加标签失败");
     return result;
 }

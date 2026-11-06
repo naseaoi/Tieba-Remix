@@ -21,7 +21,7 @@ type OptionalMapped<T> = {
     [prop in keyof T]?: T[prop];
 }
 
-type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
+type PageType = "index" | "thread" | "forum" | "search" | "user" | "unhandled"
 
 /** 用户模块 */
 interface UserModule {

@@ -42,7 +42,8 @@
                 <UserButton class="nav-icon-button menu-trigger avatar-button" data-menu-trigger="user" no-border="all"
                     @mouseenter="handleMenuTriggerEnter($event, 'user')"
                     @mouseleave="handleMenuTriggerLeave($event, 'user')">
-                    <img ref="navAvatar" class="nav-avatar">
+                    <img v-if="userPortrait" :src="tiebaAPI.URL_profile(userPortrait)" :alt="navUser.displayName" class="nav-avatar">
+                    <UserRound v-else class="nav-svg" aria-label="用户" />
                     <DropdownMenu class="nav-menu" :class="{ visible: activeMenu === 'user' }" data-menu-key="user"
                         :menu-items="userMenu!" @mouseenter="handleMenuPanelEnter('user')"
                         @mouseleave="handleMenuPanelLeave($event, 'user')" @request-close="closeMenus"></DropdownMenu>
@@ -56,8 +57,9 @@
 </template>
 
 <script lang="ts" setup>
-import { Bell, Ellipsis, Settings } from "@lucide/vue";
+import { Bell, Ellipsis, Settings, UserRound } from "@lucide/vue";
 import { tiebaAPI } from "@/lib/api/tieba";
+import { getNavUser, navLoginUrl, navLogoutUrl, parseNavUser, type NavUser } from "@/lib/api/tieba-user";
 import { openSettingsDialog } from "@/lib/common/open-settings";
 import { dom } from "@/lib/elemental";
 import { navBarHideMode } from "@/lib/user-values";
@@ -76,8 +78,8 @@ type MenuKey = "message" | "more" | "user";
 
 const navBar = ref<HTMLElement>();
 
-const navAvatar = ref<HTMLImageElement>();
-const userPortrait = ref<string>("");
+const navUser = ref<NavUser>(parseNavUser(undefined));
+const userPortrait = computed(() => navUser.value.portrait);
 const activeMenu = ref<MenuKey | null>(null);
 const pendingMenuOpen = ref<MenuKey | null>(null);
 const isAutoFolded = ref(false);
@@ -128,17 +130,26 @@ watch(hideMode, (mode, previousMode) => {
     }
 });
 
-init();
-onMounted(async function () {
-    {
-        waitUntil(() => userPortrait.value !== "").then(function () {
-            if (navAvatar.value)
-                navAvatar.value.src = tiebaAPI.URL_profile(userPortrait.value);
-        });
-    }
+let scrollCleanup: (() => void) | undefined;
+let mounted = false;
+loadNavMenuContent();
+initScroll();
+onMounted(() => {
+    mounted = true;
+    void getNavUser().then(user => {
+        if (!mounted) return;
+        navUser.value = user;
+        loadNavMenuContent();
+    }).catch(() => {
+        if (mounted) toast({ message: "获取用户信息失败，请刷新重试", type: "warning" });
+    });
 });
 
-onUnmounted(() => window.clearTimeout(detachedMessageCollapseTimer));
+onUnmounted(() => {
+    mounted = false;
+    scrollCleanup?.();
+    window.clearTimeout(detachedMessageCollapseTimer);
+});
 
 function positionMenu(trigger: HTMLElement) {
     const menu = trigger.querySelector(".nav-menu") as HTMLElement;
@@ -293,14 +304,7 @@ function shouldKeepNavVisible(target: EventTarget | null) {
     return !!element.closest("#nav-bar, .nav-reveal-zone, .nav-menu");
 }
 
-async function init() {
-    await waitUntil(() => PageData !== undefined).then(() => {
-        userPortrait.value = PageData.user.portrait;
-        loadNavMenuContent();
-    });
-
-    let scrollCleanup: (() => void) | undefined;
-
+function initScroll() {
     watch(hideMode, (mode) => {
         if (scrollCleanup) { scrollCleanup(); scrollCleanup = undefined; }
         isAutoFolded.value = false;
@@ -320,6 +324,10 @@ async function init() {
 }
 
 async function login() {
+    if (typeof PageData === "undefined") {
+        location.assign(navLoginUrl(location.href));
+        return;
+    }
     document.documentElement.setAttribute(LOGIN_POPUP_VISIBLE_ATTR, "true");
 
     const loginButton = dom(".u_login");
@@ -391,7 +399,7 @@ async function openSettings() {
 }
 
 function loadNavMenuContent() {
-    const favoriteThreadsHref = `/i/i/storethread?un=${encodeURIComponent(PageData.user.user_name)}`;
+    const favoriteThreadsHref = `/i/i/storethread?un=${encodeURIComponent(navUser.value.userName)}`;
 
     messageMenu.value = [
         {
@@ -433,7 +441,7 @@ function loadNavMenuContent() {
         },
         {
             title: "贴吧设置",
-            href: `/home/profile?un=${PageData.user.name_url}`,
+            href: `/home/profile?un=${navUser.value.nameUrl}`,
         },
         "separator",
         {
@@ -456,10 +464,14 @@ function loadNavMenuContent() {
         },
     ];
 
-    PageData.user.is_login
+    navUser.value.isLoggedIn
         ? userMenu.value.push("separator", {
             title: "退出登录",
             click() {
+                if (typeof PageData === "undefined" && navUser.value.sessionId) {
+                    location.assign(navLogoutUrl(location.href, navUser.value.sessionId));
+                    return;
+                }
                 const logoutButton = dom(".u_logout");
                 if (logoutButton) {
                     dom<"a">("a", logoutButton)?.click();
@@ -497,6 +509,7 @@ $hover-trigger-height: 28px;
     right: 0;
     left: 0;
     display: flex;
+    box-sizing: border-box;
     width: calc((100% - 44px) * 0.8);
     max-width: 672px;
     height: $nav-height;
@@ -612,6 +625,9 @@ $hover-trigger-height: 28px;
 .nav-menu {
     position: fixed;
     z-index: 1201;
+    box-sizing: border-box;
+    min-width: 144px;
+    white-space: nowrap;
     visibility: hidden;
     cursor: default;
     font-weight: var(--font-weight-normal);

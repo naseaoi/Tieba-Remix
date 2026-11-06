@@ -42,7 +42,7 @@ body.special_conf_skin {
     // 导航栏始终隐藏时，去除原本为 nav-bar 让出的顶部空白
     html[data-nav-bar-mode="alwaysFold"] &,
     // 滚动隐藏模式下，首次向下滚动后顶部空白随 nav-bar 一同隐藏
-    html[thread-top-collapsed] & {
+    html[nav-top-collapsed] & {
         margin-top: 16px;
     }
 

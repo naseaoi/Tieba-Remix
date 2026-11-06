@@ -1,0 +1,332 @@
+@use "./tokens" as *;
+
+/// 帖子卡片：吧页帖子列表与搜索结果共用的外观
+
+// 暗色阴影走变量；在卡片选择器里写 html.dark-theme & 会拼出 html 嵌套 html 的无效选择器
+@mixin thread-card-theme-vars {
+    --trex-card-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+    --trex-card-shadow-hover: 0 2px 6px rgb(0 0 0 / 8%);
+
+    &.dark-theme {
+        --trex-card-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+        --trex-card-shadow-hover: 0 2px 8px rgb(0 0 0 / 50%);
+    }
+}
+
+@mixin thread-card-surface {
+    border: 1px solid var(--border-color) !important;
+    border-radius: $vercel-radius-md !important;
+    background-color: var(--default-background) !important;
+    box-shadow: var(--trex-card-shadow) !important;
+    transition: border-color $vercel-trans-normal $vercel-ease,
+                box-shadow $vercel-trans-normal $vercel-ease !important;
+
+    &:hover {
+        border-color: var(--minimal-fore) !important;
+        background-color: var(--default-background) !important;
+        box-shadow: var(--trex-card-shadow-hover) !important;
+    }
+}
+
+@mixin thread-card-title-text {
+    display: -webkit-box !important;
+    color: var(--default-fore) !important;
+    font-size: $vercel-fs-lg !important;
+    font-weight: var(--font-weight-bold) !important;
+    line-height: 1.4 !important;
+    text-decoration: none !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+        color: var(--default-fore) !important;
+        text-decoration: none !important;
+    }
+}
+
+@mixin thread-card-abstract-text {
+    display: -webkit-box !important;
+    color: var(--light-fore) !important;
+    font-size: $vercel-fs-sm !important;
+    line-height: $vercel-lh-normal !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+// 最后一张缩略图上的 +N 遮罩，数量写在 data-trex-more
+@mixin thread-card-thumb-more {
+    &[data-trex-more]::after {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgb(0 0 0 / 45%);
+        color: #fff;
+        font-size: $vercel-fs-lg;
+        font-weight: 600;
+        font-feature-settings: "tnum" 1;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+        content: attr(data-trex-more);
+        transition: background-color $vercel-trans-fast $vercel-ease;
+    }
+
+    &[data-trex-more]:hover::after {
+        background-color: rgb(0 0 0 / 60%);
+    }
+}
+
+// 作者行（头像、名字、时间）与互动按钮（点赞、评论、更多）
+@mixin thread-card-meta {
+    .thread-modern-author-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        min-width: 0 !important;
+        gap: 12px !important;
+        width: 100% !important;
+        min-height: 32px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .thread-modern-author {
+        display: inline-flex !important;
+        align-items: center !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+        color: var(--default-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        font-weight: var(--font-weight-bold) !important;
+        line-height: 1 !important;
+    }
+
+    .thread-modern-avatar-link,
+    .thread-modern-author-name {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    .thread-modern-avatar-link {
+        display: block !important;
+        flex: 0 0 32px !important;
+    }
+
+    .thread-modern-author-name {
+        display: block !important;
+        font-family: var(--code-zh, sans-serif) !important;
+        overflow: visible !important;
+        max-width: none !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        line-height: 1.3 !important;
+        padding-bottom: 2px !important;
+    }
+
+    .thread-modern-author-name:hover,
+    .thread-modern-author-name:focus-visible {
+        color: var(--tieba-theme-fore) !important;
+    }
+
+    .thread-modern-author-details {
+        display: flex !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        overflow: visible !important;
+    }
+
+    .thread-modern-avatar {
+        display: block !important;
+        width: 32px !important;
+        height: 32px !important;
+        flex: 0 0 32px !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: var(--avatar-radius) !important;
+        background: var(--default-hover) !important;
+        object-fit: cover !important;
+    }
+
+    .thread-modern-time {
+        color: var(--light-fore) !important;
+        font-family: $vercel-font-mono !important;
+        font-size: $vercel-fs-xs !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+
+    // 陈旧时间分级
+    .thread-modern-time[data-age="month"] {
+        color: var(--level-orange-fore) !important;
+    }
+
+    .thread-modern-time[data-age="year"] {
+        color: var(--error-color) !important;
+    }
+
+    .thread-modern-actions {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: center !important;
+        gap: 2px !important;
+        color: var(--light-fore) !important;
+        font-size: $vercel-fs-sm !important;
+        line-height: 1 !important;
+    }
+
+    .thread-modern-more {
+        display: inline-flex !important;
+        width: 24px !important;
+        height: 24px !important;
+        flex: 0 0 24px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: $vercel-radius-sm !important;
+        background: none !important;
+        color: var(--light-fore) !important;
+        cursor: pointer !important;
+    }
+
+    .thread-modern-more:hover,
+    .thread-modern-more:focus-visible {
+        background-color: var(--default-hover) !important;
+        color: var(--default-fore) !important;
+        outline: none !important;
+    }
+
+    .thread-modern-action {
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        padding: 0 8px !important;
+        border: 0 !important;
+        border-radius: $vercel-radius-sm !important;
+        background: none !important;
+        color: var(--light-fore) !important;
+        font: inherit !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+
+    .thread-modern-action > .thread-meta-icon,
+    .thread-modern-action > .thread-modern-value {
+        display: inline-flex !important;
+        align-items: center !important;
+        height: 18px !important;
+        line-height: 18px !important;
+        vertical-align: middle !important;
+    }
+
+    .thread-modern-action > .thread-modern-value {
+        font-family: $vercel-font-mono !important;
+        font-size: $vercel-fs-sm !important;
+        font-variant-numeric: tabular-nums !important;
+    }
+
+    .thread-modern-action:not(:disabled) {
+        cursor: pointer !important;
+    }
+
+    .thread-modern-action:hover,
+    .thread-modern-action:focus-visible {
+        background-color: var(--default-hover) !important;
+        color: var(--default-fore) !important;
+        outline: none !important;
+    }
+
+    .thread-modern-agree.agree-count-liked {
+        color: var(--tieba-theme-color) !important;
+    }
+
+    .thread-modern-agree.agree-count-liked .thread-meta-icon {
+        fill: currentcolor;
+    }
+
+    .thread-meta-icon {
+        display: block !important;
+        width: 16px !important;
+        height: 16px !important;
+        flex: 0 0 16px !important;
+        line-height: 1 !important;
+        user-select: none !important;
+    }
+}
+
+// 分段控件：灰底容器，选中项为浮起的白底
+@mixin segmented-group {
+    display: inline-flex;
+    padding: 2px;
+    border-radius: $vercel-radius-md;
+    background-color: var(--default-hover);
+}
+
+@mixin segmented-option {
+    height: 24px;
+    padding: 0 10px !important;
+    border: none !important;
+    border-radius: $vercel-radius-sm !important;
+    background: none !important;
+    color: var(--light-fore) !important;
+    font: inherit;
+    font-size: $vercel-fs-xs;
+    cursor: pointer;
+    transition: color $vercel-trans-fast $vercel-ease, background-color $vercel-trans-fast $vercel-ease;
+
+    &:hover {
+        color: var(--default-fore) !important;
+    }
+
+    &.active {
+        background-color: var(--default-background) !important;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+        color: var(--default-fore) !important;
+        font-weight: var(--font-weight-bold);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tieba-theme-color);
+        outline-offset: 1px;
+    }
+}
+
+@mixin load-more-button {
+    min-width: 160px;
+    height: 36px;
+    padding: 0 16px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: $vercel-radius-md !important;
+    background-color: var(--default-background) !important;
+    color: var(--default-fore) !important;
+    font: inherit;
+    font-size: $vercel-fs-sm;
+    cursor: pointer;
+    transition: border-color $vercel-trans-fast $vercel-ease;
+
+    &:hover:not(:disabled) {
+        border-color: var(--minimal-fore) !important;
+    }
+
+    &:disabled {
+        border-color: transparent !important;
+        background: none !important;
+        color: var(--light-fore) !important;
+        cursor: default;
+    }
+}

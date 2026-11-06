@@ -7,7 +7,7 @@ import { messageBox, toast } from "user-view";
 import { updateNotifyDialog } from "@/components/update-notify-dialog";
 import { darkPrefers } from "../theme";
 
-export type PageType = "index" | "thread" | "forum" | "user" | "unhandled"
+export type PageType = "index" | "thread" | "forum" | "search" | "user" | "unhandled"
 
 const TIEBA_HOSTS = new Set(["tieba.baidu.com", "tiebac.baidu.com"]);
 
@@ -23,6 +23,7 @@ export function currentPageType(): PageType {
     if ((["/", "/index.html"]).includes(pathname)) return "index";
     if (/\/p\/\d+/.test(pathname)) return "thread";
     if (pathname === "/f") return "forum";
+    if (/^\/f\/search(\/|$)/.test(pathname)) return "search";
     if (pathname === "/home/main") return "user";
 
     return "unhandled";

@@ -1,0 +1,6 @@
+// 原生搜索页 SPA 在 .frs-page-wrap 内滚动；base.scss 给 html 的常驻滚动条在这里只会是一条空滚动条
+// 与 base.scss 并行加载、先后不定，提高优先级保证覆盖；接管后的页面由文档滚动
+html[data-page-type="search"]:not([data-search-page]) {
+    overflow: hidden;
+    scrollbar-gutter: auto;
+}

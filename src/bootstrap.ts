@@ -137,8 +137,11 @@ function startBootstrap({ onReady }: BootstrapSignal) {
             document.body.toggleAttribute("hide-bottom-editor", true);
         }
 
+        // 原生搜索页 SPA 在内层容器滚动，html 不出滚动条；vercel 主题接管后改由文档滚动
+        const scrollsInside = currentPageType() === "search"
+            && !document.documentElement.classList.contains("style-vercel");
         const syncHtmlScrollLock = () => {
-            const next = document.body.hasAttribute("no-scrollbar") ? "hidden" : "scroll";
+            const next = scrollsInside || document.body.hasAttribute("no-scrollbar") ? "hidden" : "scroll";
             document.documentElement.style.setProperty("overflow-y", next, "important");
         };
         new MutationObserver(syncHtmlScrollLock).observe(document.body, {
@@ -174,6 +177,11 @@ async function loadPageExtension() {
         case "thread": {
             const { default: thread } = await import("./lib/theme/page-extension/thread");
             return thread();
+        }
+
+        case "search": {
+            const { default: search } = await import("./lib/theme/page-extension/search");
+            return search();
         }
 
         default:
