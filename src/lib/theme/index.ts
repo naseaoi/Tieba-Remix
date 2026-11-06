@@ -3,13 +3,12 @@ import { GM_addStyle } from "@/lib/monkey";
 import { domrd } from "../elemental";
 import { injectCSSRule, overwriteCSS, parseMultiCSS } from "../elemental/styles";
 import { scrollbarWidth } from "../render";
-import { customBackground, customStyle, fontWeights, monospaceFonts, styleTheme, themeColor, userFonts } from "../user-values";
+import { customBackground, customStyle, fontWeights, monospaceFonts, themeColor, userFonts } from "../user-values";
 import { waitUntil } from "../utils";
 import { hexToRGBA, rgbaToHSLA } from "../utils/color";
 
 export const darkPrefers = matchMedia("(prefers-color-scheme: dark)");
 
-type ThemeStyle = "remixed" | "vercel";
 type InlineStyleModule = { default: string };
 type StyleBucketLoader = () => Promise<string[]>;
 
@@ -20,7 +19,6 @@ const inlineStyleLoaders = {
     "universal": () => import("@/stylesheets/main/universal.scss?inline"),
     "animations": () => import("@/stylesheets/main/animations.scss?inline"),
     "palette": () => import("@/stylesheets/main/palette.scss?inline"),
-    "palette-vercel": () => import("@/stylesheets/main/palette-vercel.scss?inline"),
     "variables": () => import("@/stylesheets/main/variables.scss?inline"),
     "tieba-error": () => import("@/stylesheets/tieba/tieba-error.scss?inline"),
     "tieba-forum": () => import("@/stylesheets/tieba/tieba-forum.scss?inline"),
@@ -57,10 +55,6 @@ function pageBucketKey() {
     }
 }
 
-function themeBucketKey(theme: ThemeStyle) {
-    return `theme:${theme}:${pageBucketKey()}`;
-}
-
 async function loadInlineStyles(keys: Array<keyof typeof inlineStyleLoaders>) {
     const styles = await Promise.all(keys.map(key => inlineStyleLoaders[key]()));
     return styles.map(style => style.default);
@@ -78,18 +72,10 @@ function ensureStyleBucket(key: string, loader: StyleBucketLoader) {
 async function ensureBaseCSS() {
     return ensureStyleBucket("base", () => loadInlineStyles([
         "animations",
-        "palette",
         "variables",
         "base",
         "universal",
-    ]));
-}
-
-async function ensureThemePaletteCSS(theme: ThemeStyle) {
-    if (theme !== "vercel") return [];
-
-    return ensureStyleBucket(`theme-palette:${theme}`, () => loadInlineStyles([
-        "palette-vercel",
+        "palette",
     ]));
 }
 
@@ -100,6 +86,8 @@ async function ensurePageCSS() {
         return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
             "tieba-main",
             "tieba-home",
+            "vercel-main",
+            "vercel-home",
         ]));
     }
 
@@ -108,6 +96,8 @@ async function ensurePageCSS() {
             "tieba-main",
             "tieba-forum",
             "tieba-forum-search",
+            "vercel-main",
+            "vercel-forum",
         ]));
     }
 
@@ -115,65 +105,39 @@ async function ensurePageCSS() {
         return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
             "tieba-main",
             "tieba-thread",
-        ]));
-    }
-
-    if (pageType === "search") {
-        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
-            "tieba-search",
-        ]));
-    }
-
-    return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
-        "tieba-error",
-    ]));
-}
-
-async function ensureThemeCSS(theme: ThemeStyle) {
-    if (theme !== "vercel") return [];
-
-    const pageType = currentPageType();
-
-    if (pageType === "index") {
-        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
-            "vercel-main",
-            "vercel-home",
-        ]));
-    }
-
-    if (pageType === "forum") {
-        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
-            "vercel-main",
-            "vercel-forum",
-        ]));
-    }
-
-    if (pageType === "thread") {
-        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
             "vercel-main",
             "vercel-thread",
         ]));
     }
 
     if (pageType === "search") {
-        return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+        return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+            "tieba-search",
             "vercel-main",
             "vercel-search",
         ]));
     }
 
-    return ensureStyleBucket(themeBucketKey(theme), () => loadInlineStyles([
+    return ensureStyleBucket(pageBucketKey(), () => loadInlineStyles([
+        "tieba-error",
         "vercel-error",
     ]));
 }
 
 export async function ensureSettingsCSS() {
-    if (styleTheme.get() !== "vercel") return [];
-
-    return ensureStyleBucket("settings:vercel", () => loadInlineStyles([
+    return ensureStyleBucket("settings", () => loadInlineStyles([
         "vercel-settings",
     ]));
 }
+
+const userThemeAliases = {
+    "--user-theme": "var(--tieba-theme-color)",
+    "--user-theme-transp": "var(--trans-tieba-theme-color)",
+    "--user-theme-hover": "var(--tieba-theme-hover)",
+    "--user-theme-active": "var(--tieba-theme-active)",
+    "--user-theme-back": "var(--tieba-theme-background)",
+    "--user-theme-fore": "var(--tieba-theme-fore)",
+};
 
 let themeColorStyleEl: HTMLStyleElement | undefined;
 
@@ -204,12 +168,7 @@ export function applyThemeColor() {
             "--tieba-theme-active": darkActive,
             "--tieba-theme-background": darkBack,
             "--tieba-theme-fore": darkFore,
-            "--user-theme": theme.dark,
-            "--user-theme-transp": darkTransp,
-            "--user-theme-hover": darkHover,
-            "--user-theme-active": darkActive,
-            "--user-theme-back": darkBack,
-            "--user-theme-fore": darkFore,
+            ...userThemeAliases,
         },
         "html.light-theme": {
             "--tieba-theme-color": theme.light,
@@ -218,12 +177,7 @@ export function applyThemeColor() {
             "--tieba-theme-active": lightActive,
             "--tieba-theme-background": lightBack,
             "--tieba-theme-fore": lightFore,
-            "--user-theme": theme.light,
-            "--user-theme-transp": lightTransp,
-            "--user-theme-hover": lightHover,
-            "--user-theme-active": lightActive,
-            "--user-theme-back": lightBack,
-            "--user-theme-fore": lightFore,
+            ...userThemeAliases,
         },
     });
 
@@ -310,20 +264,9 @@ export async function loadMainCSS() {
         installFavicon();
     }
 
-    await Promise.all([
-        ensureBaseCSS(),
-        ensurePageCSS(),
-        ensureThemePaletteCSS(styleTheme.get()),
-        ensureThemeCSS(styleTheme.get()),
-    ]);
-}
-
-export function setStyleTheme(value: "remixed" | "vercel") {
-    const html = document.documentElement;
-    html.classList.toggle("style-vercel", value === "vercel");
-    html.classList.toggle("style-remixed", value === "remixed");
-    void ensureThemePaletteCSS(value);
-    void ensureThemeCSS(value);
+    // 先注入基础与调色板，再注入页面样式；各 bucket 内的覆盖样式排在基础样式之后。
+    await ensureBaseCSS();
+    await ensurePageCSS();
 }
 
 let customBackgroundElement: Maybe<HTMLStyleElement> = undefined;

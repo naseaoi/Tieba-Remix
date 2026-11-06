@@ -85,8 +85,8 @@ html.style-vercel {
         backdrop-filter: none;
     }
 
-    .d_badge_bright .d_badge_lv,
-    .user_level .badge_index {
+    // 橙色仅作兜底，让原生等级分段和补丁染色拥有更高优先级。
+    :where(.d_badge_bright .d_badge_lv, .user_level .badge_index) {
         background-color: var(--level-orange-background) !important;
         color: var(--level-orange-fore) !important;
     }

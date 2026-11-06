@@ -6,7 +6,6 @@ vi.mock("@/lib/api/remixed", () => ({
 
 describe("forum aside collapse", () => {
     it("expands native regions and novel ranking by default", async () => {
-        document.documentElement.classList.add("style-vercel");
         document.body.innerHTML = `
             <aside class="aside">
                 <section class="aside_region">

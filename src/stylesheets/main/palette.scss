@@ -2,78 +2,94 @@
     --img-tieba-icon: url("https://gitee.com/HacksawBlade/Tieba-Remix/raw/master/assets/images/main/icon.png");
 }
 
-.dark-theme {
-    --default-background: rgb(32 32 32);
-    --default-hover: rgb(42 42 42);
-    --default-active: rgb(54 54 54);
-    --page-background: rgb(26 26 26);
-    --page-background-90: rgb(26 26 26 / 90%);
-    --trans-page-background: rgb(26 26 26 / 60%);
-    --trans-default-background: rgb(32 32 32 / 60%);
-    --deep-background: rgb(26 26 26);
-    --trans-deep-background: rgb(20 20 20 / 60%);
-    --light-background: rgb(60 60 60);
-    --trans-light-background: rgb(60 60 60 / 60%);
-    --very-light-background: rgb(60 60 60);
-    --elem-color: rgb(26 26 26);
-    --default-fore: rgb(230 230 230);
-    --light-fore: rgb(180 180 180);
-    --minimal-fore: rgb(144 144 144);
-    --highlight-fore: rgb(255 255 255);
-    --border-color: rgb(96 96 96 / 60%);
-    --light-border-color: rgb(96 96 96 / 20%);
-    --card-border-color: rgb(255 255 255 / 30%);
+// 固定主题根 class 保证调色板的覆盖优先级
 
-    --level-green-background: rgb(96 153 59 / 10%);
-    --level-green-fore: rgb(133 206 84);
-    --level-blue-background: rgb(0 165 227 / 10%);
-    --level-blue-fore: rgb(0 169 255);
-    --level-yellow-background: rgb(229 193 90 / 10%);
-    --level-yellow-fore: rgb(242 205 96);
-    --level-orange-background: rgb(204 122 0 / 10%);
-    --level-orange-fore: rgb(255 170 0);
+html.style-vercel.light-theme {
+    // 背景层级
+    --default-background: rgb(255 255 255);
+    --page-background: rgb(250 250 250);
+    --page-background-90: rgb(250 250 250 / 90%);
+    --trans-page-background: rgb(250 250 250 / 80%);
+    --trans-default-background: rgb(255 255 255 / 80%);
+    --deep-background: rgb(244 244 245);
+    --light-background: rgb(244 244 245);
+    --trans-light-background: rgb(244 244 245 / 60%);
+    --very-light-background: rgb(250 250 250);
+    --elem-color: rgb(255 255 255);
 
-    --check-color: lawngreen;
-    --error-color: tomato;
-    --warning-color: orange;
+    // 交互层
+    --default-hover: rgb(244 244 245);
+    --default-active: rgb(234 234 234);
 
-    color-scheme: dark;
+    // 文字层级
+    --default-fore: rgb(0 0 0);
+    --highlight-fore: rgb(0 0 0);
+    --light-fore: rgb(102 102 102);
+    --minimal-fore: rgb(136 136 136);
+
+    // 边框
+    --border-color: rgb(234 234 234);
+    --light-border-color: rgb(244 244 245);
+    --card-border-color: rgb(0 0 0 / 10%);
+
+    // 等级牌：对齐贴吧官方语义色，整体偏淡（楼主蓝保持饱和度作为强调色，等级橙 / 层主绿 / 黄牌偏淡）
+    --level-green-background: rgb(95 191 87 / 8%);
+    --level-green-fore: rgb(80 145 75);
+    --level-blue-background: rgb(78 158 235 / 16%);
+    --level-blue-fore: rgb(20 91 167);
+    --level-yellow-background: rgb(247 178 26 / 11%);
+    --level-yellow-fore: rgb(160 125 50);
+    --level-orange-background: rgb(247 110 50 / 9%);
+    --level-orange-fore: rgb(195 110 65);
+
+    --check-color: rgb(0 112 74);
+    --error-color: rgb(204 0 0);
+    --warning-color: rgb(204 88 0);
+
+    color-scheme: light;
 }
 
-.light-theme {
-    --default-background: rgb(255 255 255);
-    --default-hover: rgb(240 240 240);
-    --default-active: rgb(224 224 224);
-    --page-background: rgb(245 245 245);
-    --page-background-90: rgb(245 245 245 / 90%);
-    --trans-page-background: rgb(245 245 245 / 60%);
-    --trans-default-background: rgb(255 255 255 / 60%);
-    --deep-background: rgb(228 228 228);
-    --trans-deep-background: rgb(200 200 200 / 60%);
-    --light-background: rgb(235 235 235);
-    --trans-light-background: rgb(228 228 228 / 60%);
-    --very-light-background: rgb(245 245 245);
-    --elem-color: rgb(240 240 240);
-    --default-fore: rgb(16 16 16);
-    --light-fore: rgb(86 86 86);
-    --minimal-fore: rgb(118 118 118);
-    --highlight-fore: rgb(0 0 0);
-    --border-color: rgb(185 185 185 / 60%);
-    --light-border-color: rgb(185 185 185 / 20%);
-    --card-border-color: rgb(0 0 0 / 30%);
+html.style-vercel.dark-theme {
+    // 背景层级
+    --default-background: rgb(0 0 0);
+    --page-background: rgb(0 0 0);
+    --page-background-90: rgb(0 0 0 / 90%);
+    --trans-page-background: rgb(0 0 0 / 80%);
+    --trans-default-background: rgb(10 10 10 / 80%);
+    --deep-background: rgb(10 10 10);
+    --light-background: rgb(17 17 17);
+    --trans-light-background: rgb(17 17 17 / 60%);
+    --very-light-background: rgb(10 10 10);
+    --elem-color: rgb(10 10 10);
 
-    --level-green-background: rgb(84 130 53 / 10%);
-    --level-green-fore: rgb(51 78 32);
-    --level-blue-background: rgb(0 153 213 / 10%);
-    --level-blue-fore: rgb(0 81 111);
-    --level-yellow-background: rgb(164 139 63 / 10%);
-    --level-yellow-fore: rgb(124 105 46);
-    --level-orange-background: rgb(255 153 0 / 10%);
-    --level-orange-fore: rgb(178 104 0);
+    // 交互层
+    --default-hover: rgb(26 26 26);
+    --default-active: rgb(42 42 42);
 
-    --check-color: green;
-    --error-color: darkred;
-    --warning-color: darkorange;
+    // 文字层级
+    --default-fore: rgb(237 237 237);
+    --highlight-fore: rgb(255 255 255);
+    --light-fore: rgb(161 161 161);
+    --minimal-fore: rgb(102 102 102);
 
-    color-scheme: "light";
+    // 边框
+    --border-color: rgb(31 31 31);
+    --light-border-color: rgb(22 22 22);
+    --card-border-color: rgb(255 255 255 / 10%);
+
+    // 等级牌：暗色背景下减弱饱和度（楼主蓝保持，等级橙 / 层主绿 / 黄牌偏淡灰）
+    --level-green-background: rgb(89 191 75 / 9%);
+    --level-green-fore: rgb(155 195 145);
+    --level-blue-background: rgb(74 144 226 / 18%);
+    --level-blue-fore: rgb(110 175 250);
+    --level-yellow-background: rgb(247 178 26 / 9%);
+    --level-yellow-fore: rgb(220 195 140);
+    --level-orange-background: rgb(247 110 50 / 9%);
+    --level-orange-fore: rgb(225 175 145);
+
+    --check-color: rgb(0 200 130);
+    --error-color: rgb(255 80 80);
+    --warning-color: rgb(247 178 26);
+
+    color-scheme: dark;
 }

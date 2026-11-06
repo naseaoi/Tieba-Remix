@@ -22,7 +22,6 @@ describe("forum aside layout", () => {
         vi.stubGlobal("ResizeObserver", class {
             observe(): void { /* jsdom 无布局 */ }
         });
-        document.documentElement.classList.add("style-vercel");
         document.documentElement.removeAttribute("data-forum-aside");
         document.body.innerHTML = `
             <div class="card_top_wrap">

@@ -246,7 +246,6 @@ export function installForumPinnedFoldWatcher(): void {
 
     // AJAX 翻页会重建整个列表，每次都重新查找置顶区
     const sync = (): void => {
-        if (!document.documentElement.classList.contains("style-vercel")) return;
         const folder = document.querySelector<HTMLLIElement>(".threadlist_bright > li.thread_top_list_folder");
         if (!folder) return;
         syncFolder(folder, forumKey);

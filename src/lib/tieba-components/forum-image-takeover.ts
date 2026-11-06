@@ -60,8 +60,6 @@ export function installForumImageTakeover(): void {
     }, { capture: true });
 
     document.addEventListener("click", function (e) {
-        if (!document.documentElement.classList.contains("style-vercel")) return;
-
         const target = getForumImageTarget(e.target);
         if (!target) return;
         const { tid, index, firstPostId, mediaList } = target;
@@ -95,7 +93,6 @@ export function installForumImageTakeover(): void {
 }
 
 function getForumImageTarget(eventTarget: EventTarget | null): ForumImageTarget | undefined {
-    if (!document.documentElement.classList.contains("style-vercel")) return;
     if (!(eventTarget instanceof Element)) return;
 
     const picLi = eventTarget.closest<HTMLLIElement>(".threadlist_media > li");

@@ -3,7 +3,7 @@
 @use "./forum-drawer" as *;
 
 // =============================================
-// Vercel 风格 - 搜索页（/f/search/res）
+// 搜索页（/f/search/res）
 // 原生 SPA 只有新版，由 page-extension/search 自绘结果并隐藏 SPA
 // SPA 没有全局 border-box，自绘节点显式声明盒模型
 // =============================================

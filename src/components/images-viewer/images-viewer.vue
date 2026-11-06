@@ -87,7 +87,7 @@ import {
 import { dom } from "@/lib/elemental";
 import { EventProxy } from "@/lib/elemental/event-proxy";
 import { CSSRule, parseCSSRule } from "@/lib/elemental/styles";
-import { imageViewerControlsPinned, styleTheme } from "@/lib/user-values";
+import { imageViewerControlsPinned } from "@/lib/user-values";
 import _ from "@/lib/utils/_";
 import { UserButton, UserDialog, UserDialogOpts } from "user-view";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
@@ -200,13 +200,10 @@ const dialogOpts: UserDialogOpts = {
         borderRadius: "0",
         padding: "0",
     },
-    // Vercel 主题：接管 modal mask 颜色 + 渐暗动画
-    ...(styleTheme.get() === "vercel" ? {
-        modalStyle: {
-            backgroundColor: "rgb(0 0 0 / 92%)",
-            animation: "kf-viewer-mask-fade 0.25s ease both",
-        },
-    } : {}),
+    modalStyle: {
+        backgroundColor: "rgb(0 0 0 / 92%)",
+        animation: "kf-viewer-mask-fade 0.25s ease both",
+    },
     renderAnimation: "kf-fade-in var(--fast-duration)",
     unloadAnimation: "kf-fade-out var(--fast-duration)",
     uniqueName: "images-viewer",
@@ -955,7 +952,7 @@ $scroll-bar-height: 6px;
     }
 }
 
-// Vercel 主题：去除磨砂，强制深色界面，1px 边框
+// 看图器采用深色界面与 1px 边框
 html.style-vercel .images-viewer {
     --viewer-bg: #0A0A0A;
     --viewer-bg-hover: #1F1F1F;

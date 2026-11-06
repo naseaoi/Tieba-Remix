@@ -32,12 +32,6 @@ export const userModuleManifests: UserModuleManifest[] = [
         loader: () => import("./portal"),
     },
     {
-        id: "remixed-theme",
-        scope: true,
-        runAt: "immediately",
-        loader: () => import("./remixed-theme"),
-    },
-    {
         id: "shield",
         scope: true,
         runAt: "immediately",

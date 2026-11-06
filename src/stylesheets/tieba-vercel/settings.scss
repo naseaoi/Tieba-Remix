@@ -1,7 +1,7 @@
 @use "./tokens" as *;
 @use "./mixins" as *;
 
-// Vercel 风格 - 设置面板覆盖
+// 设置面板样式
 // 作用域：html.style-vercel 下的 .settings-wrapper 及对话框外壳
 
 html.style-vercel {
@@ -30,7 +30,7 @@ html.style-vercel {
         --user-theme-transp: var(--default-hover);
     }
 
-    // 文本输入：1px 边框 + Vercel 聚焦环（user-view 内置 2px 需显式覆盖）
+    // 文本输入：1px 边框 + 聚焦环（user-view 内置 2px 需显式覆盖）
     .settings-wrapper .sidebar-search.user-textbox,
     .settings-wrapper .widget-textbox.user-textbox {
         padding: 6px 10px !important;

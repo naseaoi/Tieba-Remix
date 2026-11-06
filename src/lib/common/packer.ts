@@ -60,7 +60,7 @@ export async function ensureUserModulesLoaded(manifests: UserModuleManifest[]): 
 
 function canRunModule(module: Pick<UserModule, "id" | "scope" | "switch">): boolean {
     if (!module.switch && module.switch !== undefined) return false;
-    if (module.id !== "remixed-theme" && disabledModules.get().includes(module.id)) return false;
+    if (disabledModules.get().includes(module.id)) return false;
     if (module.scope === true) return true;
     if (Array.isArray(module.scope)) return module.scope.includes(currentPageType());
     return module.scope.test(location.href);

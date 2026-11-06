@@ -7,7 +7,7 @@ import { parseUserModules } from "./lib/common/packer";
 import { onWindowLoaded } from "./lib/elemental/ready";
 import type { BootstrapSignal } from "./lib/legacy-redirect";
 import { forumThreadsObserver, legacyIndexFeedsObserver, threadCommentsObserver, threadFloorsObserver } from "./lib/observers";
-import { darkPrefers, loadDynamicCSS, loadMainCSS, setStyleTheme } from "./lib/theme";
+import { darkPrefers, loadDynamicCSS, loadMainCSS } from "./lib/theme";
 import { installForumAsideCollapse } from "./lib/tieba-components/forum-aside-collapse";
 import { installForumAsideLayout } from "./lib/tieba-components/forum-aside-layout";
 import { installForumStickyNav } from "./lib/tieba-components/forum-sticky-nav";
@@ -31,7 +31,7 @@ import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
 import { installSubPostImages } from "./lib/tieba-components/sub-post-images";
-import { REMIXED, avatarShape, glassEffect, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType } from "./lib/user-values";
+import { REMIXED, avatarShape, glassEffect, navBarHideMode, pageExtension, showBottomEditor, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 import { userModuleManifests } from "./modules/manifest";
 
@@ -44,7 +44,7 @@ export function bootstrap(signal: BootstrapSignal) {
 
 function startBootstrap({ onReady }: BootstrapSignal) {
     setTheme(themeType.get());
-    setStyleTheme(styleTheme.get());
+    document.documentElement.classList.add("style-vercel");
     darkPrefers.addEventListener("change", () => setTheme(themeType.get()));
 
     document.documentElement.toggleAttribute("glass-effect", glassEffect.get());
@@ -98,6 +98,11 @@ function startBootstrap({ onReady }: BootstrapSignal) {
     const cssReady = Promise.all([loadDynamicCSS(), loadMainCSS()]);
 
     const pageExtensionReady = loadPageExtension().finally(() => refreshThreadImageLoading());
+    // 与 immediately 模块一致：CSS 加载启动后导入，不等待 CSS 或 DOM 就绪。
+    const pagePatchesReady = Promise.all([
+        import("./lib/tieba-components/page-chrome").then(({ installPageChrome }) => installPageChrome()),
+        import("./lib/tieba-components/thread-badges").then(({ installThreadBadges }) => installThreadBadges()),
+    ]);
     const modulesReady = parseUserModules(
         userModuleManifests,
         module => {
@@ -124,7 +129,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
         document.addEventListener("DOMContentLoaded", startObservers, { once: true });
     }
 
-    const firstPaintReady = Promise.all([cssReady, pageExtensionReady, modulesReady]);
+    const firstPaintReady = Promise.all([cssReady, pageExtensionReady, pagePatchesReady, modulesReady]);
     const revealAfterPaint = () => requestAnimationFrame(() => requestAnimationFrame(onReady));
     firstPaintReady.then(revealAfterPaint, revealAfterPaint);
 
@@ -137,11 +142,8 @@ function startBootstrap({ onReady }: BootstrapSignal) {
             document.body.toggleAttribute("hide-bottom-editor", true);
         }
 
-        // 原生搜索页 SPA 在内层容器滚动，html 不出滚动条；vercel 主题接管后改由文档滚动
-        const scrollsInside = currentPageType() === "search"
-            && !document.documentElement.classList.contains("style-vercel");
         const syncHtmlScrollLock = () => {
-            const next = scrollsInside || document.body.hasAttribute("no-scrollbar") ? "hidden" : "scroll";
+            const next = document.body.hasAttribute("no-scrollbar") ? "hidden" : "scroll";
             document.documentElement.style.setProperty("overflow-y", next, "important");
         };
         new MutationObserver(syncHtmlScrollLock).observe(document.body, {

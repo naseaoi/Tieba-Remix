@@ -1,6 +1,5 @@
 import { currentPageType } from "@/lib/api/remixed";
 import { addCoalescedObserverEvent, threadFloorsObserver } from "@/lib/observers";
-import { styleTheme } from "@/lib/user-values";
 
 let installed = false;
 
@@ -9,13 +8,12 @@ const GRID_CLASS = "vercel-image-grid";
 
 /**
  * 把 .d_post_content 内连续相邻的图片单元（.BDE_Image / .replace_div，中间只夹 <br>/空白）
- * 整组包到 .vercel-image-grid，并删除组内的 <br>，由 vercel 主题 CSS 渲染成 grid 网格。
- * 单张图不包装（避免被 cell 尺寸拉伸失真），仅 vercel 主题生效。
+ * 整组包到 .vercel-image-grid，并删除组内的 <br>，由 CSS 渲染成 grid 网格。
+ * 单张图保留原结构，避免被 cell 尺寸拉伸失真。
  */
 export function installThreadImageGrid(): void {
     if (installed) return;
     if (currentPageType() !== "thread") return;
-    if (styleTheme.get() !== "vercel") return;
     installed = true;
 
     const process = (): void => {

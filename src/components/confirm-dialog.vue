@@ -269,28 +269,6 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
         border-color: var(--light-fore);
     }
 }
-
-// Remixed 主题：圆角更大、主按钮使用主题色
-html:not(.style-vercel) {
-    .confirm-dialog {
-        border-radius: 16px;
-    }
-
-    .confirm-btn {
-        border-radius: 10px;
-
-        &.positive {
-            border-color: var(--tieba-theme-color);
-            background-color: var(--tieba-theme-color);
-            color: var(--default-background);
-
-            &:hover {
-                background-color: var(--tieba-theme-color);
-                opacity: 0.92;
-            }
-        }
-    }
-}
 </style>
 
 <style lang="scss">

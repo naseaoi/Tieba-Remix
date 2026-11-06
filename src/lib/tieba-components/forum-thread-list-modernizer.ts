@@ -130,7 +130,7 @@ function modernize(item: HTMLElement): void {
 }
 
 export function installForumThreadListModernizer(): void {
-    if (currentPageType() !== "forum" || !document.documentElement.classList.contains("style-vercel")) return;
+    if (currentPageType() !== "forum") return;
     forumThreadModernLayout.on("setter", syncForumThreadModernLayout);
     addCoalescedObserverEvent(syncForumThreadModernLayout, forumThreadsObserver);
 }

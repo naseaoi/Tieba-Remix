@@ -251,27 +251,6 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
         border-color: var(--light-fore);
     }
 }
-
-html:not(.style-vercel) {
-    .update-notify-dialog {
-        border-radius: 16px;
-    }
-
-    .dialog-btn {
-        border-radius: 10px;
-
-        &.btn-primary {
-            border-color: var(--tieba-theme-color);
-            background-color: var(--tieba-theme-color);
-            color: var(--default-background);
-
-            &:hover {
-                background-color: var(--tieba-theme-color);
-                opacity: 0.92;
-            }
-        }
-    }
-}
 </style>
 
 <style lang="scss">

@@ -21,8 +21,6 @@ export function installForumAsideLayout(): void {
 }
 
 async function setup(): Promise<void> {
-    if (!document.documentElement.classList.contains("style-vercel")) return;
-
     const [aside, nav, content] = await Promise.all([
         asyncdom<"div">(".forum_content > .aside", undefined, FORUM_PAGELET_TIMEOUT_MS),
         asyncdom<"div">(".nav_wrap", undefined, FORUM_PAGELET_TIMEOUT_MS),

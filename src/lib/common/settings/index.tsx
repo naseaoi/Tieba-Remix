@@ -3,35 +3,43 @@ import { Boxes, Eye, FlaskConical } from "@lucide/vue";
 import type { NavBarHideMode } from "@/components/nav-bar.vue";
 import type { MainSettingKey, SubSettingKey, UserSettings } from "@/components/settings.vue";
 import { backupUserConfigs, restoreUserConfigs } from "@/lib/api/remixed";
-import { AvatarShape, UpdateConfig, avatarShape, compactLayout, customStyle, disabledModules, fontWeights, forumStickyNav, forumThreadModernLayout, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, styleTheme, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
+import { AvatarShape, UpdateConfig, avatarShape, compactLayout, customStyle, disabledModules, fontWeights, forumStickyNav, forumThreadModernLayout, glassEffect, monospaceFonts, navBarHideMode, pageExtension, showBottomEditor, themeType, threadImageQueueScope, updateConfig, userFonts } from "@/lib/user-values";
 import { AllModules } from "@/lib/utils";
 import _ from "@/lib/utils/_";
-import { UserSelectItem, messageBox } from "user-view";
+import { UserSelectItem, messageBox, toast } from "user-view";
 import { markRaw } from "vue";
 import AboutDetail from "./setting-widgets/about.detail.vue";
 import AboutUpdate from "./setting-widgets/about.update.vue";
 import LayoutCustomBack from "./setting-widgets/layout.custom-back.vue";
 import ThemeColor from "./setting-widgets/theme.color.vue";
 
+function notifyReloadRequired() {
+    toast({ message: "刷新页面后生效", type: "basic" });
+}
+
+function parseFontWeight(value: string) {
+    const weight = Number(value);
+    return Number.isInteger(weight) && weight >= 1 && weight <= 1000 ? weight : undefined;
+}
+
 export const getUserSettings = _.once((): UserSettings => ({
     "visibility": {
         name: "显示",
         icon: Eye,
-        description: "主题、显示设置",
+        description: "主题、布局与字体",
         sub: {
             "theme": {
                 name: "主题样式",
                 content: {
                     "switch-theme": {
-                        title: "主题偏好",
-                        description:
-                            `在自动模式下，将根据当前系统设置自动选择合适的主题`,
+                        title: "主题模式",
+                        description: "深色、浅色或跟随系统自动切换",
                         widgets: [{
                             type: "select",
                             content: [
-                                { value: "auto", text: "自动", desc: "根据系统设置自动切换主题" },
-                                { value: "dark", text: "深色", desc: "使用深色主题" },
-                                { value: "light", text: "浅色", desc: "使用浅色主题" },
+                                { value: "auto", text: "跟随系统", desc: "根据系统设置自动切换深色、浅色" },
+                                { value: "dark", text: "深色" },
+                                { value: "light", text: "浅色" },
                             ] as UserSelectItem<ReturnType<typeof themeType.get>>[],
                             init() {
                                 return themeType.get();
@@ -42,32 +50,38 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
-                    "style-theme": {
-                        title: "样式风格",
-                        description:
-                            `提供两套视觉主题，切换后即时生效`,
+                    "color": {
+                        title: "强调色",
+                        description: "用于点赞、焦点、进度条等强调元素",
+                        widgets: [{
+                            type: "component",
+                            component: markRaw(ThemeColor),
+                        }],
+                    },
+
+                    "avatar-shape": {
+                        title: "头像形状",
+                        description: "帖子列表、楼层与楼中楼中的用户头像",
                         widgets: [{
                             type: "select",
                             content: [
-                                { value: "remixed", text: "Remixed", desc: "脚本默认风格，圆润色彩与品牌紫" },
-                                { value: "vercel", text: "Vercel", desc: "极简中性，吧首页帖子列表为卡片网格" },
-                            ] as UserSelectItem<ReturnType<typeof styleTheme.get>>[],
+                                { value: "circle", text: "圆形" },
+                                { value: "rounded", text: "圆角矩形" },
+                            ] as UserSelectItem<AvatarShape>[],
                             init() {
-                                return styleTheme.get();
+                                return avatarShape.get();
                             },
-                            event(value: ReturnType<typeof styleTheme.get>) {
-                                styleTheme.set(value);
+                            event(shape: AvatarShape) {
+                                avatarShape.set(shape);
                             },
                         }],
                     },
 
                     "glass-effect": {
                         title: "磨砂玻璃质感",
-                        description:
-                            `为导航栏、首页标题栏、下拉菜单等元素启用磨砂玻璃背景效果`,
+                        description: "导航栏、下拉菜单等浮层使用模糊背景",
                         widgets: [{
                             type: "toggle",
-                            content: `关闭后，所有使用到磨砂玻璃质感的位置都将回退为普通半透明背景`,
                             init() {
                                 return glassEffect.get();
                             },
@@ -84,16 +98,6 @@ export const getUserSettings = _.once((): UserSettings => ({
                             component: markRaw(LayoutCustomBack),
                         }],
                     },
-
-                    "color": {
-                        title: "主题颜色",
-                        description:
-                            `自定义主题色，由于存在深浅两种主题，需要设置两种主题色。`,
-                        widgets: [{
-                            type: "component",
-                            component: markRaw(ThemeColor),
-                        }],
-                    },
                 },
             },
 
@@ -102,40 +106,25 @@ export const getUserSettings = _.once((): UserSettings => ({
                 content: {
                     "index": {
                         title: "全新首页",
+                        description: "集中展示关注的吧、贴吧热议与瀑布流推送",
                         widgets: [{
                             type: "toggle",
-                            content: `旨在提供更纯粹的浏览体验，提供管理关注的吧、贴吧热议、瀑布流推送等功能`,
                             init() {
                                 return pageExtension.get().index;
                             },
                             event() {
                                 pageExtension.merge({ index: !pageExtension.get().index });
+                                notifyReloadRequired();
                                 return pageExtension.get().index;
-                            },
-                        }],
-                    },
-
-                    "thread": {
-                        title: "新版看帖页面",
-                        widgets: [{
-                            type: "toggle",
-                            content: `使用全新的 UI 简化帖子浏览，并改进屏幕空间利用率`,
-                            init() {
-                                return pageExtension.get().thread;
-                            },
-                            event() {
-                                pageExtension.merge({ thread: !pageExtension.get().thread });
-                                return pageExtension.get().thread;
                             },
                         }],
                     },
 
                     "forum-thread-modern": {
                         title: "新版帖子列表",
-                        description: "控制吧首页帖子列表的作者信息、正文和互动栏布局",
+                        description: "重排吧首页帖子的作者信息、正文与互动栏",
                         widgets: [{
                             type: "toggle",
-                            content: "关闭后恢复贴吧原生帖子列表布局",
                             init() {
                                 return forumThreadModernLayout.get();
                             },
@@ -146,99 +135,11 @@ export const getUserSettings = _.once((): UserSettings => ({
                         }],
                     },
 
-                    "forum-sticky-nav": {
-                        title: "吧内导航栏吸顶",
-                        description: "向下滚动吧首页时，「看贴」「图片」等标签导航栏固定在页面顶部，并显示吧名入口",
-                        widgets: [{
-                            type: "toggle",
-                            content: "关闭后导航栏随页面正常滚动",
-                            init() {
-                                return forumStickyNav.get();
-                            },
-                            event() {
-                                forumStickyNav.set(!forumStickyNav.get());
-                                return forumStickyNav.get();
-                            },
-                        }],
-                    },
-
-                    "nav-bar-mode": {
-                        title: "导航栏隐藏模式",
-                        description:
-                            `设置导航栏的隐藏模式`,
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "fold", text: "滚动隐藏", desc: "当页面向下滚动时隐藏导航栏，将鼠标移至屏幕最顶端可重新呼出" },
-                                { value: "alwaysFold", text: "始终隐藏", desc: "导航栏始终保持隐藏，将鼠标移至屏幕最顶端可呼出" },
-                                { value: "never", text: "始终显示", desc: "始终显示完整的导航栏" },
-                            ] as UserSelectItem<NavBarHideMode>[],
-                            init() {
-                                return navBarHideMode.get();
-                            },
-                            event(hideMode: NavBarHideMode) {
-                                navBarHideMode.set(hideMode);
-                            },
-                        }],
-                    },
-
-                    "avatar-shape": {
-                        title: "头像形状",
-                        description: "统一设置帖子列表、楼层、楼中楼等位置的用户头像形状",
-                        widgets: [{
-                            type: "select",
-                            content: [
-                                { value: "circle", text: "圆形" },
-                                { value: "rounded", text: "圆角矩形" },
-                            ] as UserSelectItem<AvatarShape>[],
-                            init() {
-                                return avatarShape.get();
-                            },
-                            event(shape: AvatarShape) {
-                                avatarShape.set(shape);
-                            },
-                        }],
-                    },
-
-                    "thread-image-queue": {
-                        title: "看图模式加载全帖图片",
-                        description:
-                            `控制看图模式打开时的图片队列范围`,
-                        widgets: [{
-                            type: "toggle",
-                            content: `开启时加载整个帖子的所有图片到队列；关闭时仅加载当前楼层中的图片`,
-                            init() {
-                                return threadImageQueueScope.get() === "full";
-                            },
-                            event() {
-                                const next = threadImageQueueScope.get() === "full" ? "floor" : "full";
-                                threadImageQueueScope.set(next);
-                                return next === "full";
-                            },
-                        }],
-                    },
-
-                    "compact-layout": {
-                        title: "紧凑布局",
-                        widgets: [{
-                            type: "toggle",
-                            content: `对帖子页应用更紧凑的布局以提高信息密度，兼容新旧楼层模板。`,
-                            init() {
-                                return compactLayout.get();
-                            },
-                            event() {
-                                compactLayout.set(!compactLayout.get());
-                                document.body.toggleAttribute("compact-layout");
-                                return compactLayout.get();
-                            },
-                        }],
-                    },
-
                     "forum-bottom-editor": {
-                        title: "显示吧首页底部发帖模块",
+                        title: "吧首页底部发帖框",
+                        description: "在帖子列表下方显示贴吧原生发帖编辑器",
                         widgets: [{
                             type: "toggle",
-                            content: `开启后会在吧首页底部显示贴吧原生的发帖编辑器`,
                             init() {
                                 return showBottomEditor.get();
                             },
@@ -250,19 +151,106 @@ export const getUserSettings = _.once((): UserSettings => ({
                             },
                         }],
                     },
+
+                    "thread": {
+                        title: "新版看帖页面",
+                        description: "精简帖子页界面，扩大正文阅读区域",
+                        widgets: [{
+                            type: "toggle",
+                            init() {
+                                return pageExtension.get().thread;
+                            },
+                            event() {
+                                pageExtension.merge({ thread: !pageExtension.get().thread });
+                                notifyReloadRequired();
+                                return pageExtension.get().thread;
+                            },
+                        }],
+                    },
+
+                    "compact-layout": {
+                        title: "紧凑楼层",
+                        description: "缩小新版看帖页面的楼层间距，单屏显示更多内容",
+                        disabled: () => !pageExtension.get().thread,
+                        widgets: [{
+                            type: "toggle",
+                            init() {
+                                return compactLayout.get();
+                            },
+                            event() {
+                                const next = !compactLayout.get();
+                                compactLayout.set(next);
+                                document.body.toggleAttribute("compact-layout", next);
+                                return next;
+                            },
+                        }],
+                    },
+                },
+            },
+
+            "browsing": {
+                name: "浏览交互",
+                content: {
+                    "nav-bar-mode": {
+                        title: "顶部导航栏",
+                        widgets: [{
+                            type: "select",
+                            content: [
+                                { value: "fold", text: "滚动时隐藏", desc: "向下滚动时隐藏，鼠标移至屏幕顶端可呼出" },
+                                { value: "alwaysFold", text: "始终隐藏", desc: "鼠标移至屏幕顶端可呼出" },
+                                { value: "never", text: "始终显示" },
+                            ] as UserSelectItem<NavBarHideMode>[],
+                            init() {
+                                return navBarHideMode.get();
+                            },
+                            event(hideMode: NavBarHideMode) {
+                                navBarHideMode.set(hideMode);
+                            },
+                        }],
+                    },
+
+                    "forum-sticky-nav": {
+                        title: "吧内标签栏吸顶",
+                        description: "滚动吧首页时，「看贴」「图片」等标签栏固定在顶部并显示吧名",
+                        widgets: [{
+                            type: "toggle",
+                            init() {
+                                return forumStickyNav.get();
+                            },
+                            event() {
+                                forumStickyNav.set(!forumStickyNav.get());
+                                return forumStickyNav.get();
+                            },
+                        }],
+                    },
+
+                    "thread-image-queue": {
+                        title: "看图浏览全帖图片",
+                        description: "看图模式中可切换整个帖子的图片，关闭后仅浏览当前楼层",
+                        widgets: [{
+                            type: "toggle",
+                            init() {
+                                return threadImageQueueScope.get() === "full";
+                            },
+                            event() {
+                                const next = threadImageQueueScope.get() === "full" ? "floor" : "full";
+                                threadImageQueueScope.set(next);
+                                return next === "full";
+                            },
+                        }],
+                    },
                 },
             },
 
             "fonts": {
-                name: "字体控制",
+                name: "字体",
                 content: {
                     "code-zh": {
-                        title: "主要字体组合",
-                        description:
-                            `应用在贴吧绝大多数场景的字体组合`,
+                        title: "正文字体",
+                        description: "每行一个字体，按顺序回退",
                         widgets: [{
                             type: "textarea",
-                            placeHolder: "填入字体名，以换行分隔。若需要中英文混排，需将英文字体写在中文字体之前",
+                            placeHolder: "中英文混排时，英文字体写在中文字体之前",
                             init() {
                                 return userFonts.get().join("\n");
                             },
@@ -274,11 +262,11 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
 
                     "code-monospace": {
-                        title: "等宽字体组合",
-                        description: `应用在数据显示等场景的等宽字体组合`,
+                        title: "等宽字体",
+                        description: "用于数字、代码等需要对齐的内容",
                         widgets: [{
                             type: "textarea",
-                            placeHolder: "填入字体名，以换行分隔。建议在此处写入等宽字体",
+                            placeHolder: "每行一个字体，按顺序回退",
                             init() {
                                 return monospaceFonts.get().join("\n");
                             },
@@ -290,13 +278,11 @@ export const getUserSettings = _.once((): UserSettings => ({
                     },
 
                     "font-weights": {
-                        title: "字重调整",
-                        description:
-                            `设置字体的字重`,
+                        title: "字重",
                         widgets: [
                             {
                                 type: "subTitle",
-                                content: "默认字重",
+                                content: "常规",
                             },
                             {
                                 type: "textbox",
@@ -305,13 +291,13 @@ export const getUserSettings = _.once((): UserSettings => ({
                                     return fontWeights.get().normal;
                                 },
                                 event(e) {
-                                    const newValue = (e.target as HTMLInputElement).value;
-                                    fontWeights.merge({ normal: +newValue });
+                                    const weight = parseFontWeight((e.target as HTMLInputElement).value);
+                                    if (weight) fontWeights.merge({ normal: weight });
                                 },
                             },
                             {
                                 type: "subTitle",
-                                content: "粗体字重",
+                                content: "粗体",
                             },
                             {
                                 type: "textbox",
@@ -320,8 +306,8 @@ export const getUserSettings = _.once((): UserSettings => ({
                                     return fontWeights.get().bold;
                                 },
                                 event(e) {
-                                    const newValue = (e.target as HTMLInputElement).value;
-                                    fontWeights.merge({ bold: +newValue });
+                                    const weight = parseFontWeight((e.target as HTMLInputElement).value);
+                                    if (weight) fontWeights.merge({ bold: weight });
                                 },
                             },
                         ],
@@ -335,7 +321,7 @@ export const getUserSettings = _.once((): UserSettings => ({
         name: "模块",
         icon: Boxes,
         description: "用户模块管理及部署",
-        sub: AllModules().filter(m => m.id !== "remixed-theme").reduce<Record<string, SubSettingKey>>((accu, curr) => {
+        sub: AllModules().reduce<Record<string, SubSettingKey>>((accu, curr) => {
             function toSubSettingKey(module: UserModule): SubSettingKey {
                 return {
                     name: module.name,

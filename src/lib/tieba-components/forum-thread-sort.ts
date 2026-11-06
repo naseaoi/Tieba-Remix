@@ -54,7 +54,7 @@ function forumName(): string {
 }
 
 function sync(): void {
-    if (!document.documentElement.classList.contains("style-vercel") || !isMainTab()) return;
+    if (!isMainTab()) return;
     const list = dom<"ul">("#thread_list");
     if (!list || !forumName()) return;
 

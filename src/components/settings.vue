@@ -46,7 +46,8 @@
                         </div>
 
                         <!-- 简单行：title + 描述 在左，单一控件 在右 -->
-                        <div v-else-if="content && isSimpleRow(content)" class="setting-row simple">
+                        <div v-else-if="content && isSimpleRow(content)" class="setting-row simple"
+                            :class="{ disabled: isRowDisabled(content) }">
                             <div class="row-text">
                                 <div v-if="content.title" class="row-title">{{ content.title }}</div>
                                 <p v-for="(line, idx) in resolveSimpleDesc(content)" :key="idx" class="row-desc">{{ line }}</p>
@@ -54,10 +55,11 @@
                             <div class="row-control">
                                 <SettingSwitch v-if="content.widgets![0].type === 'toggle'"
                                     :model-value="!!content.widgets![0].init?.()"
-                                    @change="content.widgets![0].event?.($event)" />
+                                    :disabled="isRowDisabled(content)"
+                                    @change="runWidgetEvent(content.widgets![0], $event)" />
 
                                 <UserButton v-else-if="content.widgets![0].type === 'button'"
-                                    class="row-button" @click="content.widgets![0].event">
+                                    class="row-button" @click="runWidgetEvent(content.widgets![0], $event)">
                                     {{ content.widgets![0].content }}
                                 </UserButton>
 
@@ -65,7 +67,10 @@
                                     class="row-select"
                                     :data="content.widgets![0].content as UserSelectItem[]"
                                     :default-value="content.widgets![0].init?.()"
-                                    @change="content.widgets![0].event" />
+                                    @change="runWidgetEvent(content.widgets![0], $event)" />
+
+                                <component v-else-if="content.widgets![0].component"
+                                    :is="content.widgets![0].component" @change-view="changeView" />
                             </div>
                         </div>
 
@@ -89,16 +94,17 @@
                                     <!-- 复合内嵌 toggle：横向 标签 + 滑块 -->
                                     <div v-else-if="widget.type === 'toggle'" class="widget-toggle">
                                         <div class="toggle-label">{{ widget.content }}</div>
-                                        <SettingSwitch :model-value="!!widget.init?.()" @change="widget.event?.($event)" />
+                                        <SettingSwitch :model-value="!!widget.init?.()"
+                                            @change="runWidgetEvent(widget, $event)" />
                                     </div>
 
                                     <UserButton v-else-if="widget.type === 'button'" class="widget-button"
-                                        @click="widget.event">{{ widget.content }}</UserButton>
+                                        @click="runWidgetEvent(widget, $event)">{{ widget.content }}</UserButton>
 
                                     <SettingSelect v-else-if="widget.type === 'select' && Array.isArray(widget.content)"
                                         class="widget-select"
                                         :data="widget.content as UserSelectItem[]"
-                                        :default-value="widget.init?.()" @change="widget.event" />
+                                        :default-value="widget.init?.()" @change="runWidgetEvent(widget, $event)" />
 
                                     <UserTextbox v-else-if="widget.type === 'textbox' || widget.type === 'textarea'"
                                         class="widget-textbox"
@@ -173,17 +179,21 @@ export interface SubSettingKey extends SettingKey {
 export interface SettingContent {
     title?: string;
     description?: string;
-    widgets?: {
-        type: "toggle" | "icon" | "button" | "select" | "subTitle" | "desc" | "textbox" | "textarea" | "image" | "component";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        init?: (() => any);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        event?: ((e: any) => any);
-        content?: string | LiteralObject | Array<unknown>;
-        component?: SupportedComponent;
-        placeHolder?: string;
-        altContent?: string;
-    }[]
+    /** 依赖其他设置项时返回 true 以禁用本行开关，每次设置变更后重新求值 */
+    disabled?: () => boolean;
+    widgets?: SettingWidget[];
+}
+
+export interface SettingWidget {
+    type: "toggle" | "icon" | "button" | "select" | "subTitle" | "desc" | "textbox" | "textarea" | "image" | "component";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    init?: (() => any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event?: ((e: any) => any);
+    content?: string | LiteralObject | Array<unknown>;
+    component?: SupportedComponent;
+    placeHolder?: string;
+    altContent?: string;
 }
 
 const userSettings = getUserSettings();
@@ -261,12 +271,28 @@ function searchKey() {
 
 const debSearchKey = useDebounce(searchKey, 300);
 
+// 设置项的 init/disabled 读取的是非响应式存储，变更后递增版本号触发重新求值
+const settingsRevision = ref(0);
+
+function runWidgetEvent(widget: SettingWidget, e: unknown) {
+    const result = widget.event?.(e);
+    settingsRevision.value++;
+    return result;
+}
+
+function isRowDisabled(content: SettingContent): boolean {
+    void settingsRevision.value;
+    return !!content.disabled?.();
+}
+
 // 渲染辅助
 const SIMPLE_TYPES = new Set(["toggle", "button", "select"]);
 
 function isSimpleRow(content: SettingContent): boolean {
     const widgets = content.widgets ?? [];
     if (widgets.length !== 1) return false;
+    // 带标题的单一组件也按单行排布，组件自身作为右侧控件
+    if (widgets[0].type === "component") return !!content.title && !!widgets[0].component;
     return SIMPLE_TYPES.has(widgets[0].type);
 }
 
@@ -576,6 +602,16 @@ $dur: 0.18s;
 
     &:hover {
         border-color: var(--minimal-fore);
+    }
+
+    &.disabled {
+        &:hover {
+            border-color: var(--border-color);
+        }
+
+        .row-text {
+            opacity: 0.5;
+        }
     }
 
     // 简单行：左标题右控件
