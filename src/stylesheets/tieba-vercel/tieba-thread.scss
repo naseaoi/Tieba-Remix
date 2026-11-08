@@ -382,8 +382,8 @@ html.style-vercel {
     }
 
     // 纯文本链接
-    .d_post_content a:not(.at):not(:empty):not(:has(img)),
-    .lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)) {
+    .d_post_content a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"]),
+    .lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"]) {
         color: #2563eb !important;
         text-decoration: underline 1px rgb(37 99 235 / 50%);
         text-underline-offset: 2px;
@@ -399,6 +399,19 @@ html.style-vercel {
 
         &:hover {
             text-decoration-color: #2563eb;
+        }
+    }
+
+    // 话题链接；服务端输出的嵌套 <a> 会被解析出一个空链接，:empty 将其排除
+    .d_post_content a[href*="/hottopic/browse/hottopic"]:not(:empty),
+    .lzl_cnt .lzl_content_main a[href*="/hottopic/browse/hottopic"]:not(:empty) {
+        margin: 0 2px;
+        color: #2563eb !important;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline 1px;
+            text-underline-offset: 2px;
         }
     }
 

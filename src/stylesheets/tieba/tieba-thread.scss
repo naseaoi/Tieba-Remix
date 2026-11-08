@@ -555,14 +555,14 @@
     height: unset;
 } */
 
-/* 文字链接：固定蓝色 + 链接图标前缀；:not(:has(img)) 排除图片/链接卡 */
-.d_post_content a:not(.at):not(:empty):not(:has(img)),
-.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)) {
+/* 文字链接：固定蓝色 + 链接图标前缀；:not(:has(img)) 排除图片/链接卡，话题链接自带 #话题# 文本，不加图标 */
+.d_post_content a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"]),
+.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"]) {
     margin: auto 2px;
 }
 
-.d_post_content a:not(.at):not(:empty):not(:has(img))::before,
-.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img))::before {
+.d_post_content a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"])::before,
+.lzl_cnt .lzl_content_main a:not(.at):not(:empty):not(:has(img)):not([href*="/hottopic/browse/hottopic"])::before {
     @include lucide-mask-icon($lucide-link);
 }
 

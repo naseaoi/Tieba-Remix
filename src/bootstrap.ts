@@ -31,6 +31,7 @@ import { installThreadFloorTag } from "./lib/tieba-components/thread-floor-tag";
 import { installThreadImageGrid } from "./lib/tieba-components/thread-image-grid";
 import { installThreadImageLoading, refreshThreadImageLoading } from "./lib/tieba-components/thread-image-loading";
 import { installSubPostImages } from "./lib/tieba-components/sub-post-images";
+import { installThreadTopics } from "./lib/tieba-components/thread-topics";
 import { REMIXED, avatarShape, glassEffect, navBarHideMode, pageExtension, showBottomEditor, themeType } from "./lib/user-values";
 import { AllModules, waitUntil } from "./lib/utils";
 import { userModuleManifests } from "./modules/manifest";
@@ -92,6 +93,7 @@ function startBootstrap({ onReady }: BootstrapSignal) {
 
     installThreadFloorActions();
     installSubPostImages();
+    installThreadTopics();
 
     installThreadImageGrid();
 
