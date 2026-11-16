@@ -62,6 +62,43 @@ describe("renderLzlReplyTargets", () => {
             .toBe(`/home/main?un=${encodeURIComponent("用户名")}&ie=utf-8&fr=pb`);
     });
 
+    it("纯文本前缀按同楼回复的显示名解析出 portrait", () => {
+        document.body.innerHTML = `
+            <ul class="j_lzl_m_w">
+                <li class="lzl_single_post" data-field="{'spid':'1','user_name':'麻酱','portrait':'tb.1.target','showname':'中继站下车'}"></li>
+                <li class="lzl_single_post" data-field="{'spid':'2','user_name':'仙贝','portrait':'tb.1.author','showname':'仙贝'}">
+                    <div class="lzl_cnt">
+                        <a class="at j_user_card" href="/home/main?id=author">仙贝</a>
+                        <span class="lzl_content_main">回复 中继站下车 :顺便<img class="BDE_Smiley">好</span>
+                    </div>
+                </li>
+            </ul>
+        `;
+        renderLzlReplyTargets();
+
+        const post = document.querySelectorAll<HTMLElement>("li")[1];
+        expect(post.dataset.tbrReplyTo).toBe("tb.1.target");
+        const link = post.querySelector<HTMLAnchorElement>(".tbr-lzl-reply-target .at")!;
+        expect(link.textContent).toBe("中继站下车");
+        expect(link.getAttribute("href")).toBe("/home/main?id=tb.1.target&ie=utf-8&fr=pb");
+        expect(post.querySelector(".lzl_content_main")?.innerHTML).toBe(`顺便<img class="BDE_Smiley">好`);
+    });
+
+    it("纯文本前缀找不到同楼作者时以显示名作为回复对象", () => {
+        document.body.innerHTML = `
+            <li class="lzl_single_post">
+                <div class="lzl_cnt">
+                    <a class="at j_user_card" href="/home/main?id=author">作者</a>
+                    <span class="lzl_content_main">回复 某人：正文</span>
+                </div>
+            </li>
+        `;
+        renderLzlReplyTargets();
+
+        expect(document.querySelector<HTMLElement>("li")?.dataset.tbrReplyTo).toBe("某人");
+        expect(document.querySelector(".lzl_content_main")?.innerHTML).toBe("正文");
+    });
+
     it("正文不是回复格式时保持原样", () => {
         const html = `回复一下 <a class="at" href="">某人</a> 看看`;
         const cnt = setup(html);

@@ -147,7 +147,7 @@ function renderReplyTree(list: HTMLElement): void {
     if (focus < 0) delete list.dataset[FOCUS_DATA];
     const nodes = buildReplyTree(posts.map(post => ({
         author: normalizePortrait(readLzlField(post, "portrait")),
-        names: [readLzlField(post, "user_name"), readLzlField(post, "showname")].filter(Boolean),
+        names: [readLzlField(post, "user_name"), readLzlField(post, "showname"), readLzlField(post, "user_nickname")].filter(Boolean),
         target: normalizePortrait(post.dataset.tbrReplyTo) || undefined,
     })), focus < 0 ? undefined : focus, floor ? readFloorAuthor(floor) : undefined);
 
