@@ -6,13 +6,12 @@
                 <div class="head-desc">上传图片作为页面背景图</div>
             </div>
             <div class="head-actions">
-                <UserButton class="back-button" @click="clearImage">清除</UserButton>
+                <UserButton v-if="imageData" class="back-button" @click="clearImage">清除</UserButton>
                 <UserButton class="back-button" @click="selectImageFile">上传图片</UserButton>
             </div>
         </div>
         <div v-show="imageData" class="preview-row">
-            <img class="custom-image" :src="imageData ?? ''" title="自定义背景" alt="自定义背景"
-                :style="`opacity: ${+alphaValue / 100}`">
+            <img class="custom-image" :src="imageData ?? ''" title="自定义背景" alt="自定义背景">
         </div>
     </div>
 </template>
@@ -24,7 +23,6 @@ import { UserButton } from "user-view";
 import { onMounted, ref, watch } from "vue";
 
 const imageData = ref<Maybe<string>>(customBackground.get());
-const alphaValue = ref("100");
 
 watch(imageData, newValue => {
     customBackground.set(newValue);

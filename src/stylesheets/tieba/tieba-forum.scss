@@ -14,15 +14,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
     display: none !important;
 }
 
-#head {
-    background: unset !important;
-    background-color: var(--page-background) !important;
-
-    .head_inner {
-        background-color: var(--page-background);
-    }
-}
-
 .threadlist_title a,
 .threadlist_title a:hover,
 .threadlist_title a:visited {
@@ -32,15 +23,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
 
 .u_menu_item a {
     color: unset !important;
-}
-
-.card_banner,
-.plat_recom_carousel {
-    display: none !important;
-}
-
-.search_main {
-    padding-bottom: unset;
 }
 
 .search_bright .search_logo_fixed {
@@ -66,38 +48,7 @@ body[hide-bottom-editor] .editor_wrap_bright {
     }
 }
 
-.search_bright .search_inp_border,
-.search_bright .search_ipt {
-    height: 40px !important;
-    box-sizing: border-box;
-    border: 2px solid var(--border-color) !important;
-    background-color: var(--default-background) !important;
-    color: var(--default-fore) !important;
-    transition: var(--default-duration);
-
-    &:hover {
-        border-color: var(--light-background) !important;
-    }
-
-    &:focus {
-        border-color: var(--tieba-theme-color) !important;
-    }
-}
-
 .search_bright .search_btn {
-    height: 40px !important;
-    box-sizing: border-box;
-    border: 1px solid var(--border-color) !important;
-    background-color: var(--default-background) !important;
-    box-shadow: none !important;
-    color: var(--default-fore) !important;
-    line-height: 40px !important;
-    transition: var(--default-duration);
-
-    &:hover {
-        filter: brightness(1.1);
-    }
-
     &:active {
         filter: brightness(1.2);
     }
@@ -105,15 +56,11 @@ body[hide-bottom-editor] .editor_wrap_bright {
 
 .search_bright .search_btn_enter_ba {
     @extend %user-button;
-    border: none !important;
-    background-color: var(--tieba-theme-color) !important;
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
-    color: var(--default-background) !important;
 }
 
 .search_main_fixed {
-    display: none !important;
     border-color: var(--border-color);
     backdrop-filter: blur(24px);
     background-color: var(--trans-default-background);
@@ -130,122 +77,14 @@ body[hide-bottom-editor] .editor_wrap_bright {
     font-family: var(--code-zh, sans-serif) !important;
 }
 
-.card_top_theme {
-    border: none !important;
-}
-
-#content {
-    width: 982px;
-}
-
-.card_top_theme .card_top {
-    padding-left: 120px !important;
-}
-
-.card_title_fname {
-    color: var(--tieba-theme-fore) !important;
-    font-weight: var(--font-weight-bold);
-}
-
-.card_slogan {
-    color: var(--light-fore) !important;
-}
-
-.islike_focus {
-    background-color: var(--tieba-theme-color) !important;
-    background-image: none !important;
-    border-radius: 8px;
-    margin-top: 4px !important;
-    color: var(--elem-color);
-    font-size: 14px;
-    line-height: 28px;
-    text-align: center;
-}
-
-.islike_focus::after {
-    content: "关注";
-}
-
-.cancel_focus {
-    width: 72px;
-    background: none !important;
-    background-color: var(--tieba-theme-background) !important;
-    border: 2px solid var(--trans-tieba-theme-color);
-    border-radius: 8px;
-    color: var(--tieba-theme-fore);
-    font-size: 14px;
-    line-height: 28px;
-    text-align: center;
-}
-
-.cancel_focus::after {
-    content: "已关注";
-}
-
 .card_top_right {
     margin-top: 20px;
 }
 
-.sign_box_bright,
-.sign_box_bright_hover {
-    width: 140px !important;
-    height: 40px !important;
-    background: none !important;
-    background-color: var(--tieba-theme-color) !important;
-    border: 2px solid var(--trans-tieba-theme-color);
-    border-radius: 8px;
-    color: var(--default-background);
-    font-size: 18px;
-    line-height: 40px;
-    text-align: center;
-}
-
-.sign_btn_bright::before {
-    color: var(--elem-color);
-    content: "签到";
-}
-
-.sign_box_bright_signed,
-.sign_box_bright_noclass_hover {
-    background: none !important;
-    background-color: var(--tieba-theme-background) !important;
-    text-align: unset;
-}
-
-.sign_today_date,
-.sign_month_lack_days {
-    display: none;
-}
-
-.sign_keep_span {
-    width: 140px !important;
-    height: 40px;
-}
-
 .sign_mod_bright .sign_keep_span {
-    margin: unset !important;
     color: var(--tieba-theme-fore);
     font-size: 12px;
     text-align: center !important;
-}
-
-.sign_box_bright_signed::before {
-    content: none !important;
-}
-
-.sign_mod_bright .sign_keep_span::before {
-    content: "已签到 | ";
-}
-
-.forum_content {
-    border-color: var(--border-color) !important;
-    border-right: none !important;
-    background: none !important;
-    background-color: var(--elem-color) !important;
-}
-
-.nav_wrap {
-    border-color: var(--border-color) !important;
 }
 
 .nav_list li.focus {
@@ -290,14 +129,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
     transform: translate(-0.5px, -0.5px);
 }
 
-.aside_region {
-    border-bottom: none !important;
-}
-
-.aside_region .region_header {
-    color: var(--default-fore) !important;
-}
-
 .my_tieba .media_left,
 .my_tieba .media-left {
     border: none !important;
@@ -333,15 +164,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
     background-color: var(--very-light-background) !important;
 }
 
-.threadlist_bright > li {
-    border: none !important;
-    background-color: var(--default-background) !important;
-}
-
-.threadlist_bright > li:hover {
-    background-color: var(--trans-light-background) !important;
-}
-
 .threadlist_bright .ylh-ad-container {
     box-sizing: border-box !important;
     width: 100% !important;
@@ -358,15 +180,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
 .j_th_tit {
     color: var(--tieba-theme-fore);
     font-weight: var(--font-weight-bold);
-}
-
-.threadlist_bright .threadlist_abs_onlyline,
-.threadlist_bright .threadlist_abs {
-    color: var(--default-fore) !important;
-}
-
-.threadlist_bright .threadlist_media li {
-    border-radius: 4px !important;
 }
 
 .threadlist_media li:hover .threadlist_pic_highlight {
@@ -386,7 +199,6 @@ body[hide-bottom-editor] .editor_wrap_bright {
 
 .threadlist_bright .threadlist_video {
     overflow: hidden;
-    border-radius: 4px;
 }
 
 .threadlist_bright .threadlist_video[data-trex-video-size-locked] > img {
@@ -437,43 +249,21 @@ body[hide-bottom-editor] .editor_wrap_bright {
 
 .pagination-default .pagination-item {
     border: none !important;
-    border-radius: 4px;
     background-color: var(--light-background) !important;
     color: var(--light-fore) !important;
 }
 
 .pagination-default .pagination-current {
     border: none !important;
-    background-color: var(--tieba-theme-color) !important;
-    color: var(--default-background) !important;
 }
 
 .pagination-default .pagination-item:not(.pagination-current):hover {
     border: none !important;
-    background-color: var(--trans-light-background) !important;
 }
 
 #tb_rich_poster_container {
     width: 982px !important;
-    border-radius: 0 0 24px 24px;
     margin-left: -1px;
-    background-color: var(--very-light-background) !important;
-}
-
-.tb_rich_poster .poster_body .editor_textfield {
-    border-color: var(--border-color) !important;
-    border-radius: 4px;
-    background-color: var(--default-background) !important;
-    color: var(--default-fore) !important;
-}
-
-.tb_rich_poster .poster_body .editor_textfield:focus {
-    border-color: var(--tieba-theme-color) !important;
-}
-
-.old_style_wrapper {
-    border-color: var(--border-color) !important;
-    background-color: var(--elem-color) !important;
 }
 
 .old_style_wrapper .edui-editor-body {
@@ -484,17 +274,8 @@ body[hide-bottom-editor] .editor_wrap_bright {
     background: none !important;
 }
 
-.edui-editor-body .edui-body-container {
-    border-color: var(--border-color) !important;
-    background-color: var(--default-background) !important;
-}
-
 .frs_content_footer_pagelet {
     background: none !important;
-}
-
-.footer {
-    display: none !important;
 }
 
 .icon_author {

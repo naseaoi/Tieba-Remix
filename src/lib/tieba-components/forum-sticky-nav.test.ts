@@ -22,7 +22,6 @@ describe("forum sticky nav", () => {
         vi.resetModules();
         setting.enabled = true;
         setting.listeners = [];
-        document.documentElement.classList.add("style-vercel");
         document.documentElement.removeAttribute("data-forum-nav-stuck");
         document.body.innerHTML = `
             <div class="card_top"><img class="card_head_img" src="https://example.com/head.jpg"><a class="card_title_fname"> 测试吧 </a></div>

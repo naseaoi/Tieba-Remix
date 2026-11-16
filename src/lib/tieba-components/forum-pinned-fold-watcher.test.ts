@@ -42,7 +42,6 @@ describe("forum pinned section", () => {
         store.collapsed = {};
         store.visited = {};
         vi.stubGlobal("location", { ...location, search: "?kw=test" });
-        document.documentElement.classList.add("style-vercel");
     });
 
     function render(items: string[]): HTMLLIElement {

@@ -1,0 +1,149 @@
+@use "./tokens" as *;
+
+/// 「本吧详情」侧滑面板：吧页与搜索页共用
+
+@mixin forum-drawer {
+    .trex-forum-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .trex-forum-drawer-backdrop {
+        position: absolute;
+        inset: 0;
+        background-color: rgb(0 0 0 / 24%);
+        opacity: 0;
+        transition: opacity 0.22s $vercel-ease;
+    }
+
+    .trex-forum-drawer-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        width: min(360px, 100vw);
+        border-left: 1px solid var(--border-color);
+        background-color: var(--default-background);
+        box-shadow: $vercel-shadow-lg;
+        transform: translateX(100%);
+        transition: transform 0.22s $vercel-ease;
+    }
+
+    .trex-forum-drawer[data-open] {
+        .trex-forum-drawer-backdrop {
+            opacity: 1;
+        }
+
+        .trex-forum-drawer-panel {
+            transform: none;
+        }
+    }
+
+    .trex-forum-drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 12px 12px 16px;
+        border-bottom: 1px solid var(--border-color);
+
+        h2 {
+            margin: 0;
+            color: var(--default-fore);
+            font-size: $vercel-fs-md;
+            font-weight: var(--font-weight-bold);
+        }
+    }
+
+    .trex-forum-drawer-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        border-radius: $vercel-radius-sm;
+        background: none;
+        color: var(--light-fore);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--default-hover);
+            color: var(--default-fore);
+        }
+    }
+
+    .trex-forum-drawer-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 16px;
+    }
+}
+
+// 本吧等级与经验条：吧页标题卡与搜索页详情面板共用
+@mixin forum-level {
+    .trex-forum-level {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 140px;
+        color: var(--default-fore) !important;
+        text-decoration: none !important;
+    }
+
+    .trex-forum-level-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        font-size: $vercel-fs-sm;
+        line-height: 20px;
+    }
+
+    .trex-forum-level-index {
+        flex-shrink: 0;
+        padding: 0 5px;
+        border: 1px solid var(--border-color);
+        border-radius: $vercel-radius-xs;
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-xs;
+        line-height: 16px;
+    }
+
+    .trex-forum-level-name {
+        overflow: hidden;
+        font-weight: var(--font-weight-bold);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .trex-forum-level-bar {
+        display: block;
+        height: 4px;
+        overflow: hidden;
+        border-radius: 2px;
+        background-color: var(--border-color);
+
+        > span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background-color: var(--default-fore);
+        }
+    }
+
+    .trex-forum-level-exp {
+        color: var(--minimal-fore);
+        font-family: $vercel-font-mono;
+        font-size: $vercel-fs-xs;
+        line-height: 14px;
+    }
+}

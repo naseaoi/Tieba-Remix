@@ -2,7 +2,7 @@ import { GM_deleteValue, GM_getValue, GM_setValue } from "@/lib/monkey";
 import { NavBarHideMode } from "@/components/nav-bar.vue";
 import _ from "@/lib/utils/_";
 import { setTheme } from "./api/remixed";
-import { applyCustomStyle, applyDynamicFonts, setCustomBackground, setStyleTheme } from "./theme";
+import { applyCustomStyle, applyDynamicFonts, setCustomBackground } from "./theme";
 import { isLiteralObject, spawnOffsetTS } from "./utils";
 
 export const MainTitle = "Tieba Remix";
@@ -238,15 +238,6 @@ export const themeType = new UserKey<"auto" | "dark" | "light">(
             setTheme(value);
         },
     }, undefined, value => ["auto", "dark", "light"].includes(String(value)));
-/** 样式风格（Remixed / Vercel） */
-export const styleTheme = new UserKey<"remixed" | "vercel">(
-    "styleTheme",
-    "vercel",
-    {
-        setter(value) {
-            setStyleTheme(value);
-        },
-    }, undefined, value => ["remixed", "vercel"].includes(String(value)));
 /** 紧凑布局 */
 export const compactLayout = new UserKey("compactLayout", false);
 /** 磨砂玻璃质感（导航栏、首页标题栏等模糊背景） */

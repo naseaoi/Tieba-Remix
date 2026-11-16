@@ -6,7 +6,6 @@
 
 <script setup lang="ts">
 import { LoaderCircle } from "@lucide/vue";
-import { styleTheme } from "@/lib/user-values";
 import { waitUntil } from "@/lib/utils";
 import { UserDialog, UserDialogOpts } from "user-view";
 import { onMounted, ref } from "vue";
@@ -45,12 +44,10 @@ const dialogOpts: UserDialogOpts = {
             borderRadius: "0",
             padding: "0",
         },
-        ...(styleTheme.get() === "vercel" ? {
-            modalStyle: {
-                backgroundColor: "rgb(0 0 0 / 92%)",
-                animation: "kf-viewer-mask-fade 0.25s ease both",
-            },
-        } : {}),
+        modalStyle: {
+            backgroundColor: "rgb(0 0 0 / 92%)",
+            animation: "kf-viewer-mask-fade 0.25s ease both",
+        },
     } : {}),
 };
 

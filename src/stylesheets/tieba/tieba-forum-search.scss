@@ -2,8 +2,7 @@
 // 隐藏顶部 #head 全部内容（站点导航 + 原生搜索区）
 
 html[data-page-type="forum"] #head,
-html.style-vercel[data-page-type="forum"] #head,
-html.style-remixed[data-page-type="forum"] #head {
+html.style-vercel[data-page-type="forum"] #head {
     display: none !important;
 }
 

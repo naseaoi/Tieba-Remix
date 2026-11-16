@@ -56,7 +56,6 @@ describe("forum thread sort", () => {
         fetchForumThreads.mockReset();
         store.sort = "reply";
         vi.stubGlobal("location", { ...location, search: "?kw=test&tab=main" });
-        document.documentElement.classList.add("style-vercel");
         document.documentElement.removeAttribute("data-forum-sort");
         document.body.innerHTML = `
             <ul id="thread_list" class="threadlist_bright">

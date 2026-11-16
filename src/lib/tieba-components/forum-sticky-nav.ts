@@ -17,8 +17,6 @@ export function installForumStickyNav(): void {
 }
 
 async function setup(): Promise<void> {
-    if (!document.documentElement.classList.contains("style-vercel")) return;
-
     // 导航嵌在标题卡 pagelet 内，导航出现时品牌所需的吧名与头像已就绪
     const nav = await asyncdom<"div">(".nav_wrap", undefined, FORUM_PAGELET_TIMEOUT_MS);
     if (!nav) return;

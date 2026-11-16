@@ -12,8 +12,6 @@ export function installForumAsideCollapse(): void {
     installed = true;
 
     const setup = async (): Promise<void> => {
-        if (!document.documentElement.classList.contains("style-vercel")) return;
-
         const aside = await asyncdom<"div">(".aside", undefined, FORUM_PAGELET_TIMEOUT_MS);
         if (!aside) return;
 

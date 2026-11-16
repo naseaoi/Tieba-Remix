@@ -22,6 +22,7 @@
 - DOM 查询与创建优先使用 `src/lib/elemental/` 中的 `dom`、`asyncdom`、`domrd`、`findParent`。
 - 动态楼层、楼中楼和帖子列表优先复用 `src/lib/observers.ts` 中的共享 observers，不重复创建同目标观察器。
 - Vue/JSX 挂载和弹窗使用 `src/lib/render/` 中的现有能力。
+- 主题样式分为基础层与 `html.style-vercel` 覆盖层，修改样式前阅读 `docs/theme-styles.md`。
 - 贴吧接口优先集中到 `src/lib/api/tieba.ts`，避免在业务组件中重复拼装请求逻辑。
 
 ## userscript 与跨域

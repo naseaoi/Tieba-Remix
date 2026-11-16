@@ -8,7 +8,6 @@ let installed = false;
  * 关键观察：服务端渲染的 textContent 才是真正的"最新显示名"；data-field.un 在用户改名后可能滞后。
  * 因此只在 textContent 尾部有省略号（"..." / "…"）时才视为被截断、需要补全；
  * 补全时还要求候选源以"截断前缀"开头，避免拿到滞后的旧昵称覆盖最新昵称。
- * 仅在 vercel 主题下启用 —— 其它主题未解开 CSS 截断，强行回填会撑破布局。
  */
 export function installForumAuthorFullId(): void {
     if (installed) return;
@@ -16,8 +15,6 @@ export function installForumAuthorFullId(): void {
     installed = true;
 
     void (async () => {
-        if (!document.documentElement.classList.contains("style-vercel")) return;
-
         const threadlist = await asyncdom<"ul">(".threadlist_bright");
         if (!threadlist) return;
 

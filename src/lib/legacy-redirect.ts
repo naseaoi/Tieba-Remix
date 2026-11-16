@@ -207,7 +207,7 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
     // 新版标记 cos-tieba 一出现就切换，不必等新版 SPA 资源加载到 DOMContentLoaded
     waitForBody(() => {
         if (handleSecurityPage()) return;
-        if (isNewVersionBody()) finalize();
+        if (isNewVersionBody() && !isSearchPath()) finalize();
     });
 
     // 最终版本判定：等 DOMContentLoaded，确保 body class、PageData 都已就位
@@ -221,7 +221,8 @@ export function setupLegacyRedirect(bootstrap: (signal: BootstrapSignal) => void
         if (bootstrapped || redirectTriggered) return;
         if (handleSecurityPage()) return;
 
-        const isNewVersion = isNewVersionBody() || isForumPageWithoutPageData();
+        // 搜索页只有新版 SPA，切换开关无效，直接在新版页面上启动
+        const isNewVersion = !isSearchPath() && (isNewVersionBody() || isForumPageWithoutPageData());
 
         if (isNewVersion) {
             if (hasRecentLegacySwitchAttempt()) {
@@ -258,9 +259,11 @@ function applyCloak(): void {
     installThreadLoadingLayoutStyle();
     cloakApplied = true;
     showCloakIndicator();
+    document.documentElement.style.setProperty("visibility", "hidden", "important");
+    // 原生搜索页 SPA 在内层容器滚动，锁定 html 滚动条只会多出一条空滚动条
+    if (isSearchPath()) return;
     document.documentElement.style.setProperty("overflow-y", "scroll", "important");
     document.documentElement.style.setProperty("scrollbar-gutter", "stable", "important");
-    document.documentElement.style.setProperty("visibility", "hidden", "important");
     waitForBody(() => {
         document.body.style.setProperty("overflow", "visible", "important");
     });
@@ -290,6 +293,10 @@ function installThreadLoadingLayoutStyle(): void {
 
 function isThreadPath(): boolean {
     return location.hostname.toLowerCase() === "tieba.baidu.com" && location.pathname.startsWith("/p/");
+}
+
+function isSearchPath(): boolean {
+    return /^\/f\/search(\/|$)/i.test(location.pathname);
 }
 
 function threadPageExtensionEnabled(): boolean {

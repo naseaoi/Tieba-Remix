@@ -10,7 +10,7 @@ export { default as ConfirmDialog } from "./confirm-dialog.vue";
 /**
  * 渲染统一风格的确认对话框。
  *
- * 用于替代 `user-view` 的 `messageBox`，提供与项目主题（Remixed / Vercel）一致的视觉。
+ * 用于替代 `user-view` 的 `messageBox`，提供与项目主题一致的视觉。
  *
  * @example
  * const result = await confirmDialog({

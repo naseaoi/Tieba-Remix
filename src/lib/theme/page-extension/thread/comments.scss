@@ -122,7 +122,8 @@ $lzl-content-margin: 12px;
                 }
 
                 .tbr-lzl-rail-pass,
-                .tbr-lzl-rail-tee {
+                .tbr-lzl-rail-tee,
+                .tbr-lzl-rail-tee::before {
                     top: 0;
                     bottom: 0;
                     border-left-width: $lzl-rail-width;
@@ -144,15 +145,25 @@ $lzl-content-margin: 12px;
                     border-bottom-left-radius: 10px;
                 }
 
-                .tbr-lzl-rail-tee::after {
-                    position: absolute;
-                    left: -$lzl-rail-width;
-                    box-sizing: border-box;
-                    border-color: inherit;
-                    border-style: solid;
-                    border-top-width: 0;
-                    border-right-width: 0;
-                    content: "";
+                // 缩放下边框宽度会按设备像素取整，竖线与弯线须从同一原点绘制，不能用负偏移抵消边框
+                .tbr-lzl-rail-tee {
+                    border-left-width: 0;
+
+                    &::before,
+                    &::after {
+                        position: absolute;
+                        left: 0;
+                        box-sizing: border-box;
+                        border-color: inherit;
+                        border-style: solid;
+                        border-top-width: 0;
+                        border-right-width: 0;
+                        content: "";
+                    }
+
+                    &::before {
+                        border-bottom-width: 0;
+                    }
                 }
             }
 
